@@ -27,13 +27,16 @@ Formal proofs for type-correct algorithms written in our language are unnecessar
 ## Learning Objectives
 
 At the end of the semester, the students should be able to:
-* implement a prototype of a programming language with differential privacy built into the type-system, or explain why this is not possible
+
+* implement a prototype of a programming language with differential privacy built into the type-system
+* explain essential concepts from differential privacy, e.g. metrics and algorithms
+* explain the basics of dependent types and motivate their usage
 * analyze the use of dependent types for enforcing differential privacy constraints
-* implement and analyze differential privacy algorithms in the prototype language (if it exists)
-* discuss and justify the design decisions made during the implementation of the prototype language (from a programming languages perspective)
+* design a simple, embedded domain-specific (type) language (EDSL)
+* demonstrate examples of differential privacy algorithms in the prototype language
+* justify design decisions made during the implementation of the prototype language (from a programming languages perspective)
 
 ## Rough Implementation Outline
 
-We plan to embed our implementation within the dependently-typed language, Idris (idris-lang.org).
-This will allow us to take advantage of Idris’ parser and advanced type-system as we explore how to embed differential privacy metrics.
-
+We plan to embed our implementation within the dependently-typed language, Idris (idris-lang.org), as an EDSL.
+This will allow us to take advantage of Idris' parser and advanced type-system as we explore the embedding of differential privacy metrics.
