@@ -18,11 +18,8 @@ Each algorithm is typically bundled with a formal proof that it meets some deman
 The burden of producing such a proof is typically manual, and therefore error-prone.
 We aim to solve this problem from a programming languages perspective by allowing the computer to take over this burden.
 
-In some branches of mathematics we concern ourselves with types of things and the operations available to manipulate them (e.g, consider the set of all real numbers and common arithmetic functions).
-Programming languages take advantage of this concept by statically verifying programs for type-correctness, precluding many potential sources of runtime errors: “well-typed programs can’t go wrong”.
-
-We aim to extend this notion of being “well-typed” to include differential privacy metrics; i.e, well-typed programs in our language can’t go wrong and also can’t return results which could be used to identify a particular individual included in the data set.
-Formal proofs for type-correct algorithms written in our language are unnecessary - the program is the proof! Thus, all type-correct programs must respect expected privacy requirements.
+Typed programming languages consist of well-defined types with rules attached to each type. Statically typed languages take advantage of these types by statically verifying programs for type-correctness, precluding many potential sources of runtime errors: "well-typed programs can’t go wrong".
+We aim to extend this notion of being "well-typed" to include differential privacy metrics. The plan is to achieve this by implementing an EDSL with differential privacy guarantees in all types. Well-typed programs in our language can’t go wrong and also can’t return results which could be used to identify a particular individual included in the data set. Formal proofs for type-correct algorithms written in our language are unnecessary - the program is the proof! Thus, all type-correct programs must respect expected privacy requirements.
 
 ## Learning Objectives
 
