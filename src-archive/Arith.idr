@@ -43,4 +43,35 @@ eval : Term -> Term
 eval t1 = case eval1 t1 of
                Just t1' => eval t1'
                Nothing  => t1
-               
+
+-- Combine functions and syntax extensions to provide a usable language interface
+
+true : Term
+true = TmTrue
+
+false : Term
+false = TmFalse
+
+syntax "|" [t1] "," [p] "|" [t2] "," "otherwise" = TmIf p t1 t2
+
+z : Term
+z = TmZero
+
+s : Term -> Term
+s = TmSucc
+
+p : Term -> Term
+p = TmPred
+
+syntax "isZ" [n] = TmIsZero n
+
+-- Example Function using special TmIf syntax
+
+partial
+isOneOrZero : Term -> Term
+isOneOrZero n = | TmTrue  , isZ (p n)
+                | TmFalse , otherwise
+
+foo : Term
+foo = eval $ isOneOrZero (s z) -- should evaluate to TmTrue
+
