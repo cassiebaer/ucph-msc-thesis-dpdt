@@ -27,7 +27,12 @@ infixl 5 &
 
 TEnv : Type
 TEnv = Symbol -> Ty
+
+emptyT : TEnv
+emptyT = \s => TInt
+
 extendT : TEnv -> Symbol -> Ty -> TEnv
+extendT g x t = \x' => if x == x' then t else g x'
 
 -- HasType captures our typing rules directly
 -- We use the Unit type for truthiness and the empty type otherwise
