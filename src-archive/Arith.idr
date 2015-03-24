@@ -63,7 +63,8 @@ s = TmSucc
 p : Term -> Term
 p = TmPred
 
-syntax "isZ" [n] = TmIsZero n
+isZ : Term -> Term
+isZ = TmIsZero
 
 -- Example Function using special TmIf syntax
 
