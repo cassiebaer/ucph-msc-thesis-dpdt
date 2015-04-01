@@ -32,13 +32,13 @@ VEnv : TEnv -> Type
 VEnv g = (x : Symbol) -> InterpTy (g x) 
 
 emptyT : TEnv
-emptyT = \s => TInt
+emptyT = \_ => TInt
 
 extendT : TEnv -> Symbol -> Ty -> TEnv
 extendT g x t = \x' => if x == x' then t else g x'
 
 emptyV : VEnv emptyT
-emptyV = \x => 0
+emptyV = \_ => 0
 
 extendV : (g : TEnv) ->
           (r : VEnv g) ->
@@ -46,7 +46,13 @@ extendV : (g : TEnv) ->
           (t : Ty) ->
           (v : InterpTy t) ->
           (VEnv (extendT g x t))
-extendV g r x t v = \x' => if x == x' then v else r x'
+extendV g r x t v x' with (x == x')
+  extendV g r x t v x' | False = r x'
+  extendV g r x t v x' | True  = v
+-- e.g.
+-- (extendV emptyT emptyV "x" TInt 42) "x" => 42
+-- (extendV emptyT emptyV "x" TInt 42) "y" => 0
+
 -- HasType captures our typing rules directly
 -- We use the Unit type for truthiness and the empty type otherwise
 HasType : TEnv -> Expr -> Ty -> Type
