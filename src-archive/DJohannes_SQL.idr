@@ -53,13 +53,25 @@ instance Show PrimExpr where
 -- Step 2: Abstract Syntax Embedding
 ------------------------------------------------------------------------------
 
-constant : (Show a) => a -> PrimExpr
-constant x = ConstExpr (show x)
+namespace untyped
 
-infixl 8 .+.
-(.+.) : PrimExpr -> PrimExpr -> PrimExpr
-(.+.) x y = BinExpr OpPlus x y
+  constant : (Show a) => a -> PrimExpr
+  constant x = ConstExpr (show x)
 
-sum : Int -> PrimExpr
-sum n = if (n <= 0) then constant 0 else constant n .+. sum (n-1)
+  infixl 8 .+.
+  (.+.) : PrimExpr -> PrimExpr -> PrimExpr
+  (.+.) x y = BinExpr OpPlus x y
+
+  sum : Int -> PrimExpr
+  sum n = if (n <= 0) then constant 0 else constant n .+. sum (n-1)
+
+------------------------------------------------------------------------------
+-- Step 3: Type Embedding
+------------------------------------------------------------------------------
+
+data Expr a = MkExpr PrimExpr
+
+constant : (Show a) => a -> Expr a
+--constant x = MkExpr $ ConstExpr (show x)
+constant = MkExpr . untyped.constant
 
