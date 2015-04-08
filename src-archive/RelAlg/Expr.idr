@@ -1,10 +1,10 @@
 module Expr
 
+import Attribute
+
 ------------------------------------------------------------------------------
 -- Abstract Syntax
 ------------------------------------------------------------------------------
-
-data Attribute
 
 ||| An enumeration of all binary operators
 data BinOp    = OpEq | OpLt | OpLtEq
