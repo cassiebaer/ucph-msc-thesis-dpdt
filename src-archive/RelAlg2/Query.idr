@@ -3,6 +3,14 @@ import Control.Monad.Identity
 import Control.Monad.State
 %default total
 
+{-
+   This is an exploration of indexing Query types by their schema
+   e.g.
+        project ["name"] $ QueryExpr ["name","age"]
+        => QueryExpr ["name"]
+   and the relational algebra given such a type system.
+-}
+
 Schema : Type
 Schema = List String
 
@@ -24,14 +32,19 @@ mutual
        Binary      : BinRel s    -> QueryExpr s
 
 ------------------------------------------------------------------------------
--- Query monad
+-- Query monad (is just a State monad)
 ------------------------------------------------------------------------------
 
--- Note that right now state is not even used!
--- We have to do something like:
---      t  <- f
---      t' <- g
---      return t'
+{-
+   Note that right now state is not being used at all!
+   We have to do something like:
+        t  <- f
+        t' <- g t
+        return t'
+   HaskellDB joins all introduced tables and uses table references for
+   attribute aliasing.
+   Is this ideal or can we do better with dep.types?
+-}
 
 data QueryState = QSt (QueryExpr a)
 data Query a = Q (QueryState -> (a,QueryState))
