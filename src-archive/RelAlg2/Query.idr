@@ -32,52 +32,22 @@ mutual
        Binary      : BinRel s    -> QueryExpr s
 
 ------------------------------------------------------------------------------
--- Query monad (is just a State monad)
-------------------------------------------------------------------------------
-
-{-
-   Note that right now state is not being used at all!
-   We have to do something like:
-        t  <- f
-        t' <- g t
-        return t'
-   HaskellDB joins all introduced tables and uses table references for
-   attribute aliasing.
-   Is this ideal or can we do better with dep.types?
--}
-
-data QueryState = QSt (QueryExpr a)
-data Query a = Q (QueryState -> (a,QueryState))
-
-instance Functor Query where
-    map f (Q mf)        = Q $ \s => let (x,s') = mf s in (f x,s')
-
-instance Applicative Query where
-    pure x              = Q $ \s => (x,s)
-    (<*>) (Q mf) (Q mx) = Q $ \s => let (f,s1) = mf s
-                                        (x,s2) = mx s1
-                                     in (f x,s2)
-
-instance Monad Query where
-    (>>=) (Q mf) k      = Q $ \s => let (x,s') = mf s
-                                        (Q mg) = k x
-                                     in mg s'
-
-------------------------------------------------------------------------------
 -- Embedding into Idris
 ------------------------------------------------------------------------------
 
-table : String -> (s:List String) -> Query (QueryExpr s)
-table name schema = return (BaseTable name schema)
+table : String -> (s:List String) -> QueryExpr s
+table name schema = BaseTable name schema
 
-project : (s:List String) -> QueryExpr t -> Query (QueryExpr s)
-project schema expr = return (Projection schema expr)
+project : (s:List String) -> QueryExpr t -> QueryExpr s
+project schema expr = Projection schema expr
 
-select : (Bool -> Bool) -> QueryExpr s -> Query (QueryExpr s)
-select p expr = return (Selection p expr)
+select : (Bool -> Bool) -> QueryExpr s -> QueryExpr s
+select p expr = Selection p expr 
 
-runQ : Query a -> QueryState -> a
-runQ (Q f) st = fst $ f st
+join : QueryExpr s -> QueryExpr t -> QueryExpr (s++t)
+join t1 t2 = Binary (Join t1 t2)
+
+-- and more..
 
 ------------------------------------------------------------------------------
 -- Show Instances
@@ -156,4 +126,14 @@ toGV : QueryExpr s -> String
 toGV x = let (GVSt _ d a) = execState (_toGV x) (GVSt 0 [] []) 
           in concat $ intersperse "\n" d ++ ["\n"]
              ++ intersperse "\n" (map (\(i,j) => show i ++ " -> " ++ show j) a)
+
+------------------------------------------------------------------------------
+-- Example
+------------------------------------------------------------------------------
+
+-- toGV foo ==> http://i61.tinypic.com/2ibohs2.png
+foo : QueryExpr ["age","salary"]
+foo = let t1 = table "Ages" ["name","age"]
+          t2 = table "Salaries" ["name","salary"]
+       in project ["age","salary"] (join t1 (select id t2))
 
