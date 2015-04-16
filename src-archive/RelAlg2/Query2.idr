@@ -24,6 +24,8 @@ mutual
       Difference   : QBinary
       Join         : QBinary
 
+  -- TODO: [("age",Nat),("name",String)]
+
   Attribute : Type
   Attribute = String
 
@@ -40,36 +42,45 @@ Schema = List Attribute
 isSubsetOf : (Ord a) => List a -> List a -> Bool
 isSubsetOf xs ys = all (\x => elem x ys) xs
 
-data TypedQueryExpr : Schema -> Type where
-  TypedQuery : (s:Schema) -> QueryExpr -> TypedQueryExpr s
+data TypedQueryExpr : (s:Schema) -> Type where
+  TypedQuery : QueryExpr -> TypedQueryExpr s
 
-map : (QueryExpr -> QueryExpr) -> TypedQueryExpr s -> TypedQueryExpr s
-map f (TypedQuery s q) = TypedQuery s (f q)
+map : (QueryExpr -> QueryExpr) -> TypedQueryExpr s -> TypedQueryExpr t
+map f (TypedQuery q) = TypedQuery (f q)
 
 ------------------------------------------------------------------------------
 -- Embed language
 ------------------------------------------------------------------------------
 
 table : String -> (s:Schema) -> TypedQueryExpr s
-table name schema = TypedQuery schema (QTable name)
+table name schema = TypedQuery (QTable name)
+
+myTable : TypedQueryExpr ["name","age"]
+myTable = table "MyTable" ["name","age"]
 
 -- Unary
 
 project : (s:Schema) -> TypedQueryExpr t -> {auto p : So (s `isSubsetOf` t)} -> TypedQueryExpr s
-project s (TypedQuery t q) = TypedQuery s (QUn Projection q)
+project s t = map (QUn Projection) t
 
 select : ?filter -> TypedQueryExpr s -> TypedQueryExpr s
 select f t = map f t
 
 rename : (r:Assoc) -> TypedQueryExpr s -> TypedQueryExpr (mapMaybe (flip lookup r) s)
-rename r (TypedQuery s q) = TypedQuery (mapMaybe (flip lookup r) s) (QUn (Rename r) q)
--- not quite working ^^
+rename r t = map (QUn (Rename r)) t
 
 -- Binary
 union : TypedQueryExpr s -> TypedQueryExpr s -> TypedQueryExpr s
+union (TypedQuery q) (TypedQuery q1) = TypedQuery (QBin Union q q1)
+
 intersection : TypedQueryExpr s -> TypedQueryExpr s -> TypedQueryExpr s
+intersection (TypedQuery q) (TypedQuery q1) = TypedQuery (QBin Intersection q q1)
+
 difference : TypedQueryExpr s -> TypedQueryExpr s -> TypedQueryExpr s
+difference (TypedQuery q) (TypedQuery q1) = TypedQuery (QBin Difference q q1)
+
 join : TypedQueryExpr s -> TypedQueryExpr t -> TypedQueryExpr (s ++ t)
+join (TypedQuery q) (TypedQuery q1) = TypedQuery (QBin Join q q1)
 
 ------------------------------------------------------------------------------
 
