@@ -8,7 +8,7 @@ import Data.So
 
 mutual
   data QueryExpr : Type where
-      QTable : String  -> QueryExpr
+      QTable : String  -> List (Attribute,Type) -> QueryExpr
       QUn    : QUnary  -> QueryExpr -> QueryExpr
       QBin   : QBinary -> QueryExpr -> QueryExpr -> QueryExpr
   %name QueryExpr q
@@ -39,7 +39,7 @@ mutual
 Schema : Type
 Schema = List Attribute
 
-isSubsetOf : (Ord a) => List a -> List a -> Bool
+isSubsetOf : (Eq a) => List a -> List a -> Bool
 isSubsetOf xs ys = all (\x => elem x ys) xs
 
 data TypedQueryExpr : (s:Schema) -> Type where
@@ -52,11 +52,12 @@ map f (TypedQuery q) = TypedQuery (f q)
 -- Embed language
 ------------------------------------------------------------------------------
 
-table : String -> (s:Schema) -> TypedQueryExpr s
-table name schema = TypedQuery (QTable name)
+table : String -> (s:List (String,Type)) -> TypedQueryExpr (map fst s)
+table name schema = TypedQuery (QTable name schema)
 
-myTable : TypedQueryExpr ["name","age"]
-myTable = table "MyTable" ["name","age"]
+namespace example
+  myTable : TypedQueryExpr ["name","age"]
+  myTable = table "MyTable" [("name",String),("age",Int)]
 
 -- Unary
 
@@ -70,6 +71,7 @@ rename : (r:Assoc) -> TypedQueryExpr s -> TypedQueryExpr (mapMaybe (flip lookup 
 rename r t = map (QUn (Rename r)) t
 
 -- Binary
+
 union : TypedQueryExpr s -> TypedQueryExpr s -> TypedQueryExpr s
 union (TypedQuery q) (TypedQuery q1) = TypedQuery (QBin Union q q1)
 
