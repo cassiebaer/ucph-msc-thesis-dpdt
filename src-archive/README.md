@@ -1,3 +1,3 @@
-### /docs-archive
+### /src-archive
 
-docs-archive is for exploratory code which might still be useful for reference.
+src-archive is for exploratory code which might still be useful for reference.

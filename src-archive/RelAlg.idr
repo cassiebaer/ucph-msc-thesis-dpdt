@@ -1,4 +1,4 @@
-module Query2
+module RelAlg
 import Data.So
 %default total
 
