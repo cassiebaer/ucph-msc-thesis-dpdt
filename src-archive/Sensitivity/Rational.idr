@@ -37,3 +37,10 @@ instance Num Rational where
     abs (n :% d) = abs n // d
     fromInteger n = n // 1
 
+instance Eq Rational where
+    (==) (n :% d) (n' :% d') = n * d' == n' * d
+
+instance Ord Rational where
+    compare (n :% d) (n' :% d') = compare (n * d') (n' * d)
+
+
