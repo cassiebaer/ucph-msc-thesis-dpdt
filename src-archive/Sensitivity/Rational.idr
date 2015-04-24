@@ -1,21 +1,24 @@
 module Rational
+import Data.So
 %default total
 
 infixr 7 :%
 data Rational : Type where
-  (:%) : Integer -> Integer -> Rational
+    (:%) : Integer -> Integer -> Rational
 
-%assert_total
 gcd : Integer -> Integer -> Integer
+gcd 0 0 = 0
 gcd x y = gcd' (abs x) (abs y)
   where gcd' a 0 = a
-        gcd' a b = gcd' b (a `mod` b)
+        gcd' a b = assert_total (gcd' b (a `mod` b))
 
-%assert_total
 reduce : Integer -> Integer -> Rational
 reduce x 0 = x :% 0
-reduce x y = (x `div` d) :% (y `div` d)
-  where d = gcd x y
+reduce x y = case choose (d == 0) of
+                  (Left _)  => assert_total ((x `div` d) :% (y `div` d))
+                  (Right _) => x :% y
+  where d : Integer
+        d = gcd x y
 
 signum : Integer -> Integer
 signum x = case compare x 0 of
@@ -42,5 +45,4 @@ instance Eq Rational where
 
 instance Ord Rational where
     compare (n :% d) (n' :% d') = compare (n * d') (n' * d)
-
 
