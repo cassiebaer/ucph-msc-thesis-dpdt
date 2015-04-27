@@ -1,29 +1,6 @@
+module Database.PINQ.PINQueryable
 
-------------------------------------------------------------------------------
--- Example data types
-------------------------------------------------------------------------------
-
-Bag : Type -> Type
-Bag = List
-
-record Person : Type where
-    MkPerson : (name : String)
-            -> (age  : Int)
-            -> Person
-
-------------------------------------------------------------------------------
--- PINQueryable Interface
-------------------------------------------------------------------------------
-
--- I assume that we don't need Expression trees. Pure Idris allowed.
--- 
-
-Eps : Type
-Eps = Double
-
-data IQueryable a = MkIQueryable
-data IEnumerable a = MkIEnumerable
-data IGrouping a b = MkIGrouping
+import Database.PINQ.Types
 
 class PINQueryable (pinq : Type -> Type) where
 
@@ -55,4 +32,3 @@ class PINQueryable (pinq : Type -> Type) where
     union        : pinq a -> pinq a -> pinq a
     intersection : pinq a -> pinq a -> pinq a
     except       : pinq a -> pinq a -> pinq a
-
