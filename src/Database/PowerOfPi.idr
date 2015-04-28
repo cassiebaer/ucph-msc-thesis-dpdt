@@ -2,21 +2,11 @@ module PowerOfPi
 import Data.So
 %default total
 
-data Ty : Type where
-  TString : Ty
-  TInt    : Ty
-  TBool   : Ty
-
-InterpTy : Ty -> Type
-InterpTy TInt    = Int
-InterpTy TBool   = Bool
-InterpTy TString = String
-
 Attribute : Type
-Attribute = Pair String Ty
+Attribute = Pair String Type
 
 infix 8 :::
-(:::) : String -> Ty -> Attribute
+(:::) : String -> Type -> Attribute
 (:::) n t = (n,t)
 
 data AttrEq : Attribute -> Attribute -> Type where
@@ -26,11 +16,11 @@ Schema : Type
 Schema = List Attribute
 
 Cars : Schema
-Cars = ["Model":::TString, "Time":::TString, "Wet":::TBool]
+Cars = ["Model":::String, "Time":::String, "Wet":::Bool]
 
 data Row : Schema -> Type where
     Nil  : Row []
-    (::) : (InterpTy t) -> Row s -> Row (name:::t::s)
+    (::) : t -> Row s -> Row (name:::t::s)
 
 zonda : Row Cars
 zonda = ["Pagani Zonda C12 F","1:18.4",False]
@@ -38,7 +28,7 @@ zonda = ["Pagani Zonda C12 F","1:18.4",False]
 disjoint : Schema -> Schema -> Bool
 sub      : Schema -> Schema -> Bool
 
-Expr : Schema -> Ty -> Type
+Expr : Schema -> Type -> Type
 
 data Query : Schema -> Type where
   Table   : Query s
@@ -46,7 +36,7 @@ data Query : Schema -> Type where
   Diff    : Query s -> Query s -> Query s
   Product : Query s -> Query s' -> { auto p : So (disjoint s s') } -> Query (s ++ s')
   Project : (s':Schema) -> Query s -> { auto p : So (sub s' s) } -> Query s'
-  Select  : Expr s TBool -> Query s -> Query s
+  Select  : Expr s Bool -> Query s -> Query s
 
 ------------------------------------------------------------------------------
 -- ContainsKey Decidability
@@ -74,20 +64,15 @@ decContainsKey ((a, b) :: ps) k with (decEq a k)
         mkNo f g Here = f Refl
         mkNo f g (There x) = g x
 
-lookup' : (ps:Schema) -> ps `ContainsKey` k -> Ty
+lookup' : (ps:Schema) -> ps `ContainsKey` k -> Type
 lookup' ((k, v) :: ps) Here = v
 lookup' ((k', v) :: ps) (There x) = lookup' ps x
 
-isNum : Ty -> Bool
-isNum TInt    = True
-isNum TBool   = False
-isNum TString = False
-
 infixl 5 ^
-data Expr : Schema -> Ty -> Type where
+data Expr : Schema -> Type -> Type where
   (^) : (s:Schema) -> (nm:String) -> { auto p : s `ContainsKey` nm } -> Expr s (lookup' s p)
-  (+) : { auto p : So (isNum t) } -> Expr s t -> Expr s t -> Expr s t
+  (+) : Expr s t -> Expr s t -> Expr s t
 
-modelExpr : Expr Cars TString
+modelExpr : Expr Cars String
 modelExpr = Cars ^ "Model"
 
