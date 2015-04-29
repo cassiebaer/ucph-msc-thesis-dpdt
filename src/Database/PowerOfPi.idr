@@ -15,15 +15,9 @@ data AttrEq : Attribute -> Attribute -> Type where
 Schema : Type
 Schema = List Attribute
 
-Cars : Schema
-Cars = ["Model":::String, "Time":::String, "Wet":::Bool]
-
 data Row : Schema -> Type where
     Nil  : Row []
     (::) : Eq t => t -> Row s -> Row (name:::t::s)
-
-zonda : Row Cars
-zonda = ["Pagani Zonda C12 F","1:18.4",False]
 
 disjoint : Schema -> Schema -> Bool
 sub      : Schema -> Schema -> Bool
@@ -72,22 +66,6 @@ infixl 5 ^
 data Expr : Schema -> Type -> Type where
   (^) : (s:Schema) -> (nm:String) -> { auto p : s `ContainsKey` nm } -> Expr s (lookup' s p)
   (+) : Num t => Expr s t -> Expr s t -> Expr s t
-
-modelExpr : Expr Cars String
-modelExpr = Cars ^ "Model"
-
-Person : Schema
-Person = [ "Name" ::: String , "Age" ::: Int ]
-
-foo : Query Person
-foo = Table [ ["Casper", 25]
-            , ["Knut",   26]
-            , ["Nanna",  24]
-            , ["Gismo",   2]
-            ]
-
-bar : Query Person
-bar = Diff foo (Table [ ["Gismo", 2] ])
 
 instance Eq (Row s) where
     (==) [] [] = True
