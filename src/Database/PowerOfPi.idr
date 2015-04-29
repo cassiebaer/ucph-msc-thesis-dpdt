@@ -2,15 +2,18 @@ module PowerOfPi
 import Data.So
 %default total
 
-Attribute : Type
-Attribute = Pair String Type
-
+data Attribute : Type where
+  (:::) : String -> Type -> Attribute
 infix 8 :::
-(:::) : String -> Type -> Attribute
-(:::) n t = (n,t)
 
-data AttrEq : Attribute -> Attribute -> Type where
-  AttrRefl : { auto strEq : n1 = n2 } -> AttrEq (n1 ::: t) (n2 ::: t)
+instance Eq Attribute where
+  (==) (n:::t) (n':::t') = n == n'
+
+instance Cast Attribute (Pair String Type) where
+    cast (n ::: t) = (n,t)
+
+--data AttrEq : Attribute -> Attribute -> Type where
+--  AttrRefl : { auto strEq : n1 = n2 } -> AttrEq (n1 ::: t) (n2 ::: t)
 
 Schema : Type
 Schema = List Attribute
@@ -20,7 +23,16 @@ data Row : Schema -> Type where
     (::) : Eq t => t -> Row s -> Row (name:::t::s)
 
 disjoint : Schema -> Schema -> Bool
+disjoint [] s2 = True
+disjoint (x :: xs) s2 = not (elem x s2) && disjoint xs s2
+
 sub      : Schema -> Schema -> Bool
+
+-- TODO : fix Disjoint!
+data Disjoint : Schema -> Schema -> Type where
+  FakeDisjoint : Disjoint xs ys
+  --Disjoint1 : (s1:Schema) -> (s2:Schema) -> { auto p : So (disjoint s1 s2) } -> Disjoint s1 s2
+  --Disjoint2 : Disjoint (x::xs) ys -> Disjoint xs ys
 
 Expr : Schema -> Type -> Type
 
@@ -28,7 +40,7 @@ data Query : Schema -> Type where
   Table   : List (Row s) -> Query s
   Union   : Query s -> Query s -> Query s
   Diff    : Query s -> Query s -> Query s
-  Product : Query s -> Query s' -> { auto p : So (disjoint s s') } -> Query (s ++ s')
+  Product : Query s -> Query s' -> { auto p : Disjoint s s' } -> Query (s ++ s')
   Project : (s':Schema) -> Query s -> { auto p : So (sub s' s) } -> Query s'
   Select  : Expr s Bool -> Query s -> Query s
 
@@ -58,14 +70,20 @@ decContainsKey ((a, b) :: ps) k with (decEq a k)
         mkNo f g Here = f Refl
         mkNo f g (There x) = g x
 
-lookup' : (ps:Schema) -> ps `ContainsKey` k -> Type
-lookup' ((k, v) :: ps) Here = v
-lookup' ((k', v) :: ps) (There x) = lookup' ps x
+lookup' : (ps:Schema) -> (map cast ps) `ContainsKey` k -> Type
+lookup' (k:::v :: ps) Here = v
+lookup' (k':::v :: ps) (There x) = lookup' ps x
+
 
 infixl 5 ^
 data Expr : Schema -> Type -> Type where
-  (^) : (s:Schema) -> (nm:String) -> { auto p : s `ContainsKey` nm } -> Expr s (lookup' s p)
+  (^) : (s:Schema) -> (nm:String) -> { auto p : (map cast s) `ContainsKey` nm } -> Expr s (lookup' s p)
   (+) : Num t => Expr s t -> Expr s t -> Expr s t
+
+infixl 5 :++:
+(:++:) : Row s -> Row s' -> Row (s ++ s')
+(:++:) [] ys      = ys
+(:++:) (x::xs) ys = x :: (xs :++: ys)
 
 instance Eq (Row s) where
     (==) [] [] = True
@@ -75,7 +93,7 @@ eval : Query s -> List (Row s)
 eval (Table xs) = xs
 eval (Union x y) = eval x ++ eval y
 eval (Diff x y) = (eval x) \\ (eval y)
-eval (Product x y) = ?eval_rhs_4
+eval (Product x y) = [ x' :++: y' | x' <- eval x, y' <- eval y ]
 eval (Project s x) = ?eval_rhs_5
 eval (Select x y) = ?eval_rhs_6
 

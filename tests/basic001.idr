@@ -48,3 +48,13 @@ namespace Diff
   lengthDiffPeopleWithNew : length diffPeopleWithNew = 2
   lengthDiffPeopleWithNew = Refl
 
+namespace Product
+
+  prodPeopleWithABC : List (Row (Person ++ ["Foo":::Char]))
+  prodPeopleWithABC = eval (Product people fooTable)
+    where fooTable : Query ["Foo":::Char]
+          fooTable = Table [ [ 'A' ] , [ 'B' ] , [ 'C' ] ]
+
+  lengthProdPeopleWithABC : length prodPeopleWithABC = 9
+  lengthProdPeopleWithABC = Refl
+
