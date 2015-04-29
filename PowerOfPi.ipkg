@@ -1,0 +1,9 @@
+package PowerOfPi
+
+modules = Database.PowerOfPi
+        , Database.PowerOfPi.Types
+        , Database.PowerOfPi.Expr
+        , Database.PowerOfPi.Query
+
+sourcedir = src
+
