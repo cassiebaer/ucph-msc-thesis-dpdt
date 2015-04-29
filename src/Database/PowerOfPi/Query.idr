@@ -7,6 +7,8 @@ import Database.PowerOfPi.Expr
 -- TODO : implement sub; preferably with a constructive proof
 sub : Schema -> Schema -> Bool
 
+MapMaybeOverName : (f:String -> Maybe String) -> (s:Schema) -> Schema
+
 ||| Represents a typed Query tree.
 |||
 ||| @s The schema of attributes for the given query
@@ -23,7 +25,7 @@ data Query : (s:Schema) -> Type where
   ||| N.B. Currently not safe because Disjoint is not implemented.
   Product : Query s -> Query s' -> { auto p : Disjoint s s' } -> Query (s ++ s')
   ||| Represents the projection of a new schema onto a Query.
-  Project : (s':Schema) -> Query s -> { auto p : So (sub s' s) } -> Query s'
+  Project : (f:String -> Maybe String) -> Query s -> Query (MapMaybeOverName f s)
   ||| Represents selection on a Query using the given expression.
   Select  : Expr s Bool -> Query s -> Query s
 
