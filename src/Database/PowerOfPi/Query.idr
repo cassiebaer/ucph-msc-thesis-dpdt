@@ -4,9 +4,6 @@ import Database.PowerOfPi.Types
 import Database.PowerOfPi.Expr
 %default total
 
--- TODO : implement sub; preferably with a constructive proof
-sub : Schema -> Schema -> Bool
-
 MapMaybeOverName : (f:String -> Maybe String) -> (s:Schema) -> Schema
 
 ||| Represents a typed Query tree.
