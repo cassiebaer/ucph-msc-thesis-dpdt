@@ -30,19 +30,6 @@ infixl 5 :++:
 (:++:) [] ys      = ys
 (:++:) (x::xs) ys = x :: (xs :++: ys)
 
-||| Get the value of an attribute given a proof that the
-||| attribute exists
-lookupVal : (Row s) -> (nm:String) -> (p : (map cast s) `ContainsKey` nm) -> lookup' s p
-lookupVal (x::xs) nm Here       = x
-lookupVal (x::xs) nm (There s') = lookupVal xs nm s'
-
-||| Evaluates an Expr in the context of a row.
-evalExpr : Expr s t -> Row s -> t
-evalExpr (Lit s x)      _ = x
-evalExpr (x + y)        r = evalExpr x r + evalExpr y r
-evalExpr ((^) s nm {p}) r = lookupVal r nm p
-evalExpr (x == y)       r = evalExpr x r == evalExpr y r
-
 ||| Evaluates a Query, returning a List of Rows.
 partial
 eval : Query s -> List (Row s)
