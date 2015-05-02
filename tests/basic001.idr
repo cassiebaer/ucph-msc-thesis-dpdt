@@ -66,3 +66,12 @@ namespace Projection
           fooProj "Name" = Just "FirstName"
           fooProj _      = Nothing
 
+namespace Select
+
+  selectOneTable : List (Row Person)
+  selectOneTable = eval (Select expr people)
+    where expr : Expr Person Bool
+          expr = (Person ^ "Age") == (Lit Person 25)
+
+ lengthSelectOneTable : length selectOneTable = 1
+ lengthSelectOneTable = Refl
