@@ -21,5 +21,7 @@ data Expr : (s:Schema) -> (t:Type) -> Type where
   ||| @nm The name of the attribute to look up
   (^) : (s:Schema) -> (nm:String) -> { auto p : (map cast s) `ContainsKey` nm } -> Expr s (lookup' s p)
   (+) : Num t => Expr s t -> Expr s t -> Expr s t
-infixl 5 ^
+  (==): Eq t  => Expr s t -> Expr s t -> Expr s Bool
+  Lit : {t:Type} -> (s:Schema) -> (val:t) -> Expr s t
 
+infixl 5 ^
