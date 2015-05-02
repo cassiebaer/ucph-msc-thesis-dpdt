@@ -20,7 +20,7 @@ data Query : (s:Schema) -> Type where
   ||| N.B. Currently not safe because Disjoint is not implemented.
   Product : Query s -> Query s' -> { auto p : Disjoint s s' } -> Query (s ++ s')
   ||| Represents the projection of a new schema onto a Query.
-  Project : (f:String -> Maybe String) -> Query s -> Query (projectedSchema f s)
+  Projection : (f:String -> Maybe String) -> Query s -> Query (projectedSchema f s)
   ||| Represents selection on a Query using the given expression.
   Select  : Expr s Bool -> Query s -> Query s
 
@@ -31,6 +31,6 @@ eval (Table xs) = xs
 eval (Union x y) = eval x ++ eval y
 eval (Diff x y) = (eval x) \\ (eval y)
 eval (Product x y) = [ x' ++ y' | x' <- eval x, y' <- eval y ]
-eval (Project f x) = map (project f) (eval x)
+eval (Projection f x) = map (project f) (eval x)
 eval (Select x y) = ?eval_rhs_6
 

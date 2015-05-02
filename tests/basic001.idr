@@ -58,3 +58,11 @@ namespace Product
   lengthProdPeopleWithABC : length prodPeopleWithABC = 9
   lengthProdPeopleWithABC = Refl
 
+namespace Projection
+
+  projPeopleFirstNames : List (Row ["FirstName":::String])
+  projPeopleFirstNames = eval (Projection fooProj people)
+    where fooProj : String -> Maybe String
+          fooProj "Name" = Just "FirstName"
+          fooProj _      = Nothing
+
