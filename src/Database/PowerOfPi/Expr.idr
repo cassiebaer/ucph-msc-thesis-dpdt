@@ -29,14 +29,14 @@ data Expr : (s:Schema) -> (t:Type) -> Type where
   (+) : Num t => Expr s t -> Expr s t -> Expr s t
   (==): Eq t  => Expr s t -> Expr s t -> Expr s Bool
   Lit : {t:Type} -> (s:Schema) -> (val:t) -> Expr s t
+  Fn  : (Row s -> a) -> Expr s a
 
 infixl 5 ^
 
 ||| Evaluates an Expr in the context of a row.
 evalExpr : Expr s t -> Row s -> t
-evalExpr (Lit s x)      _ = x
+evalExpr (Lit _ x)      _ = x
 evalExpr (x + y)        r = evalExpr x r + evalExpr y r
-evalExpr ((^) s nm {p}) r = lookupVal r nm p
+evalExpr ((^) _ nm {p}) r = lookupVal r nm p
 evalExpr (x == y)       r = evalExpr x r == evalExpr y r
-
-
+evalExpr (Fn f)         r = f r 

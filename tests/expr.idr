@@ -13,3 +13,9 @@ exprLookup = Refl
 
 exprPlus : Int
 exprPlus = evalExpr ((testSchema ^ "id") + (testSchema ^ "age")) testRow
+
+nameAndCity : Row testSchema -> String
+nameAndCity [id, name, city, age] = name ++ " and " ++ city
+
+exprFn : String
+exprFn = evalExpr (Fn nameAndCity) testRow
