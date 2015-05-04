@@ -28,7 +28,7 @@ data Expr : (s:Schema) -> (t:Type) -> Type where
   (^) : (s:Schema) -> (nm:String) -> { auto p : (map cast s) `ContainsKey` nm } -> Expr s (lookupType s p)
   (+) : Num t => Expr s t -> Expr s t -> Expr s t
   (==): Eq t  => Expr s t -> Expr s t -> Expr s Bool
-  Lit : {t:Type} -> (s:Schema) -> (val:t) -> Expr s t
+  Lit : {t:Type} -> (val:t) -> Expr s t
   PureFn : (a -> b) -> Expr s a -> Expr s b
   RowFn  : (Row s -> a) -> Expr s a
 
@@ -36,7 +36,7 @@ infixl 5 ^
 
 ||| Evaluates an Expr in the context of a row.
 evalExpr : Expr s t -> Row s -> t
-evalExpr (Lit _ x)      _ = x
+evalExpr (Lit x)        _ = x
 evalExpr (x + y)        r = evalExpr x r + evalExpr y r
 evalExpr ((^) _ nm {p}) r = lookupVal r nm p
 evalExpr (x == y)       r = evalExpr x r == evalExpr y r

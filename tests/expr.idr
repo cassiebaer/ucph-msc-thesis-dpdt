@@ -8,6 +8,9 @@ testSchema = ["id":::Int, "name":::String, "city":::String, "age":::Int]
 testRow : Row testSchema
 testRow = [1, "Knut", "Cph", 26]
 
+testLit : Integer
+testLit = evalExpr (Lit 5) testRow
+
 exprLookup : evalExpr (testSchema ^ "id") testRow = 1
 exprLookup = Refl
 
