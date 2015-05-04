@@ -1,5 +1,4 @@
 module Database.PowerOfPi.Query
-import Data.So
 import Database.PowerOfPi.Types
 import Database.PowerOfPi.Expr
 %default total
@@ -24,14 +23,7 @@ data Query : (s:Schema) -> Type where
   ||| Represents selection on a Query using the given expression.
   Select  : Expr s Bool -> Query s -> Query s
 
-infixl 5 :++:
-||| Append two Rows while preserving the type annotations.
-(:++:) : Row s -> Row s' -> Row (s ++ s')
-(:++:) [] ys      = ys
-(:++:) (x::xs) ys = x :: (xs :++: ys)
-
 ||| Evaluates a Query, returning a List of Rows.
-partial
 eval : Query s -> List (Row s)
 eval (Table xs) = xs
 eval (Union x y) = eval x ++ eval y
@@ -39,3 +31,4 @@ eval (Diff x y) = (eval x) \\ (eval y)
 eval (Product x y) = [ x' ++ y' | x' <- eval x, y' <- eval y ]
 eval (Projection f x) = map (project f) (eval x)
 eval (Select e x) = filter (evalExpr e) (eval x)
+
