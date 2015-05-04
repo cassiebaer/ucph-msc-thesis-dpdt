@@ -17,5 +17,9 @@ exprPlus = evalExpr ((testSchema ^ "id") + (testSchema ^ "age")) testRow
 nameAndCity : Row testSchema -> String
 nameAndCity [id, name, city, age] = name ++ " and " ++ city
 
-exprFn : String
-exprFn = evalExpr (Fn nameAndCity) testRow
+exprPureFn : Int
+exprPureFn = evalExpr (PureFn (+10) (testSchema ^ "age")) testRow
+
+exprRowFn : Row testSchema -> String
+exprRowFn [id,name,city,age] = name ++ " in " ++ city
+

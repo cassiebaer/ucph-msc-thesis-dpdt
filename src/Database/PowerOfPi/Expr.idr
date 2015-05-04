@@ -29,7 +29,8 @@ data Expr : (s:Schema) -> (t:Type) -> Type where
   (+) : Num t => Expr s t -> Expr s t -> Expr s t
   (==): Eq t  => Expr s t -> Expr s t -> Expr s Bool
   Lit : {t:Type} -> (s:Schema) -> (val:t) -> Expr s t
-  Fn  : (a -> b) -> Expr s a -> Expr s b
+  PureFn : (a -> b) -> Expr s a -> Expr s b
+  RowFn  : (Row s -> a) -> Expr s a
 
 infixl 5 ^
 
@@ -39,5 +40,6 @@ evalExpr (Lit _ x)      _ = x
 evalExpr (x + y)        r = evalExpr x r + evalExpr y r
 evalExpr ((^) _ nm {p}) r = lookupVal r nm p
 evalExpr (x == y)       r = evalExpr x r == evalExpr y r
-evalExpr (Fn f x)       r = f (evalExpr x r)
+evalExpr (PureFn f x)   r = f (evalExpr x r)
+evalExpr (RowFn f)      r = f r
 
