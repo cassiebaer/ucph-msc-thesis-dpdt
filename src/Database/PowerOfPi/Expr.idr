@@ -6,13 +6,13 @@ import Database.PowerOfPi.Types
 |||
 ||| @ps The schema to check
 ||| @k  The name to look for
-lookup' : (ps:Schema) -> (map cast ps) `ContainsKey` k -> Type
-lookup' (k:::v :: ps) Here = v
-lookup' (k':::v :: ps) (There x) = lookup' ps x
+lookupType : (ps:Schema) -> (map cast ps) `ContainsKey` k -> Type
+lookupType (k:::v :: ps) Here = v
+lookupType (k':::v :: ps) (There x) = lookupType ps x
 
 ||| Get the value of an attribute given a proof that the
 ||| attribute exists
-lookupVal : (Row s) -> (nm:String) -> (p : (map cast s) `ContainsKey` nm) -> lookup' s p
+lookupVal : (Row s) -> (nm:String) -> (p : (map cast s) `ContainsKey` nm) -> lookupType s p
 lookupVal (x::xs) nm Here       = x
 lookupVal (x::xs) nm (There s') = lookupVal xs nm s'
 
@@ -25,11 +25,11 @@ data Expr : (s:Schema) -> (t:Type) -> Type where
   |||
   ||| @s  The schema of available attributes (i.e. the current row)
   ||| @nm The name of the attribute to look up
-  (^) : (s:Schema) -> (nm:String) -> { auto p : (map cast s) `ContainsKey` nm } -> Expr s (lookup' s p)
+  (^) : (s:Schema) -> (nm:String) -> { auto p : (map cast s) `ContainsKey` nm } -> Expr s (lookupType s p)
   (+) : Num t => Expr s t -> Expr s t -> Expr s t
   (==): Eq t  => Expr s t -> Expr s t -> Expr s Bool
   Lit : {t:Type} -> (s:Schema) -> (val:t) -> Expr s t
-  Fn  : (Row s -> a) -> Expr s a
+  Fn  : (a -> b) -> Expr s a -> Expr s b
 
 infixl 5 ^
 
@@ -39,4 +39,5 @@ evalExpr (Lit _ x)      _ = x
 evalExpr (x + y)        r = evalExpr x r + evalExpr y r
 evalExpr ((^) _ nm {p}) r = lookupVal r nm p
 evalExpr (x == y)       r = evalExpr x r == evalExpr y r
-evalExpr (Fn f)         r = f r 
+evalExpr (Fn f x)       r = f (evalExpr x r)
+
