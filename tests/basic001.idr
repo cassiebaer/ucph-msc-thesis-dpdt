@@ -71,7 +71,16 @@ namespace Select
   selectOneTable : List (Row Person)
   selectOneTable = eval (Select expr people)
     where expr : Expr Person Bool
-          expr = (Person ^ "Age") == (Lit Person 25)
+          expr = (Person ^ "Age") == (Lit 25)
 
  lengthSelectOneTable : length selectOneTable = 1
  lengthSelectOneTable = Refl
+
+namespace Aggregation
+
+  countTable : eval (Aggregation people (+) (the Nat 0) (Lit 1)) = length (eval people)
+  countTable = Refl
+
+  sumAges : eval (Aggregation people (+) (the Nat 0) (Person^"Age")) = 53
+  sumAges = Refl
+
