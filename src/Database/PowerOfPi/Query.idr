@@ -32,3 +32,18 @@ eval (Product x y) = [ x' ++ y' | x' <- eval x, y' <- eval y ]
 eval (Projection f x) = map (project f) (eval x)
 eval (Select e x) = filter (evalExpr e) (eval x)
 
+namespace Aggregations
+
+  ||| Represents an aggregation of a typed query tree.
+  |||
+  ||| @s The schema of attributes for the underlying query
+  data QueryAggregation : (s:Schema) -> a -> Type where
+    ||| Represents an arbitrary aggregation
+    Aggregation : Query s -> (a -> a -> a) -> a -> Expr s a -> QueryAggregation s a
+    ||| Represents an arbitrary aggregation over a monoid
+    AggregationM : (Monoid a) => Query s -> Expr s a -> QueryAggregation s a
+
+  eval : QueryAggregation s a -> a
+  eval (Aggregation  q f z x) = foldr f z (map (evalExpr x) (eval q))
+  eval (AggregationM q x) = foldr (<+>) neutral (map (evalExpr x) (eval q))
+
