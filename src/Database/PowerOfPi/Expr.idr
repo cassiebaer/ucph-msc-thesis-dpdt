@@ -32,7 +32,7 @@ data Expr : (s:Schema) -> (t:Type) -> Type where
   PureFn : (a -> b) -> Expr s a -> Expr s b
   RowFn  : (Row s -> a) -> Expr s a
 
-infixl 5 ^
+infixl 9 ^
 
 ||| Evaluates an Expr in the context of a row.
 evalExpr : Expr s t -> Row s -> t
