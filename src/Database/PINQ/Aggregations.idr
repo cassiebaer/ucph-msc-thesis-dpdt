@@ -1,6 +1,6 @@
 module Database.PINQ.Aggregations
-import Database.PowerOfPi.Query
 import Database.PINQ.Types
+import Database.PINQ.PINQuery
 import Statistics.Distribution.Laplace
 import System.Random.CrapGen
 %default total
@@ -27,8 +27,8 @@ return x = MkPrivate $ \s => (x,s)
 ||| Returns the number of records in a query with noise drawn from 
 ||| the Laplace distribution scaled according to stability and sensitivity.
 noisyCount : PINQuery s c -> (e:Epsilon) -> Private (c*e) Double
-noisyCount (MkPINQuery x) e = MkPrivate $ \g => let (rx,g') = rndDouble g
-                                                    noise   = samplePure 0 (1 / toFloat e) (rx-0.5)
-                                                    count   = fromInteger $ fromNat $ length (eval x)
-                                                 in (count + noise, g')
+noisyCount pinq e = MkPrivate $ \g => let (rx,g') = rndDouble g
+                                          noise   = samplePure 0 (1 / toFloat e) (rx-0.5)
+                                          count   = fromInteger $ fromNat $ length (eval (getQuery pinq))
+                                       in (count + noise, g')
 

@@ -1,6 +1,7 @@
 module PINQ001
 import Database.PowerOfPi
 import Database.PINQ.Aggregations
+import Database.PINQ.PINQuery
 import Database.PINQ.Types
 import System.Random.CrapGen
 
@@ -11,13 +12,13 @@ Food : Schema
 Food = [ "Name" ::: String , "Food" ::: String ]
 
 people : PINQuery Person 1
-people = MkPINQuery $ Table [ [ "Casper" , 25 ]
+people = MkLeaf $ Table [ [ "Casper" , 25 ]
                             , [ "Knut"   , 26 ]
                             , [ "Gismo"  ,  2 ]
                             ]
 
 foods : PINQuery Food 1
-foods = MkPINQuery ( Table [ [ "Casper" , "Bruschetta" ]
+foods = MkLeaf ( Table [ [ "Casper" , "Bruschetta" ]
                            , [ "Knut"   , "Prim"       ]
                            , [ "Gismo"  , "Dog food"   ]
                            ])
