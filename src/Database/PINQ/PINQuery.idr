@@ -2,12 +2,7 @@ module PINQuery
 
 import Data.Rational
 import Database.PowerOfPi
-
-Sensitivity : Type
-Sensitivity = Rational
-
-Stability : Type
-Stability = Rational
+import Database.PINQ.Types
 
 data PINQuery : Schema -> Stability -> Type where
     MkLeaf   : Query s -> PINQuery s c
@@ -18,9 +13,6 @@ getQuery : PINQuery s _ -> Query s
 getQuery (MkLeaf q) = q
 getQuery (MkUnary q _) = q
 getQuery (MkBinary q _ _) = q
-
-data PINQueryAggregation : Schema -> a -> Sensitivity -> Type where
-    MkPINQueryAggregation : QueryAggregation s a -> PINQueryAggregation s a c
 
 table : List (Row s) -> PINQuery s (1:%1)
 table rs = MkLeaf (Table rs)
