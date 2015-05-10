@@ -1,15 +1,21 @@
 module Database.PINQ.Aggregations
-import Effects
-import Effect.Random
 import Database.PowerOfPi.Query
 import Database.PINQ.Types
+import Statistics.Distribution.Laplace
+import System.Random.CrapGen
 %default total
 
-StdGen : Type
-StdGen = Integer
-
+||| Represents a Private computation
 data Private : Sensitivity -> Type -> Type where
-  MkPrivate : (StdGen -> (a,StdGen)) -> Private budget a
+  MkPrivate : (CrapGen -> (a,CrapGen)) -> Private budget a
+
+||| Evaluates a Private computation
+evalPrivate : Private s a -> CrapGen -> a
+evalPrivate (MkPrivate f) g = fst (f g)
+
+||| Lifts a value into a Private computation.
+return : a -> Private 0 a
+return x = MkPrivate $ \s => (x,s)
 
 ||| Sequencing primitive. Allows us to overload Idris' do-notation
 ||| N.B. It may be necessary to prefix a 'do' with 'with PINQ '
@@ -18,19 +24,11 @@ data Private : Sensitivity -> Type -> Type where
                                                 MkPrivate sf' = f x
                                              in sf' st1
 
-||| Lifts a value into a Private computation.
-return : a -> Private 0 a
-return x = MkPrivate $ \s => (x,s)
-
+||| Returns the number of records in a query with noise drawn from 
+||| the Laplace distribution scaled according to stability and sensitivity.
 noisyCount : PINQuery s c -> (e:Epsilon) -> Private (c*e) Double
-noisyCount (MkPINQuery x) _ = let count = fromInteger $ fromNat $ length (eval x)
-                               in MkPrivate $ \s => (count + ?noise,s)
-
-fakeQuery : PINQuery ["Name":::String] 3
-
-mySeqOfQueries : Private (3//5) Double
-mySeqOfQueries = do
-  x <- noisyCount fakeQuery (1//10)
-  noisyCount fakeQuery (1//10)
-  return 5
+noisyCount (MkPINQuery x) e = MkPrivate $ \g => let (rx,g') = rndDouble g
+                                                    noise   = samplePure 0 (1 / toFloat e) (rx-0.5)
+                                                    count   = fromInteger $ fromNat $ length (eval x)
+                                                 in (count + noise, g')
 
