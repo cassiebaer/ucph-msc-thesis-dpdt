@@ -3,29 +3,22 @@ module PINQuery
 import Data.Rational
 import Database.PowerOfPi
 import Database.PINQ.Types
+import Database.PINQ.Aggregations
+import Statistics.Distribution.Laplace
+import System.Random.CrapGen
+import Database.PINQ.PINQueryable
+import Data.Double
 
 data PINQuery : Schema -> Stability -> Type where
-    MkLeaf   : Query s -> PINQuery s c
-    MkUnary  : Query s -> PINQuery s c' -> PINQuery s c 
-    MkBinary : Query s -> PINQuery s c' -> PINQuery s c'' -> PINQuery s c
-
-getQuery : PINQuery s _ -> Query s
-getQuery (MkLeaf q) = q
-getQuery (MkUnary q _) = q
-getQuery (MkBinary q _ _) = q
-
-table : List (Row s) -> PINQuery s 1
-table rs = MkLeaf (Table rs)
-
-where' : PINQuery s c -> Expr s Bool -> PINQuery s c 
-where' pq p = MkUnary (Select p (getQuery pq)) pq
-       
---select : PINQuery s c -> (f:String -> Maybe String)-> PINQuery (projectedSchema f s) c
---select (MkPINQuery q) f = MkUnary (Projection f q)
-
-union : PINQuery s c -> PINQuery s c' -> PINQuery s (c * c')
-union pq1 pq2 = MkBinary (Union (getQuery pq1) (getQuery pq2)) pq1 pq2
-
---intersection : PINQuery s c -> PINQuery s c' -> PINQuery s (c * c')
---intersection (MkPINQuery q) (MkPINQuery q') = MkPINQuery (Diff q q')
-
+  MkPINQuery : Query Idris s -> PINQuery s c 
+ 
+instance PINQueryable PINQuery where
+  where'     (MkPINQuery q) e = MkPINQuery (Select e q)
+  select     (MkPINQuery q) f = MkPINQuery (Projection f q)
+  union      (MkPINQuery q) (MkPINQuery q') = MkPINQuery (Union q q')
+  intersect  (MkPINQuery q) (MkPINQuery q') = MkPINQuery (Diff q q')
+  noisyCount (MkPINQuery q) e = MkPrivate $ \g => 
+    let (rx,g') = rndDouble g
+        noise   = samplePure 0 (1 / toFloat e) (rx-0.5)
+        count   = fromInteger $ fromNat $ length (eval q)
+    in (count + noise, g')
