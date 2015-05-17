@@ -1,6 +1,6 @@
 module System.Random.CrapGen
+import Data.Double
 %default total
-
 {-
    CrapGen comes directly from Idris' own Effect.Random module.
    It doesn't seem to be particularly good and should probably be replaced with a CSPRING.
