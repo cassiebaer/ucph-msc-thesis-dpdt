@@ -1,17 +1,14 @@
 module PINQuery
 
-import Data.Rational
 import Database.PowerOfPi
-import Database.PINQ.Types
-import Database.PINQ.Aggregations
-import Statistics.Distribution.Laplace
+import Database.PINQ
 import System.Random.CrapGen
-import Database.PINQ.PINQueryable
-import Data.Double
+import Statistics.Distribution.Laplace
+import Database.Backend.Idris.Query
 
 data PINQuery : Schema -> Stability -> Type where
   MkPINQuery : Query Idris s -> PINQuery s c 
- 
+
 instance PINQueryable PINQuery where
   where'     (MkPINQuery q) e = MkPINQuery (Select e q)
   select     (MkPINQuery q) f = MkPINQuery (Projection f q)
