@@ -20,9 +20,9 @@ data Expr : (s:Schema) -> (t:Type) -> Type where
   ||| @s  The schema of available attributes (i.e. the current row)
   ||| @nm The name of the attribute to look up
   (^) : (s:Schema) -> (nm:String) -> { auto p : (map cast s) `ContainsKey` nm } -> Expr s (lookupType s p)
-  (+) : Num t => Expr s t -> Expr s t -> Expr s t
-  (==): Eq t  => Expr s t -> Expr s t -> Expr s Bool
-  Lit : {t:Type} -> (val:t) -> Expr s t
+  (+) : Num t  => Expr s t -> Expr s t -> Expr s t
+  (==): Eq t   => Expr s t -> Expr s t -> Expr s Bool
+  Lit : Show t => (val:t) -> Expr s t
   PureFn : (a -> b) -> Expr s a -> Expr s b
 
 infixl 9 ^
