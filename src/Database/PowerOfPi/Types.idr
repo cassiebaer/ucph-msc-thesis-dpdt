@@ -22,6 +22,9 @@ namespace Schema
   Schema : Type
   Schema = List Attribute
 
+  getNames : Schema -> List String
+  getNames s = map (fst . cast) s
+
   projectedSchema : (f:String -> Maybe String) -> Schema -> Schema
   projectedSchema f [] = []
   projectedSchema f (n:::t::as) = maybe (projectedSchema f as) (\n' => n':::t::projectedSchema f as) (f n)
