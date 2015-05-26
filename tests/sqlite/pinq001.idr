@@ -2,9 +2,7 @@ module PINQ001
 
 import Database.PowerOfPi
 import Database.PINQ
-import Database.Backend.PINQuery
-import Database.Backend.Idris.PINQuery
-import Database.Backend.Idris.Row
+import Database.Backend.SQLite.PINQuery
 import System.Random.CrapGen
 
 Person : Schema
@@ -13,18 +11,14 @@ Person = [ "Name" ::: String , "Age" ::: Nat ]
 Food : Schema
 Food = [ "Name" ::: String , "Food" ::: String ]
 
-people : PINQuery Idris Person 1
-people = MkPINQuery $ Table [ [ "Casper" , 25 ]
-                            , [ "Knut"   , 26 ]
-                            , [ "Gismo"  ,  2 ]
-                            ]
+people : PINQuery SQLite Person 1
+people = MkPINQuery $ Table "People"
 
-foods : PINQuery Idris Food 1
-foods = MkPINQuery ( Table [ [ "Casper" , "Bruschetta" ]
-                           , [ "Knut"   , "Prim"       ]
-                           , [ "Gismo"  , "Dog food"   ]
-                           ])
+foods : PINQuery SQLite Food 1
+foods = MkPINQuery ( Table "Foods")
 
+
+--- TODO: count as a SQLite query
 namespace Aggregations
 
   testNoisyCount : Double

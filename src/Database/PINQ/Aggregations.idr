@@ -1,5 +1,6 @@
 module Database.PINQ.Aggregations
 import Database.PINQ.Types
+import Database.PINQ.Transformation
 import Statistics.Distribution.Laplace
 import System.Random.CrapGen
 %default total
@@ -21,4 +22,8 @@ return x = MkPrivate $ \s => (x,s)
 (>>=) : Private s a -> (a -> Private s' b) -> Private (s + s') b
 (>>=) (MkPrivate sf) f = MkPrivate $ \st => let (x,st1)       = sf st
                                                 MkPrivate sf' = f x
-                                             in sf' st1
+                                            in sf' st1
+
+||| Aggregation type class that keeps track of the sensitivity
+class Transformation pinq => Aggregation (pinq : Schema -> Stability-> Type) where
+    noisyCount : pinq s c -> (e:Epsilon) -> Private (c*e) Double -- TODO: make this dependent on backend                                           
