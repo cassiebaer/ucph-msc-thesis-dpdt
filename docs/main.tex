@@ -7,7 +7,7 @@
         Department of Computer Science\\
         DIKU - Datalogisk Institut, Københavns Universitet\\
         \and
-        Knut Liestøl\\
+        Knut Liest\o l\\
         Department of Computer Science\\
         DIKU - Datalogisk Institut, Københavns Universitet\\
 }
@@ -15,19 +15,69 @@
 
 \documentclass[12pt]{article}
 
+\usepackage{listings}
+
 \begin{document}
 \maketitle
+
+\lstset{language=Haskell}
 
 \begin{abstract}
 This is the paper's abstract \ldots
 \end{abstract}
 
 \section{Introduction}\label{sec:introduction}
+
+\subsection{Motivation/Overview}
+
+With each passing day, more and more of our personal information is being collected, cataloged and analyzed by an ever increasing number of interested parties.
+Their interests range from simple targeted advertising to malicious and sometimes illegal actions and everything in between.
+We are the producers of this data, however, and we should be concerned with how it is being used.
+
+For example, our medical records consist of very personal information which we reasonably expect to remain private.
+Many countries have imposed regulations requiring a baseline of privacy for systems maintaining such sensitive information, e.g, the Health Insurance Portability and Acountability Act (HIPAA) in the USA.
+However, the aggregation and availability of an entire populations medical records would be a huge boon for medical researchers in need of statistical data.
+And so we are faced with a classic balancing act: how do we balance individuals' privacy against the usefulness of a dataset?
+
+Differential privacy is an emerging field aiming to answer this question.
+The central concept in differential privacy is indistinguishability, i.e, a query against a dataset should return more-or-less the same result regardless of whether or not a particular individuals records were included in the data.
+If the results are indistinguishable, then the records of that particular individual must be unidentifiable.
+
+Many metrics and algorithms have been developed by the differential privacy community.
+Each algorithm is typically bundled with a formal proof that it meets some constraints or has some privacy-related properties.
+The burden of producing such a proof is typically manual, and therefore error-prone.
+
+PINQ is a differential privacy framework that takes a different approach.
+It is a SQL-like query DSL for the .NET languages which guarantees differential privacy by construction.
+Users of PINQ are able to use and compose carefully implemented primitives to build computations which run against raw data but cannot break differential privacy.
+PINQ enforces checks for differential privacy at runtime.
+We aim to show that it is possible to provide these privacy guarantees statically in a language with dependent types.
+
+Strongly-typed languages are capable of statically verifying programs for type-correctness, precluding many potential sources of runtime errors: ``well-typed programs can't go wrong''.
+We extend this notion of being ``well-typed'' to include differential privacy metrics.
+Just as PINQ is embedded in the .NET languages (particularly C\#), we plan to embed our implementation within the dependently-typed language Idris (idris-lang.org).
+This will allow us to take advantage of Idris' parser and advanced type checker as we explore the embedding of differential privacy metrics into a type-system.
+(See the code snippet below for a motivation of sensitive functions in Idris).
+
+\begin{lstlisting}
+    data SensitiveFunction : Sensitivity -> Type where
+      MkSensitiveFunction : (a -> b) -> SensitiveFunction s
+\end{lstlisting}
+
+Well-typed programs in our embedded language can't go wrong and also can't violate their privacy requirements.
+Formal proofs for type-correct algorithms written in our language are unnecessary - the program is the proof!
+Thus, all type-correct programs must respect expected privacy requirements.
+
+\subsection{Related work}
+
 \begin{itemize}
-  \item Motivation/Overview
-  \item Related work
-  \item Contributions
+  \item PINQ
+  \item (D)Fuzz
+  \item Airavat
+  \item \ldots
 \end{itemize}
+
+\subsection{Contributions}
 
 \paragraph{Outline}
 The remainder of this article is organized as follows.
@@ -49,9 +99,7 @@ Finally, Section~\ref{conclusions} gives the conclusions.
 
 \section{Discussion}\label{sec:discussion}
 
-\begin{itemize}
-  \item Future work
-\end{itemize}
+\subsection{Future work}
 
 \section{Conclusions}\label{sec:conclusions}
 We worked hard, and achieved very little.
