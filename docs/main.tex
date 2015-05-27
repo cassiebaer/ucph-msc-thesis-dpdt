@@ -20,7 +20,8 @@
 \begin{document}
 \maketitle
 
-\lstset{language=Haskell}
+\lstset{language=Haskell,basicstyle=\footnotesize,frame=single,
+        numbers=left}
 
 \begin{abstract}
 This is the paper's abstract \ldots
@@ -60,7 +61,7 @@ We aim to extend this idea by showing that a dependent type system is a natural 
 Strongly-typed languages are capable of statically verifying programs for type-correctness, precluding many potential sources of runtime errors: ``well-typed programs can't go wrong''.
 We extend this notion of being ``well-typed'' to include differential privacy metrics.
 Just as PINQ is embedded in the .NET languages (particularly C\#), we plan to embed our implementation within the dependently-typed, functional programming language: Idris \footnote{http://idris-lang.org}.
-This allows us to take advantage of Idris' parser and advanced type checker and all of the improvements being made to them by the open-source community.
+This allows us to take advantage of Idris' parser and advanced type checker, as well as the many constant improvements being made to them by the open-source community.
 
 \begin{lstlisting}
     data SensitiveFunction : Sensitivity -> Type where
@@ -68,25 +69,18 @@ This allows us to take advantage of Idris' parser and advanced type checker and 
 \end{lstlisting}
 
 Well-typed programs in our embedded language can't go wrong and also can't violate their privacy requirements.
-Formal proofs for type-correct algorithms written in our language are unnecessary - the program is the proof!
+Formal proofs for type-correct algorithms written in our language are unnecessary - the program itself is the proof.
 Thus, all type-correct programs must respect expected privacy requirements.
-
-\subsection{Related work}
-
-\begin{itemize}
-  \item PINQ
-  \item (D)Fuzz
-  \item Airavat
-  \item \ldots
-\end{itemize}
 
 \subsection{Contributions}
 
 \paragraph{Outline}
 The remainder of this article is organized as follows.
-Section~\ref{previous work} gives account of previous work.
-Our new and exciting results are described in Section~\ref{results}.
-Finally, Section~\ref{conclusions} gives the conclusions.
+Section~\ref{sec:background} provides background and gives account of previous work.
+Section~\ref{sec:implementation} describes our implementation.
+We evaluate our implementation in Section~\ref{sec:evaluation}.
+Section~\ref{sec:discussion} discusses the implementation and potential future work.
+Finally, Section~\ref{sec:conclusions} gives the conclusions.
 
 \section{Background}\label{sec:background}
 
@@ -96,13 +90,27 @@ Finally, Section~\ref{conclusions} gives the conclusions.
   \item Dep.Types
 \end{itemize}
 
+\subsection{Related work}\label{sec:related_work}
+
+\begin{itemize}
+  \item PINQ
+  \item (D)Fuzz
+  \item Airavat
+  \item \ldots
+\end{itemize}
+
 \section{Implementation}\label{sec:implementation}
 
 \section{Evaluation / Validation}\label{sec:evaluation}
 
 \section{Discussion}\label{sec:discussion}
 
-\subsection{Future work}
+\subsection{Future work}\label{sec:future_work}
+
+\begin{itemize}
+  \item CSPRING
+  \item Effects?
+\end{itemize}
 
 \section{Conclusions}\label{sec:conclusions}
 We worked hard, and achieved very little.
