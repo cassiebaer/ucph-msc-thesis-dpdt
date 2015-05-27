@@ -5,11 +5,11 @@
 \author{
         Casper Holmgreen \\
         Department of Computer Science\\
-        DIKU - Datalogisk Institut, Københavns Universitet\\
+        DIKU - Datalogisk Institut, K\o benhavns Universitet\\
         \and
         Knut Liest\o l\\
         Department of Computer Science\\
-        DIKU - Datalogisk Institut, Københavns Universitet\\
+        DIKU - Datalogisk Institut, K\o benhavns Universitet\\
 }
 \date{\today}
 
@@ -33,9 +33,9 @@ This is the paper's abstract \ldots
 
 With each passing day, more and more of our personal information is being collected, cataloged and analyzed by an ever increasing number of interested parties.
 Their interests can range from targeted advertising to malicious and potentially illegal actions and everything in between.
-We are the producers of this data, however, and we should be concerned with how it is being used.
+As the producers of this data, we should be concerned with how it is being used.
 
-For example, our medical records consist of very personal information which we reasonably expect to remain private.
+For example, our medical records consist of very personal information which we expect to remain private.
 Many countries have imposed regulations requiring a baseline of privacy for systems maintaining sensitive information, e.g, the Health Insurance Portability and Acountability Act (HIPAA) in the USA.
 However, the aggregation and availability of an entire populations medical records would be a huge boon for medical researchers in need of statistical data.
 And so we are faced with a classic balancing act: how do we balance individuals' privacy against the usefulness of a dataset?
@@ -55,7 +55,7 @@ A protected runtime-system rejects queries whose cost exceed the remaining priva
 
 These cost vs. budget checks are made at runtime.
 An analyst has no way of knowing whether a query will be accepted by the runtime-system unless they are manually tracking their budget.
-Reed and Pierce\cite{conf/icfp/ReedP10} go a step further and build a strongly-typed programming language which represents query costs in the types.
+Reed and Pierce\cite{conf/icfp/ReedP10} solve this by building a strongly-typed programming language which represents query costs in the types.
 We aim to extend this idea by showing that a dependent type system is a natural fit for capturing differential privacy requirements.
 
 Strongly-typed languages are capable of statically verifying programs for type-correctness, precluding many potential sources of runtime errors: ``well-typed programs can't go wrong''.
@@ -84,10 +84,43 @@ Finally, Section~\ref{sec:conclusions} gives the conclusions.
 
 \section{Background}\label{sec:background}
 
+This section provides light background information on differential privacy, dependent types, and relational algebra.
+
+\subsection{Differential Privacy}\label{sec:differential_privacy}
+
+In today's Big Data world, more and more of our data is being stored on servers belonging to others.
+We are not the consumers of free online services, we are the product.
+But regardless of whether we freely volunteered it, were legally compelled to share it, or just bought something online, we have a reasonable expectation for privacy of our data.
+Some countries even legally require guaranteed privacy for sensitive information, e.g, the Health Insurance Portability and Acountability Act (HIPAA) in the United States.
+
+However, databases containing large amounts of personal data can be tremendously valuable for researchers looking into a variety of important questions.
+For example, epidemiologists may be able to detect and prevent the spread of disease.
+Doctors may be able to monitor and/or analyze the long-term health trends of a large population over time.
+Clearly, we have a lot to learn from Big Data, but most of these databases are held under lock and key.
+How best to balance database utility against individual privacy is the question differential privacy aims to answer.
+
+Differential privacy aims to maximize database utility while minimizing the risk for all individuals contained within.
+Traditionally, privacy research has focused on preventing a malicious attacker from learning anything about any given individual.
+However, this has proved to be nearly impossible in the presence of auxiliary information. ((WHY))
+% TODO: why?
+
+The differential privacy community has taken a different approach.
+Rather than trying to prove the impossibility of a privacy breach, differential privacy guarantees that a users participation in a database will only increase their risk of a privacy breach by some small amount.
+This holds true regardless of how much auxiliary information a would-be attacker knows.
+
+Analysts are able to run differentially private algorithms against raw data knowing that no individuals' privacy can be compromised.
+Suddenly, many of the Big Data databases which would otherwise be off limits can be made available to researchers.
+Each individuals participation in the database does not have a large effect on their privacy risk, so honest participation is almost a direct consequence.
+
+\begin{itemize}
+  \item Quick talk about PINQ?
+  \item Other stuff
+\end{itemize}
+
+\section{Dependent Types}
+
 \begin{itemize}
   \item Relational algebra
-  \item Diff.Priv.
-  \item Dep.Types
 \end{itemize}
 
 \subsection{Related work}\label{sec:related_work}
@@ -100,6 +133,14 @@ Finally, Section~\ref{sec:conclusions} gives the conclusions.
 \end{itemize}
 
 \section{Implementation}\label{sec:implementation}
+
+Our implementation consists of two parts: a LINQ-like relational algebra and query engine, and a PINQ-like interface providing compositional differential privacy mechanisms.
+
+\subsection{Power of Pi}\label{sec:power_of_pi}
+
+
+
+\subsection{PINQ}\label{sec:pinq}
 
 \section{Evaluation / Validation}\label{sec:evaluation}
 
