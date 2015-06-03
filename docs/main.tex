@@ -15,6 +15,7 @@
 
 \documentclass[12pt]{article}
 
+\usepackage{graphicx}
 \usepackage{listings}
 \usepackage{amsfonts,amsthm,amsmath}
 
@@ -39,8 +40,8 @@ Their interests can range from targeted advertising to malicious and potentially
 As the producers of this data, we should be concerned with how it is being used.
 
 For example, our medical records consist of very personal information which we expect to remain private.
-Many countries have imposed regulations requiring a baseline of privacy for systems maintaining sensitive information, e.g, the Health Insurance Portability and Acountability Act (HIPAA) in the USA.
-However, the aggregation and availability of an entire populations medical records would be a huge boon for medical researchers in need of statistical data.
+Some countries even require legal privacy guarantees for systems maintaining sensitive information, e.g, the Health Insurance Portability and Acountability Act (HIPAA) in the USA.
+The availability of an entire population's medical records would be a gold mine for medical researchers in need of statistical data.
 And so we are faced with a classic balancing act: how do we balance individuals' privacy against the usefulness of a dataset?
 
 Differential privacy\cite{journals/cacm/Dwork11} is an emerging field aiming to answer this question.
@@ -71,6 +72,10 @@ Formal proofs for type-correct algorithms written in our language are unnecessar
 Thus, all type-correct programs must respect expected privacy requirements.
 
 \subsection{Contributions}
+
+This paper describes an implementation of an embedded prototype language, [NAME], for describing differentially private computations.
+Dependent type systems have come a long way since Martin-L\"of's original intuitionistic type theory.
+We show that dependent types in a practical setting are a natural fit for describing concepts from differential privacy.
 
 \paragraph{Outline}
 The remainder of this article is organized as follows.
@@ -263,10 +268,10 @@ Function sensitivity composes according to simple arithmetic functions over valu
 Differential privacy can be recorded and enforced directly in dependent function type signatures.
 
 Now we illustrate a simple example of using dependent types for capturing function sensitivity.
-We want to construct a function type indexed by its sensitivity.
-Additionally, we want to write an application function which, given a sensitive function, maximum sensitivity, and input value, applies the function to it's input value.
+We want to be able to construct functions indexed by sensitivity and compose them.
+Additionally, we want to write an application function which, given a sensitive function, maximum sensitivity, and input value, applies the function to it's input value if the function sensitivity does not exceed the given maximum sensitivity.
 
-We name the sensitive function type \texttt{Private s a b}, where \texttt{s} represents the sensitivity, and \texttt{a} and \texttt{b} represent the input and output types.
+We name the sensitive function type \texttt{Private s a b}, where \texttt{s} represents the sensitivity (as a floating point value), and \texttt{a} and \texttt{b} represent the input and output types.
 There is only one data constructor, \texttt{MkPrivate}, wrapping a native Idris function.
 For now, we will model sensitivity as a floating-point value.
 This is not necessarily the best choice, but it is sufficient for illustration purposes.
@@ -278,6 +283,7 @@ More on this later.
 \end{lstlisting}
 
 Now we can make a few sensitive functions.
+At this point, we must rely on the user providing accurate function sensitivities in the type annotations.
 
 \begin{lstlisting}[caption="Simple examples of sensitive functions"]
   foo : Private 1 Int Int
@@ -321,6 +327,45 @@ The type-checker will reject any illegal function applications \textit{at compil
 \end{lstlisting}
 
 \subsection{Relational Algebra}
+
+The relational algebra describes semantics of relational datastores and queries over them.
+There have been numerous attempts to formalize relational algebra in type systems %TODO : add citations. Include Henglein & Larsen? HaskellDB
+, particularly in Haskell.
+Oury and Swierstra demonstrate how dependent types can be used\cite{OurySwierstra08PowerOfPi}.
+We arrived at the same result independently and like it very much.
+% TODO : how to rewrite prev. sentence?
+
+The benefit to focusing our research on the relational algebra is that our results are as general as the relational algebra.
+Indeed, we demonstrate two different backends for our language.
+Anything which can be described by the relational algebra can be made differentially private. % TODO : is this claim too bold?
+
+An algebra describes a set of symbols and operations over the symbols.
+For example, the set of all natural numbers, $\mathbb{N}$, with the operations $\{+,-\}$, is an algebra.
+
+In the case of relational algebra, the symbols are relations, or, if we abuse our imaginations a little bit, tables.
+There are five primitive operations as laid out by Codd\cite{codd70} and one rename operator:
+
+\begin{itemize}
+  \item $\sigma$ - selection
+  \item $\pi$    - projection
+  \item $\times$ - cartesian product
+  \item $\cup$   - union
+  \item $\cap$   - difference
+  \item $\rho$   - rename
+\end{itemize}
+
+Union and difference only differ from Set union and difference in the addition of schema constraints.
+The same is true of the cartesian product.
+See Figure~\ref{fig:example_relalg} for a sample visualization.
+
+\begin{figure}[tb]
+  \centering
+  \includegraphics[width=\textwidth]{assets/relalg.jpg}
+  \caption{Example of relational algebra}
+  \label{fig:example_relalg}
+\end{figure}
+
+From these operators and armed with dependent types, we can now construct type-safe queries over relational data stores.
 
 \subsection{Related work}\label{sec:related_work}
 
