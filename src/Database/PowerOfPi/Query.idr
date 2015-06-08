@@ -24,6 +24,8 @@ data Query : (b:Backend) -> (s:Schema) -> Type where
   Projection : (f:String -> Maybe String) -> Query b s -> Query b (projectedSchema f s)
   ||| Represents selection on a Query using the given expression.
   Select  : Expr s Bool -> Query b s -> Query b s
+  
+  GroupBy : Expr s k    -> Query b s -> Query b ["k":::k, "v":::Query b s]
 
 namespace Aggregations
 

@@ -12,3 +12,4 @@ instance Transformation (PINQuery b) where
   select    (MkPINQuery  q) f                = MkPINQuery  (Projection f q)
   union     (MkPINQuery  q) (MkPINQuery  q') = MkPINQuery  (Union q q')
   intersect (MkPINQuery  q) (MkPINQuery  q') = MkPINQuery  (Diff q q')
+  groupBy   (MkPINQuery  q) e                = MkPINQuery  (GroupBy e q)

@@ -8,3 +8,4 @@ class Transformation (pinq : Schema -> Stability-> Type) where
     select     : pinq  s c -> (f:String -> Maybe  String) -> pinq  (projectedSchema f s) c
     union      : pinq  s c -> pinq  s c' -> pinq  s (c + c')
     intersect  : pinq  s c -> pinq  s c' -> pinq  s (c + c')
+    groupBy    : pinq  s c -> Expr s k -> pinq ["k":::k, "v"::: pinq s c] (c * 2)
