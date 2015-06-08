@@ -1,8 +1,0 @@
-package PINQ
-
-modules = Database.PINQ
-        , Database.PINQ.Types
-        , Database.PINQ.PINQueryable
-
-sourcedir = src
-

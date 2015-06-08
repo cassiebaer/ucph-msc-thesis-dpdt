@@ -15,8 +15,8 @@ gcd x y = gcd' (abs x) (abs y)
 reduce : Integer -> Integer -> Rational
 reduce x 0 = x :% 0
 reduce x y = case choose (d == 0) of
-                  (Left _)  => assert_total ((x `div` d) :% (y `div` d))
-                  (Right _) => x :% y
+                  (Left _)  => x :% y
+                  (Right _) => assert_total ((x `div` d) :% (y `div` d))
   where d : Integer
         d = gcd x y
 

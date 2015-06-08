@@ -1,6 +1,9 @@
 module Basic001
 
 import Database.PowerOfPi
+import Database.Backend.Backend
+import Database.Backend.Idris.Row
+import Database.Backend.Idris.Query
 
 Person : Schema
 Person = [ "Name" ::: String , "Age" ::: Nat ]
@@ -8,13 +11,13 @@ Person = [ "Name" ::: String , "Age" ::: Nat ]
 Food : Schema
 Food = [ "Name" ::: String , "Food" ::: String ]
 
-people : Query Person
+people : Query Idris Person
 people = Table [ [ "Casper" , 25 ]
                , [ "Knut"   , 26 ]
                , [ "Gismo"  ,  2 ]
                ]
 
-foods : Query Food
+foods : Query Idris Food
 foods = Table [ [ "Casper" , "Bruschetta" ]
               , [ "Knut"   , "Prim"       ]
               , [ "Gismo"  , "Dog food"   ]
@@ -52,7 +55,7 @@ namespace Product
 
   prodPeopleWithABC : List (Row (Person ++ ["Foo":::Char]))
   prodPeopleWithABC = eval (Product people fooTable)
-    where fooTable : Query ["Foo":::Char]
+    where fooTable : Query Idris ["Foo":::Char]
           fooTable = Table [ [ 'A' ] , [ 'B' ] , [ 'C' ] ]
 
   lengthProdPeopleWithABC : length prodPeopleWithABC = 9
