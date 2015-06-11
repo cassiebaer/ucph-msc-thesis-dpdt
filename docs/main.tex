@@ -356,7 +356,6 @@ There are five primitive operations as laid out by Codd\cite{codd70} and one ren
 
 Union and difference only differ from Set union and difference in the addition of schema constraints.
 The same is true of the cartesian product.
-See Figure~\ref{fig:example_relalg} for a sample visualization.
 
 \begin{figure}[tb]
   \centering
@@ -366,6 +365,7 @@ See Figure~\ref{fig:example_relalg} for a sample visualization.
 \end{figure}
 
 From these operators and armed with dependent types, we can now construct type-safe queries over relational data stores.
+See Figure~\ref{fig:example_relalg} for a visual example.
 
 \subsection{Related work}\label{sec:related_work}
 
@@ -382,7 +382,47 @@ Our implementation consists of two parts: a LINQ-like relational algebra and que
 
 \subsection{Power of Pi}\label{sec:power_of_pi}
 
+How to best represent the relational algebra with static types has been an open research question for some time.
+There are a variety of approaches offering different degrees of static guarantees.
+Most have been limited by the power of the type systems they targetted.
+In particular, the requirements on operations such as \texttt{product} pose problems for limited type systems.
 
+Idris provides a rich, dependent-type system, which allows for much stronger guarantees.
+In particular, we are capable of fully representing schemas, expressions, and transformations with dependent types.
+
+A database schema is a list of attributes (or columns).
+We represent an \texttt{Attribute} as a pair consisting of its name and type.
+A \texttt{Schema} is then just a list of \texttt{Attribute}s.
+See Listing~\ref{lst:schemas}.
+Note that we represent the database type using native Idris types.
+% TODO : discuss why this is good.
+
+\begin{lstlisting}[label={lst:schemas},caption="Representing schemas with dependent types"]
+  data Attribute : Type where
+    (:::) : String -> Type -> Attribute
+
+  Schema : Type
+  Schema = List Attribute
+
+  people : Schema
+  people = ["name":::String,"age":::Int]
+\end{lstlisting}
+
+Armed with a solid \texttt{Schema} representation, it is easy to symbolically represent an expression language.
+
+\begin{lstlisting}
+  data Expr : (s:Schema) -> (t:Type) -> Type where
+    (^) : (s:Schema) -> (nm:String)
+       -> { auto p : (map cast s) `ContainsKey` nm }
+       -> Expr s (lookupType s p)
+    (+) : Num t  => Expr s t -> Expr s t -> Expr s t
+    (==): Eq t   => Expr s t -> Expr s t -> Expr s Bool
+    Lit : Show t => (val:t) -> Expr s t
+    PureFn : (a -> b) -> Expr s a -> Expr s b
+
+  fountain_of_youth : Expr people Int
+  fountain_of_youth = people^"age" + (-10)
+\end{lstlisting}
 
 \subsection{PINQ}\label{sec:pinq}
 
