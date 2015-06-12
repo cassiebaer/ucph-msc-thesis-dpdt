@@ -22,6 +22,5 @@ project f (r::rs) {s=n:::t::as} with (f n)
   project f (r::rs) {s=n:::t::as} | Nothing = project f rs
   project f (r::rs) {s=n:::t::as} | Just n' = r :: project f rs
 
-TableRep : Schema -> Type
-TableRep s = List (Row s)
-
+getSchema : List $ Row s -> Schema
+getSchema {s} _ = s

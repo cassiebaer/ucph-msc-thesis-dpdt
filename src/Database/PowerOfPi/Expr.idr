@@ -26,3 +26,6 @@ data Expr : (s:Schema) -> (t:Type) -> Type where
   PureFn : (a -> b) -> Expr s a -> Expr s b
 
 infixl 9 ^
+
+getType : Expr _ t -> Type
+getType {t} _ = t
