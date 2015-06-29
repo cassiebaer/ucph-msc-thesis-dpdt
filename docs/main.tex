@@ -239,23 +239,23 @@ Additionally, the resulting vector of an \texttt{append} operation \textbf{must}
 Of course, there are many semantically incorrect ways of writing the definition for \texttt{append} while satisfying the length requirement, but the compiler will be able to prevent a large subset of incorrect implementations based on the length guarantee.
 
 \begin{lstlisting}[caption=List and Vect,label={lst:vect}]
-  data Nat : Type where
-    Z : Nat
-    S : Nat -> Nat
+data Nat : Type where
+  Z : Nat
+  S : Nat -> Nat
 
-  data List : Type -> Type where
-    Nil  : List a
-    (::) : a -> List a -> List a
+data List : Type -> Type where
+  Nil  : List a
+  (::) : a -> List a -> List a
 
-  data Vect : Nat -> Type -> Type where
-    Nil  : List Z a
-    (::) : a -> List n a -> List (S n) a
+data Vect : Nat -> Type -> Type where
+  Nil  : List Z a
+  (::) : a -> List n a -> List (S n) a
 
-  head   : List a -> a
-  head   : Vect (S n) a -> a
+head   : List a -> a
+head   : Vect (S n) a -> a
 
-  append : List a -> List a -> List a
-  append : Vect n a -> Vect m a -> Vect (n+m) a
+append : List a -> List a -> List a
+append : Vect n a -> Vect m a -> Vect (n+m) a
 \end{lstlisting}
 
 The usefulness of dependent types extends far beyond keeping track of $List$ lengths.
@@ -278,19 +278,19 @@ This is not necessarily the best choice, but it is sufficient for illustration p
 More on this later.
 
 \begin{lstlisting}[caption="Sensitive functions in Idris"]
-  data Private : Float -> Type -> Type -> Type where
-    MkPrivate  : (a -> b) -> Private s a b
+data Private : Float -> Type -> Type -> Type where
+  MkPrivate  : (a -> b) -> Private s a b
 \end{lstlisting}
 
 Now we can make a few sensitive functions.
 At this point, we must rely on the user providing accurate function sensitivities in the type annotations.
 
 \begin{lstlisting}[caption="Simple examples of sensitive functions"]
-  foo : Private 1 Int Int
-  foo = MkPrivate (\x => x)
+foo : Private 1 Int Int
+foo = MkPrivate (\x => x)
 
-  bar : Private 1 Float Float
-  bar = MkPrivate (\x => x / 2)
+bar : Private 1 Float Float
+bar = MkPrivate (\x => x / 2)
 \end{lstlisting}
 
 Suppose we want to compose \texttt{foo} and \texttt{bar}.
@@ -300,12 +300,12 @@ We abstract the specific details away with an operator: \texttt{(.+.)} (but impl
 Given an implementation of \texttt{(.+.)}, we can implement function composition for \texttt{Private} computations.
 (Also, note that Idris allows function name overloading as long as the correct instance can be determined uniquely from the types.)
 
-\begin{lstlisting}[caption="Composing function sensitivity"]
-  (.+.) : Float -> Float -> Float
-  (.+.) = (+)
+\begin{lstlisting}[caption=Composing function sensitivity]
+(.+.) : Float -> Float -> Float
+(.+.) = (+)
 
-  (.) : Private s b c -> Private s' a b -> Private (s .+. s') a c
-  (.) (MkPrivate f) (MkPrivate g) = MkPrivate (f . g)
+(.) : Private s b c -> Private s' a b -> Private (s .+. s') a c
+(.) (MkPrivate f) (MkPrivate g) = MkPrivate (f . g)
 \end{lstlisting}
 
 All that is missing now is function application.
@@ -322,8 +322,8 @@ Now we are able to apply \texttt{Private} functions to values if we do not excee
 The type-checker will reject any illegal function applications \textit{at compile-time}.
 
 \begin{lstlisting}
-  apply (foo . bar) 1 1 -- does not type-check: 2 <= 1 not true
-  apply (foo . bar) 1 10 -- does type-check: 2 <= 10
+apply (foo . bar) 1 1 -- does not type-check: 2 <= 1 not true
+apply (foo . bar) 1 10 -- does type-check: 2 <= 10
 \end{lstlisting}
 
 \subsection{Relational Algebra}
@@ -390,39 +390,65 @@ In particular, the requirements on operations such as \texttt{product} pose prob
 Idris provides a rich, dependent-type system, which allows for much stronger guarantees.
 In particular, we are capable of fully representing schemas, expressions, and transformations with dependent types.
 
-A database schema is a list of attributes (or columns).
-We represent an \texttt{Attribute} as a pair consisting of its name and type.
-A \texttt{Schema} is then just a list of \texttt{Attribute}s.
-See Listing~\ref{lst:schemas}.
+A schema describes the structured format of a database table.
+For example, a database table \texttt{people} may consist of two columns: \texttt{name} and \texttt{age}.
+An \texttt{Attribute} is a pair consisting of name and type.
+\texttt{age} is an attribute most likely represented by an unsigned integer.
+A database \texttt{Schema} is then just a list of \texttt{Attribute}s.
+See Listing~\ref{lst:schemas} for an example in Idris.
 Note that we represent the database type using native Idris types.
 % TODO : discuss why this is good.
 
-\begin{lstlisting}[label={lst:schemas},caption="Representing schemas with dependent types"]
-  data Attribute : Type where
-    (:::) : String -> Type -> Attribute
+\begin{lstlisting}[label={lst:schemas},caption=Representing schemas with dependent types]
+data Attribute : Type where
+  (:::) : String -> Type -> Attribute
 
-  Schema : Type
-  Schema = List Attribute
+Schema : Type
+Schema = List Attribute
 
-  people : Schema
-  people = ["name":::String,"age":::Int]
+people : Schema
+people = ["name":::String,"age":::Int]
 \end{lstlisting}
 
 Armed with a solid \texttt{Schema} representation, it is easy to symbolically represent an expression language.
+Expressions will be necessary for some of the relational algebra operators.
+Listing~\ref{lst:expr} shows an incomplete example.
 
-\begin{lstlisting}
-  data Expr : (s:Schema) -> (t:Type) -> Type where
-    (^) : (s:Schema) -> (nm:String)
-       -> { auto p : (map cast s) `ContainsKey` nm }
-       -> Expr s (lookupType s p)
-    (+) : Num t  => Expr s t -> Expr s t -> Expr s t
-    (==): Eq t   => Expr s t -> Expr s t -> Expr s Bool
-    Lit : Show t => (val:t) -> Expr s t
-    PureFn : (a -> b) -> Expr s a -> Expr s b
+\begin{lstlisting}[label={lst:expr},caption=Representing typed expressions]
+data Expr : (s:Schema) -> (t:Type) -> Type where
+  (^) : (s:Schema) -> (nm:String)
+     -> { auto p : (map cast s) `ContainsKey` nm }
+     -> Expr s (lookupType s p)
+  (+) : Num t  => Expr s t -> Expr s t -> Expr s t
+  (==): Eq t   => Expr s t -> Expr s t -> Expr s Bool
+  Lit : Show t => (val:t) -> Expr s t
+  PureFn : (a -> b) -> Expr s a -> Expr s b
 
-  fountain_of_youth : Expr people Int
-  fountain_of_youth = people^"age" + (-10)
+fountain_of_youth : Expr people Int
+fountain_of_youth = people^"age" + (-10)
 \end{lstlisting}
+
+Now, we have everything necessary to represent the relational algebra.
+Listing~\ref{lst:query} shows our implementation.
+\texttt{Disjoint s s'} is a proof that two schemas, \texttt{s} and \texttt{s'} are disjoint.
+\texttt{projectedSchema} applies and filters the types of a projection.
+Note that renaming is a general case of projection.
+\texttt{Query} is a type family indexed by backend.
+This allows us to generalize the relational algebra to in-memory Idris databases as well as SQL-based databases such as SQLite.
+
+\begin{lstlisting}[label={lst:query},caption=Representing typed queries]
+data Query : (b:Backend) -> (s:Schema) -> Type where
+  Table   : TableType b s -> Query b s
+  Union   : Query b s -> Query b s -> Query b s
+  Diff    : Query b s -> Query b s -> Query b s
+  Product : Query b s -> Query b s'
+         -> { auto p : Disjoint s s' } -> Query b (s ++ s')
+  Projection : (f:String -> Maybe String) -> Query b s
+            -> Query b (projectedSchema f s)
+  Select  : Expr s Bool -> Query b s -> Query b s
+\end{lstlisting}
+
+% TODO : show an example of a Query on people
 
 \subsection{PINQ}\label{sec:pinq}
 
