@@ -26,7 +26,9 @@ data Query : (b:Backend) -> (s:Schema) -> Type where
   ||| Represents selection on a Query using the given expression.
   Select  : Expr s Bool -> Query b s -> Query b s 
   
-  GroupBy : Eq k => Expr s k -> Query b s -> Query b ["k":::k, "v":::Query b s ]
+  GroupBy : Eq k => Expr s k -> Query b s -> Query b ["k":::k, "v":::TableType b s ]
+
+  Lookup  : Eq k => k -> Query b ["k":::k, "v":::TableType b s] -> Query b s
 
 getSchema : Query b s -> Schema
 getSchema {s} _ = s
