@@ -91,7 +91,7 @@ namespace GroupBy
 namespace Foo
 
   twentySixYOs : List (Row Person)
-  twentySixYOs = eval $ Foo 26 $ GroupBy (Person ^ "Age") people
+  twentySixYOs = eval $ Lookup 26 $ GroupBy (Person ^ "Age") people
   
   length26YOs : length twentySixYOs = 2
   length26YOs = Refl
