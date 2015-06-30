@@ -9,7 +9,7 @@ namespace Attribute
   infix 8 :::
 
   -- TODO : Implement equality check for Type as well?
-  ||| Equality is currently only based on names!
+  ||| N.B. Equality is currently only based on names!
   instance Eq Attribute where
     (==) (n:::t) (n':::t') = n == n'
 
@@ -31,7 +31,7 @@ namespace Schema
 
 namespace Proofs
 
-  -- TODO : Fix disjoint!
+  -- TODO : Implement disjoint!
   ||| A proof that two schemas are disjoint.
   ||| N.B. This is currently not implemented.
   data Disjoint : Schema -> Schema -> Type where

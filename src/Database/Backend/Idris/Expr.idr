@@ -16,3 +16,4 @@ eval (x + y)        r = eval x r + eval y r
 eval ((^) _ nm {p}) r = lookupVal r nm p
 eval (x == y)       r = eval x r == eval y r
 eval (PureFn f x)   r = f (eval x r)
+

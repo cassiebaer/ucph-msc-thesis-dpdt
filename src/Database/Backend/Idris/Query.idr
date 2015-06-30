@@ -38,3 +38,4 @@ namespace QueryAggregation
   eval : QueryAggregation Idris s a -> a
   eval (Aggregation  q f z e) = foldr f z (map (eval e) (eval q))
   eval (AggregationM q e) = foldr (<+>) neutral (map (eval e) (eval q))
+

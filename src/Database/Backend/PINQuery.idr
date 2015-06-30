@@ -21,3 +21,4 @@ intersect (MkPINQuery q) (MkPINQuery q') = MkPINQuery (Diff q q')
 
 groupBy : Eq k => PINQuery b s c -> Expr s k -> PINQuery b ["k":::k, "v"::: TableType b s] (c * 2)
 groupBy (MkPINQuery q) e = MkPINQuery  (GroupBy e q)
+

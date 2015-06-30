@@ -31,3 +31,4 @@ data Aggr : (Sensitivity -> Epsilon -> Sensitivity) -> Type where
 class Aggregation (pinq : Schema -> Stability-> Type) where
     noisyCount : pinq s c -> (e:Epsilon) -> Private (c*e) Double -- TODO: make this dependent on backend
    -- groupAggr  : Aggr f -> pinq ["k":::k, "v":::v] c -> (e:Epsilon) -> Private (f c e)  
+

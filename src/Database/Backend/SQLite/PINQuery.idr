@@ -13,3 +13,4 @@ instance Aggregation (PINQuery SQLite) where
              noise   = samplePure 0 (1 / toFloat e) (rx-0.5)
              count   = fromInteger $ fromNat $ length (eval q)
          in (count + noise, g')
+

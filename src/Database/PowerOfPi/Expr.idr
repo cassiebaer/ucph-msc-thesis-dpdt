@@ -29,3 +29,5 @@ infixl 9 ^
 
 getType : Expr _ t -> Type
 getType {t} _ = t
+-- TODO : Check whether getType is used anywhere
+
