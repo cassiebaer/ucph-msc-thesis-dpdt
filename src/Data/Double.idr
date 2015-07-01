@@ -1,4 +1,4 @@
-module Double
+module Data.Double
 
 Double : Type
 Double = Float

@@ -1,4 +1,4 @@
-module PINQuery
+module Database.Backend.Idris.PINQuery
 
 import Database.PowerOfPi
 import Database.PINQ
