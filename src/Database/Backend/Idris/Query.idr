@@ -32,7 +32,7 @@ namespace Query
   eval (Projection f x) = map (project f) (eval x)
   eval (Select e x)     = filter (eval e) (eval x)
   eval (GroupBy e x)    = constructMap e $ eval x
-  eval (Lookup k group)    = lookup k (eval group)
+  eval (Lookup k group) = lookup k (eval group)
 
 namespace QueryAggregation
   eval : QueryAggregation Idris s a -> a
