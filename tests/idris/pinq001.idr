@@ -8,7 +8,7 @@ import Database.Backend.Idris.Row
 import System.Random.CrapGen
 
 Person : Schema
-Person = [ "Name" ::: String , "Age" ::: Nat ]
+Person = [ "Name" ::: String , "Age" ::: Double ]
 
 Food : Schema
 Food = [ "Name" ::: String , "Food" ::: String ]
@@ -33,6 +33,9 @@ namespace Aggregations
                                    return ((x+y)/2)
                                ) 123
 
+  testNoisyAverage : Double
+  testNoisyAverage = evalPrivate (do avg <- noisyAverage (Person^"Age") people 1
+                                     return avg) 123
   --avgAge : 
   --avgAge = noisyMean (MkPINQuery (Select (PureFn (>20) (Person^"Age"))
                                          --people))
