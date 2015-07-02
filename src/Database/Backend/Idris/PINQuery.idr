@@ -7,7 +7,9 @@ import System.Random.CrapGen
 import Statistics.Distribution.Laplace
 import Database.Backend.Idris.Query
 import public Database.Backend.PINQuery
+%default total
 
+%assert_total
 until : (a -> Bool) -> (a -> a) -> a -> a
 until p f = go
   where
