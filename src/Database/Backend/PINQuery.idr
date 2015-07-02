@@ -19,6 +19,9 @@ union (MkPINQuery q) (MkPINQuery q') = MkPINQuery (Union q q')
 intersect : PINQuery b s c -> PINQuery b s c' -> PINQuery b s (c + c')
 intersect (MkPINQuery q) (MkPINQuery q') = MkPINQuery (Diff q q')
 
-groupBy : Eq k => PINQuery b s c -> Expr s k -> PINQuery b ["k":::k, "v"::: TableType b s] (c * 2)
-groupBy (MkPINQuery q) e = MkPINQuery  (GroupBy e q)
+groupBy : Eq k => Expr s k -> PINQuery b s c -> PINQuery b ["k":::k, "v"::: TableType b s] (c * 2)
+groupBy e (MkPINQuery q) = MkPINQuery (GroupBy e q)
+
+lookup : Eq k => k -> PINQuery b ["k":::k, "v"::: TableType b s] c -> PINQuery b s c
+lookup k (MkPINQuery q) = MkPINQuery (Lookup k q)
 
