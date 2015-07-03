@@ -72,3 +72,4 @@ kMeans (S k) centers q e = let groups = groupBy (classifyExpr centers) q
 
 kMeansTest : Vect 3 (ClassifiedPoint 3)
 kMeansTest = kMeans 1 initialCenters points 1
+
