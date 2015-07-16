@@ -1,4 +1,4 @@
-module Database.Backend.Backend
+module Database.Backend
 
 import Database.PowerOfPi.Types
 import Database.Backend.Idris.Row

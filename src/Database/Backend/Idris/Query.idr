@@ -3,7 +3,6 @@ module Database.Backend.Idris.Query
 import Database.PowerOfPi.Query
 import Database.Backend.Idris.Row
 import Database.Backend.Idris.Expr
-import Database.Backend.Backend
 %default total
 
 namespace Query

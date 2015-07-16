@@ -2,7 +2,6 @@ module Database.Backend.PINQuery
 
 import Database.PowerOfPi
 import Database.PINQ
-import Database.Backend.Backend
 
 data PINQuery : Backend -> Schema -> Stability -> Type  where
   MkPINQuery : Query b s -> PINQuery b s c

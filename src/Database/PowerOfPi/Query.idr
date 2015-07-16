@@ -2,7 +2,7 @@ module Database.PowerOfPi.Query
 
 import public Database.PowerOfPi.Types
 import public Database.PowerOfPi.Expr
-import public Database.Backend.Backend
+import public Database.Backend
 %default total
 
 ||| Represents a typed Query tree.

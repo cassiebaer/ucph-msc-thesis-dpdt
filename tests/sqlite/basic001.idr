@@ -1,7 +1,9 @@
 module Basic001
 
+-- TODO: fix this module
+
 import Database.PowerOfPi
-import Database.Backend.Backend
+import Database.Backend
 import Database.Backend.SQLite.Query
 
 Person : Schema
