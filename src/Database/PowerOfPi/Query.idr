@@ -5,7 +5,6 @@ import public Database.PowerOfPi.Expr
 import public Database.Backend.Backend
 %default total
 
-
 ||| Represents a typed Query tree.
 |||
 ||| @b The backend dictates the table representation,
@@ -25,10 +24,11 @@ data Query : (b:Backend) -> (s:Schema) -> Type where
   Projection : (f:String -> Maybe String) -> Query b s -> Query b (projectedSchema f s)
   ||| Represents selection on a Query using the given expression.
   Select  : Expr s Bool -> Query b s -> Query b s 
-  
+  ||| Represents the grouping of a query into an associative map
   GroupBy : Eq k => Expr s k -> Query b s -> Query b ["k":::k, "v":::TableType b s ]
-
+  ||| Represents a lookup into the result of a GroupBy
   Lookup  : Eq k => k -> Query b ["k":::k, "v":::TableType b s] -> Query b s
+  -- TODO: Check that Lookup is not harmful to D.P.
 
 getSchema : Query b s -> Schema
 getSchema {s} _ = s
@@ -44,3 +44,4 @@ namespace Aggregations
     Aggregation : Query b s -> (a -> a -> a) -> a -> Expr s a -> QueryAggregation b s a
     ||| Represents an arbitrary aggregation over a monoid
     AggregationM : (Monoid a) => Query b s -> Expr s a -> QueryAggregation b s a
+

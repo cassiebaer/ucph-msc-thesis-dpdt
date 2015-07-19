@@ -1,4 +1,4 @@
-module Laplace
+module Statistics.Distribution.Laplace
 
 import Data.Floats
 import Data.Double

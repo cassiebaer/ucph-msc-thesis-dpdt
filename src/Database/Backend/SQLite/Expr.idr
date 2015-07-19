@@ -9,3 +9,4 @@ eval (x + y)      = eval x ++ " + "  ++ eval y
 eval ((^) _ nm)   = nm 
 eval (x == y)     = eval x ++ " == " ++ eval y
 eval (PureFn f x) = "TODO"
+

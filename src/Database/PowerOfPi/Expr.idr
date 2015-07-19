@@ -24,8 +24,11 @@ data Expr : (s:Schema) -> (t:Type) -> Type where
   (==): Eq t   => Expr s t -> Expr s t -> Expr s Bool
   Lit : Show t => (val:t) -> Expr s t
   PureFn : (a -> b) -> Expr s a -> Expr s b
+  Couple : Expr s t -> Expr s t' -> Expr s $ Pair t t'
 
 infixl 9 ^
 
 getType : Expr _ t -> Type
 getType {t} _ = t
+-- TODO : Check whether getType is used anywhere
+

@@ -3,7 +3,6 @@ import Database.PINQ.Types
 import Database.PINQ.Transformation
 import Statistics.Distribution.Laplace
 import System.Random.CrapGen
-%default total
 
 ||| Represents a Private computation
 data Private : Sensitivity -> Type -> Type where
@@ -24,6 +23,13 @@ return x = MkPrivate $ \s => (x,s)
                                                 MkPrivate sf' = f x
                                             in sf' st1
 
+data Aggr : (Sensitivity -> Epsilon -> Sensitivity) -> Type where
+  COUNT : Aggr (\c, e => c*e)
+-- TODO : What is the purpose of this ADT?
+
 ||| Aggregation type class that keeps track of the sensitivity
-class Transformation pinq => Aggregation (pinq : Schema -> Stability-> Type) where
-    noisyCount : pinq s c -> (e:Epsilon) -> Private (c*e) Double -- TODO: make this dependent on backend                                           
+class Aggregation (pinq : Schema -> Stability-> Type) where
+    noisyCount : pinq s c -> (e:Epsilon) -> Private (c*e) Double -- TODO: make this dependent on backend
+    noisyAverage : Expr s Double -> pinq s c -> (e:Epsilon) -> Private (c*e) Double
+   -- groupAggr  : Aggr f -> pinq ["k":::k, "v":::v] c -> (e:Epsilon) -> Private (f c e)  
+

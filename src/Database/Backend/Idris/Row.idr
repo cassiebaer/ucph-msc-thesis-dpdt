@@ -24,3 +24,4 @@ project f (r::rs) {s=n:::t::as} with (f n)
 
 getSchema : List $ Row s -> Schema
 getSchema {s} _ = s
+

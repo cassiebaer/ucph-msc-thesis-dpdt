@@ -9,3 +9,4 @@ class Transformation (pinq : Schema -> Stability-> Type) where
     union      : pinq  s c -> pinq  s c' -> pinq  s (c + c')
     intersect  : pinq  s c -> pinq  s c' -> pinq  s (c + c')
     groupBy    : Eq k => pinq  s c -> Expr s k -> pinq ["k":::k, "v"::: pinq s (c * 2)] (c * 2)
+
