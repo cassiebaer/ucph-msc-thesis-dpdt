@@ -179,7 +179,7 @@ We say that such a query is $\epsilon$-differentially-private if the inclusion o
 
 This section will provide an overview of PINQ, the language we used as model for our language. PINQ is a layer built on top of the query language LINQ, providing some differential privacy guarantees.
 
-\subsubsection{Aggregations}\label{sec:pinq:aggregations}
+\subsubsection{Aggregations}
 
 The only way to extract data from the underlying database in PINQ and is by using the built-in aggregation functions. These aggregations are proven to be $\epsilon$-differentially private. $\epsilon$ is a precission parameter passed in with aggregation applications.
 
@@ -190,7 +190,7 @@ Following definition $\ref{def:diffpriv}$, we can make count $\epsilon$-differen
 
 Another aggregation we provide is average. Using the same approach, we find that the distance is dependent on the range of the type we are averaging. PINQ chooses to clamp the range between -1 and 1, which makes the function 1-sensitive. The consequence is that users have to preprocess the data by normalization before they use \texttt{noisyAverage}, which is the name of the average function with the added Laplacian noise as with count.
 
-\subsubsection{Transformations}\label{sec:pinq:transformations}
+\subsubsection{Transformations}
 
 Aggregations on their own are somewhat limited in their analytic power, but combined with transformations they become more powerful.
 The raw data results produced from transformations can not be exposed to users, as this would leak large amounts of privacy, but can be used as input to the aggregations, providing more flexibility.
@@ -204,6 +204,15 @@ Examples of 1-stable transformations are \texttt{select} and \texttt{where}.
 \texttt{where} is a selection and will return a subset of the input rows. If we remove one of the input rows, the change in the result will be at most one row.
 
 \texttt{groupBy} is an example of a 2-stable transformation. This is because removing one row of the input can potentially both remove a group and the member in this group, leading to a symmetric difference of 2.
+
+For an aggregation applied to subsequent transformations the sensitivity is the stability of the transformations multiplied by $\epsilon$.
+
+For example $\texttt{count} \circ \texttt{groupBy} \circ \texttt{groupBy}$ will be a $4\epsilon$-differentially private function.
+
+\subsubsection{Budget}
+
+For every data source in PINQ a global budget is user-defined. Whenever a successful aggregation has been performed, its sensitivity is subtracted from the budget.
+If the privacy cost of the aggregation exceeds the remaining budget, the aggregation request gets denied.
 
 
 \subsection{Dependent Types}
