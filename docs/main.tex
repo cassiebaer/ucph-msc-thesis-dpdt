@@ -181,21 +181,21 @@ This section will provide an overview of PINQ, the language we used as model for
 
 \subsubsection{Aggregations}
 
-The only way to extract data from the underlying database in PINQ and is by using the built-in aggregation functions. These aggregations are proven to be $\epsilon$-differentially private. $\epsilon$ is a precission parameter passed in with aggregation applications.
+The only way to extract data from the underlying database in PINQ and is by using the built-in aggregation functions. These aggregations are proven to be $\epsilon$-differentially private. $\epsilon$ is a precision parameter passed in with aggregation applications.
 
 One of these aggregations is \texttt{count}, which counts the number of rows in the given query. In order to prove the sensitivity of this function we can use definition $\ref{def:csens}$. 
-Let the distance function \texttt{d} be the Euclidian distance. Let the domain of \texttt{f} be two databases $D_1$ and $D_2$ where $D_1 \sim D_2$, representing a database with and without a particular individuals record. If we take the count of both these databases, we see that the Euclidian distance between the counts will always be 1, and thus count is a 1-sensitive function.
+Let the distance function \texttt{d} be the Euclidean distance. Let the domain of \texttt{f} be two databases $D_1$ and $D_2$ where $D_1 \sim D_2$, representing a database with and without a particular individuals record. If we take the count of both these databases, we see that the Euclidean distance between the counts will always be 1, and thus count is a 1-sensitive function.
 
-Following definition $\ref{def:diffpriv}$, we can make count $\epsilon$-differentially private by adding zero mean Laplacian noise with 1/$\epsilon$ standard deviation to the result (TODO: Why). We call this version of count \texttt{noisyCount}. $\epsilon$ is a parameter of all the noisy aggreagations and represents the balance between precision and privacy.
+Following definition $\ref{def:diffpriv}$, we can make count $\epsilon$-differentially private by adding zero mean Laplacian noise with 1/$\epsilon$ standard deviation to the result (TODO: Why). We call this version of count \texttt{noisyCount}. $\epsilon$ is a parameter of all the noisy aggregations and represents the balance between precision and privacy.
 
-Another aggregation we provide is average. Using the same approach, we find that the distance is dependent on the range of the type we are averaging. PINQ chooses to clamp the range between -1 and 1, which makes the function 1-sensitive. The consequence is that users have to preprocess the data by normalization before they use \texttt{noisyAverage}, which is the name of the average function with the added Laplacian noise as with count.
+Another aggregation we provide is average. Using the same approach, we find that the distance is dependent on the range of the type we are averaging. PINQ chooses to clamp the range between -1 and 1, which makes the function 1-sensitive. The consequence is that users have to pre-process the data by normalization before they use \texttt{noisyAverage}, which is the name of the average function with the added Laplacian noise as with count.
 
 \subsubsection{Transformations}
 
 Aggregations on their own are somewhat limited in their analytic power, but combined with transformations they become more powerful.
 The raw data results produced from transformations can not be exposed to users, as this would leak large amounts of privacy, but can be used as input to the aggregations, providing more flexibility.
 
-In PINQ, the sensitivity of a transformation is reffered to as its stability. Proving the stability of a transformation is an application of definition \ref{def:csens} where \texttt{c} is the stability, \texttt{f} is of type  $D_1 \sim D_2 -> D$ and the distance function \texttt{d} is the symmetric difference.
+In PINQ, the sensitivity of a transformation is referred to as its stability. Proving the stability of a transformation is an application of definition \ref{def:csens} where \texttt{c} is the stability, \texttt{f} is of type  $D_1 \sim D_2 -> D$ and the distance function \texttt{d} is the symmetric difference.
 
 Examples of 1-stable transformations are \texttt{select} and \texttt{where}. 
 
