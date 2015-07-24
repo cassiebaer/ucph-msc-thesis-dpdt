@@ -522,15 +522,6 @@ groupBy e (MkPINQuery q) = MkPINQuery (GroupBy e q)
 In listing $\ref{lst:groupBy}$ we can see \texttt{groupBy}, which has a more complex type signature.
 Because we know that it has a stability of 2, we multiply the sensitivity of the incoming PINQuery by 2.
 
-
-
-\subsubsection{Aggregations}\label{sec:pinq:aggregations}
-
-
-
-
-
-
 \begin{lstlisting}[label={lst:aggregation},caption=Aggregation type class]
 
 ||| Aggregation type class that keeps track of the sensitivity
@@ -538,6 +529,10 @@ class Aggregation (pinq : Schema -> Stability-> Type) where
     noisyCount : pinq s c -> (e:Epsilon) -> Private (c*e) Double
     noisyAverage : Expr s Double -> pinq s c -> (e:Epsilon) -> Private (c*e) Double
 \end{lstlisting}
+
+The aggregation functions' type signatures are captured in a type class shown in listing $\ref{lst:aggregation}$.
+A type class is chosen in order to allow for different implementations of the evaluation function, i.e. native Idris execution, or compilation to a query language like SQL.
+
 
 \section{Evaluation / Validation}\label{sec:evaluation}
 
