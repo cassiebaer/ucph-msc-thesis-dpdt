@@ -175,13 +175,13 @@ We say that such a query is $\epsilon$-differentially-private if the inclusion o
   \item Other stuff
 \end{itemize}
 
-\subsection{PINQ}
+\subsection{PINQ}\label{sec:pinq}
 
 This section will provide an overview of PINQ, the language we used as model for our language. PINQ is a layer built on top of the query language LINQ, providing some differential privacy guarantees.
 
 \subsubsection{Aggregations}
 
-The only way to extract data from the underlying database in PINQ and is by using the built-in aggregation functions. These aggregations are proven to be $\epsilon$-differentially private. $\epsilon$ is a precision parameter passed in with aggregation applications.
+The only way to extract data from the underlying database in PINQ is by using the built-in aggregation functions. These aggregations are proven to be $\epsilon$-differentially private. $\epsilon$ is a precision parameter passed in with aggregation applications.
 
 One of these aggregations is \texttt{count}, which counts the number of rows in the given query. In order to prove the sensitivity of this function we can use definition $\ref{def:csens}$. 
 Let the distance function \texttt{d} be the Euclidean distance. Let the domain of \texttt{f} be two databases $D_1$ and $D_2$ where $D_1 \sim D_2$, representing a database with and without a particular individuals record. If we take the count of both these databases, we see that the Euclidean distance between the counts will always be 1, and thus count is a 1-sensitive function.
@@ -490,40 +490,46 @@ data Query : (b:Backend) -> (s:Schema) -> Type where
 
 % TODO : show an example of a Query on peoplea
 
-\subsection{PINQ}\label{sec:pinq}
+\subsection{PINQ}\label{sec:implementation:pinq}
 
 This section will descibe our implementation of the differential privacy aspects of our language. We follow PINQ's model of building a differential privacy layer on top of a query language.
 
-\subsubsection{Aggregations}\label{sec:pinq:aggregations}
+\subsubsection{PINQuery}\label{sec:pinq:pinquery}
 
-\subsubsection{Transformations}\label{sec:pinq:transformations}
-
-
-
-
-\begin{lstlisting}[label={lst:pinquery},caption=PINQuery]
+\begin{lstlisting}[label={lst:pinquery},caption=PINQuery - wrapper around Query]
 data PINQuery : Backend -> Schema -> Stability -> Type  where
   MkPINQuery : Query b s -> PINQuery b s c
+\end{lstlisting}
 
+\texttt{PINQuery} is a type that represents a query with stability, which is a concept mentioned in section $\ref{sec:pinq}$. 
+The type has only one type constructor, taking a \texttt{Query} as an argument. The Query type is described in $\ref{sec:power_of_pi}$.
+
+\begin{lstlisting}[label={lst:where},caption=Selection on PINQuery]
 where' : PINQuery b s c -> Expr s Bool -> PINQuery b s c
 where' (MkPINQuery q) e = MkPINQuery (Select e q)
+\end{lstlisting}
 
-select : PINQuery b s c -> (f:String -> Maybe  String) -> PINQuery b (projectedSchema f s) c
-select (MkPINQuery q) f = MkPINQuery (Projection f q)
+The transformation functions on PINQueries are just calling the analog transformation of the Power of Pi query language on the encapsulated Query.
+The interesting thing happens in their type signatures. 
+As for \texttt{where'} in listing $\ref{lst:where}$, because it is a 1-sensitive function, it just copies the stability of the incoming PINQuery to the result.
 
-union : PINQuery b s c -> PINQuery b s c' -> PINQuery b s (c + c')
-union (MkPINQuery q) (MkPINQuery q') = MkPINQuery (Union q q')
 
-intersect : PINQuery b s c -> PINQuery b s c' -> PINQuery b s (c + c')
-intersect (MkPINQuery q) (MkPINQuery q') = MkPINQuery (Diff q q')
-
+\begin{lstlisting}[label={lst:groupBy},caption=groupBy]
 groupBy : Eq k => Expr s k -> PINQuery b s c -> PINQuery b ["k":::k, "v"::: TableType b s] (c * 2)
 groupBy e (MkPINQuery q) = MkPINQuery (GroupBy e q)
-
-lookup : Eq k => k -> PINQuery b ["k":::k, "v"::: TableType b s] c -> PINQuery b s c
-lookup k (MkPINQuery q) = MkPINQuery (Lookup k q)
-
 \end{lstlisting}
+
+In listing $\ref{lst:groupBy}$ we can see \texttt{groupBy}, which has a more complex type signature.
+Because we know that it has a stability of 2, we multiply the sensitivity of the incoming PINQuery by 2.
+
+
+
+\subsubsection{Aggregations}\label{sec:pinq:aggregations}
+
+
+
+
+
 
 \begin{lstlisting}[label={lst:aggregation},caption=Aggregation type class]
 
