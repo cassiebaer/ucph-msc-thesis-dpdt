@@ -23,11 +23,11 @@ clamp x = if x > 1.0 then 1.0
 ||| Helper function for Laplace noise. Takes a width parameter
 ||| (e.g. 1/eps) and a uniform random value drawn from [0,1).
 lap : Double -> Double -> Double
-lap width rx = samplePure 0 width (rx-0.5)
+lap width rx = samplePure 0 width rx
 
 lap' : Double -> CrapGen -> (Double,CrapGen)
 lap' width g = let (rx,g') = rndDouble g
-                in (samplePure 0 width (rx-0.5), g')
+                in (samplePure 0 width rx, g')
 
 %assert_total
 go : Double -> Double -> CrapGen -> (Double,CrapGen)

@@ -19,19 +19,22 @@ pdf : (mu:Double) -> (b:Double) -> (x:Double) -> Double
 pdf mu b x = (1/2/b)*exp(-(abs (x - mu))/b)
 
 ||| Represents the CDF of a Laplace distribution
+||| N.B. This is the inverse of samplePure.
 |||
 ||| @mu The center of the dist.
 ||| @b  The spread of the dist.
 ||| @p  p
 cdf : (mu:Double) -> (b:Double) -> (p:Double) -> Double
-cdf mu b p = 0.5 + 0.5 * signum (p - 0.5) * log (1 - 2 * abs (p - 0.5))
+cdf mu b p = 0.5 + 0.5 * signum (p - mu) * (1 - exp (- (abs (p - mu) / b)))
 
 ||| Produces a value from the Laplace distribution given
 ||| a random uniform variable in (-0.5,0.5]
+||| N.B. This is the inverse of `cdf`.
 |||
 ||| @mu The center of the dist.
 ||| @b  The spread of the dist.
-||| @u  A random variable drawn uniformly from (-0.5,0.5]
+||| @u  A random variable drawn uniformly from (0,1.0]
 samplePure : (mu:Double) -> (b:Double) -> (u:Double) -> Double
-samplePure mu b u = mu - b * signum u * log (1 - 2 * abs u)
+samplePure mu b u = let x = u - 0.5
+                     in mu - b * signum x * log (1 - 2 * abs x)
 
