@@ -9,38 +9,24 @@ import Database.Backend.Idris.Query
 import public Database.Backend.PINQuery
 %default total
 
-%assert_total
-until : (a -> Bool) -> (a -> a) -> a -> a
-until p f = go
-  where
-    go x = if p x then x else go (f x)
-
+||| Clamps a value to [-1.0,+1.0]
 clamp : Double -> Double
 clamp x = if x > 1.0 then 1.0
                      else if x < (-1.0) then (-1.0)
                                         else x
 
-||| Helper function for Laplace noise. Takes a width parameter
-||| (e.g. 1/eps) and a uniform random value drawn from [0,1).
-lap : Double -> Double -> Double
-lap width rx = samplePure 0 width rx
+||| Computes the bounds required on the uniform variable to satisfy the
+||| constraint that `-1 < tally + noise < 1` where noise is Laplace
+bounds : Double -> Double -> (Double,Double)
+bounds width tally = let lb = cdf 0 width (-1 - tally)
+                         ub = cdf 0 width ( 1 - tally)
+                      in (lb,ub)
 
-lap' : Double -> CrapGen -> (Double,CrapGen)
-lap' width g = let (rx,g') = rndDouble g
-                in (samplePure 0 width rx, g')
-
-%assert_total
-go : Double -> Double -> CrapGen -> (Double,CrapGen)
-go width tally g = let (lx,g') = lap' width g
-                       cand    = tally + lx
-                    in if (-1.0) < cand && cand < 1.0
-                       then (cand,g')
-                       else go width tally g'
- 
 instance Aggregation (PINQuery Idris) where
   noisyCount (MkPINQuery q) eps = MkPrivate $ \g => 
-    let (noise,g') = lap' (1 / toFloat eps) g
-        count      = fromInteger $ fromNat $ length (eval q)
+    let (rx,g') = rndDouble g
+        noise   = samplePure 0 (1 / toFloat eps) rx
+        count   = fromInteger $ fromNat $ length (eval q)
      in (count + noise, g')
 
   noisyAverage exp (MkPINQuery q) eps = MkPrivate $ \g =>
@@ -51,5 +37,9 @@ instance Aggregation (PINQuery Idris) where
                         let (rx,g') = rndDouble g
                          in ((rx - 0.5)*2,g')
                    else -- We need to add Lap. noise
-                        go (2 / toFloat eps) trueAvg g
+                        let width   = 2 / toFloat eps
+                            (lb,ub) = bounds width trueAvg
+                            (rx,g') = rndDouble g
+                            noise   = samplePure 0 width (rx * (ub-lb) + lb)
+                         in (trueAvg + noise,g')
 
