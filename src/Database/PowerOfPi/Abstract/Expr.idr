@@ -1,5 +1,6 @@
-module Database.PowerOfPi.Expr
-import public Database.PowerOfPi.Types
+module Database.PowerOfPi.Abstract.Expr
+
+import public Database.PowerOfPi.Abstract.Types
 %default total
 
 ||| Looks up the Type associated with 'nm'
@@ -31,4 +32,3 @@ infixl 9 ^
 getType : Expr _ t -> Type
 getType {t} _ = t
 -- TODO : Check whether getType is used anywhere
-

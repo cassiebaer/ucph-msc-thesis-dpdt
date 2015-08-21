@@ -1,8 +1,8 @@
-module Database.PowerOfPi.Query
+module Database.PowerOfPi.Abstract.Query
 
-import public Database.PowerOfPi.Types
-import public Database.PowerOfPi.Expr
-import public Database.Backend
+import public Database.PowerOfPi.Abstract.Types
+import public Database.PowerOfPi.Abstract.Expr
+import public Database.PowerOfPi.Backends
 %default total
 
 ||| Represents a typed Query tree.

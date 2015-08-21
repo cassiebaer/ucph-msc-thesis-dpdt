@@ -1,7 +1,7 @@
-module Database.Backend.Idris.Expr
+module Database.PowerOfPi.Idris.Expr
 
 import Database.PowerOfPi
-import Database.Backend.Idris
+import Database.PowerOfPi.Idris.Types
 
 ||| Get the value of an attribute given a proof that the
 ||| attribute exists

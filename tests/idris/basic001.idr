@@ -1,7 +1,6 @@
 module Basic001
 
-import Database.PowerOfPi
-import Database.Backend.Idris
+import Database.PowerOfPi.Idris
 
 Person : Schema
 Person = [ "Name" ::: String , "Age" ::: Nat ]

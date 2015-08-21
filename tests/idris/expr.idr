@@ -1,7 +1,6 @@
 module ExprTests
 
-import Database.PowerOfPi
-import Database.Backend.Idris
+import Database.PowerOfPi.Idris
 
 testSchema : Schema
 testSchema = ["id":::Int, "name":::String, "city":::String, "age":::Int]

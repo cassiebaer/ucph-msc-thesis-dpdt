@@ -1,6 +1,6 @@
-module Database.Backend.Idris.Row
+module Database.PowerOfPi.Idris.Types
 
-import Database.PowerOfPi.Types 
+import Database.PowerOfPi.Abstract.Types
 
 ||| Represents a row in a table.
 ||| We impose an Eq constraint for the Expr language.
