@@ -1,4 +1,6 @@
 module Database.PINQ.Aggregations
+
+import Database.PowerOfPi
 import Database.PINQ.Types
 import Database.PINQ.Transformation
 import Statistics.Distribution.Laplace
