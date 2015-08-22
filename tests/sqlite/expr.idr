@@ -1,7 +1,6 @@
 module ExprTests
 
-import Database.PowerOfPi
-import Database.Backend.SQLite.Expr
+import Database.PowerOfPi.SQLite
 
 testSchema : Schema
 testSchema = ["id":::Nat, "name":::String, "city":::String, "age":::Nat]
@@ -17,3 +16,4 @@ exprLookup = Refl
 
 exprPlus : eval ((testSchema ^ "id") + five) = "id + 5"
 exprPlus =  Refl
+

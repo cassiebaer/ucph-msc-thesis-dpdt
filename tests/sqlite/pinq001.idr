@@ -1,8 +1,6 @@
 module PINQ001
 
-import Database.PowerOfPi
-import Database.PINQ
-import Database.Backend.SQLite.PINQuery
+import Database.PINQ.SQLite
 import System.Random.CrapGen
 
 Person : Schema

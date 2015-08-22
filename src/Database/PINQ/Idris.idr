@@ -1,12 +1,13 @@
-module Database.Backend.Idris.PINQuery
+module Database.PINQ.Idris
 
-import Database.PowerOfPi
-import Database.PINQ
-import Database.Backend.Idris.Expr
+import public Data.Rational
+import public Database.PowerOfPi.Idris -- TODO : should be public?
+import public Database.PINQ
+
 import System.Random.CrapGen
 import Statistics.Distribution.Laplace
-import Database.Backend.Idris.Query
-import public Database.Backend.PINQuery
+--import Database.PowerOfPi.Idris.Query
+--import public Database.Backend.PINQuery
 %default total
 
 ||| Clamps a value to [-1.0,+1.0]

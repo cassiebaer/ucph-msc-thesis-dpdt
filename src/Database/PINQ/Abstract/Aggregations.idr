@@ -1,8 +1,8 @@
-module Database.PINQ.Aggregations
+module Database.PINQ.Abstract.Aggregations
 
+import Data.Rational
 import Database.PowerOfPi
-import Database.PINQ.Types
-import Database.PINQ.Transformation
+import Database.PINQ.Abstract.Types
 import Statistics.Distribution.Laplace
 import System.Random.CrapGen
 
@@ -24,10 +24,6 @@ return x = MkPrivate $ \s => (x,s)
 (>>=) (MkPrivate sf) f = MkPrivate $ \st => let (x,st1)       = sf st
                                                 MkPrivate sf' = f x
                                             in sf' st1
-
-data Aggr : (Sensitivity -> Epsilon -> Sensitivity) -> Type where
-  COUNT : Aggr (\c, e => c*e)
--- TODO : What is the purpose of this ADT?
 
 ||| Aggregation type class that keeps track of the sensitivity
 class Aggregation (pinq : Schema -> Stability-> Type) where
