@@ -1,10 +1,6 @@
 module Basic001
 
--- TODO: fix this module
-
-import Database.PowerOfPi
-import Database.Backend
-import Database.Backend.SQLite.Query
+import Database.PowerOfPi.SQLite
 
 Person : Schema
 Person = [ "Name" ::: String , "Age" ::: Nat ]
