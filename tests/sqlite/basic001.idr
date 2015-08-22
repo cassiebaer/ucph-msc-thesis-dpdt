@@ -1,8 +1,6 @@
 module Basic001
 
-import Database.PowerOfPi
-import Database.Backend.Backend
-import Database.Backend.SQLite.Query
+import Database.PowerOfPi.SQLite
 
 Person : Schema
 Person = [ "Name" ::: String , "Age" ::: Nat ]

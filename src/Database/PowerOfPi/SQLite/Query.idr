@@ -1,7 +1,7 @@
 module Database.Backend.SQLite.Query
 
-import Database.PowerOfPi.Query
-import Database.Backend.SQLite.Expr
+import Database.PowerOfPi.Abstract.Query
+import Database.PowerOfPi.SQLite.Expr
 
 namespace Query
 
@@ -9,6 +9,7 @@ namespace Query
   commasBetween xs = concat $ intersperse ", " xs
 
   ||| Evaluates a Query, returning a List of Rows.
+  %assert_total
   eval : Query SQLite s -> String
   eval (Table xs)       = xs
   eval (Union x y)      = "(" ++ eval x ++ ") Union (" ++ eval y ++ ")"
@@ -22,9 +23,3 @@ namespace Query
   eval (Select e x {s}) = "Select " ++ cols ++ " From " ++ eval x ++ " Where " ++ eval e where
     cols : String
     cols = commasBetween $ getNames s
-
---namespace QueryAggregation
-  --eval : QueryAggregation Idris s a -> a
-  --eval (Aggregation  q f z e) = foldr f z (map (eval e) (eval q))
-  --eval (AggregationM q e)     = foldr (<+>) neutral (map (eval e) (eval q))
-

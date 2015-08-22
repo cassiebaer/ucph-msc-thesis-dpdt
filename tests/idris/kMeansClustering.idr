@@ -1,8 +1,6 @@
-import Database.PowerOfPi
-import Database.PINQ
-import Database.Backend.PINQuery
-import Database.Backend.Idris.PINQuery
-import Database.Backend.Idris.Row
+module kMeans
+
+import Database.PINQ.Idris
 import System.Random.CrapGen
 import Data.Floats
 import Data.Fin
@@ -58,7 +56,7 @@ classifyExpr centers = PureFn (classify centers) $ Couple (Point^"x") (Point^"y"
 updateCenters : Vect n (ClassifiedPoint 3) -> PINQuery Idris ["k":::(Fin 3), "v":::(List (Row Point)) ] c -> Epsilon -> Vect n $ ClassifiedPoint 3
 updateCenters []                                    _      _ = []
 updateCenters ((MkClassifiedPoint _ cl) :: centers) groups e = 
-  let group = lookup cl groups
+  let group     = lookup cl groups
       newCenter = evalPrivate ( do x <- noisyAverage (Point^"x") group e
                                    y <- noisyAverage (Point^"y") group e
                                    return (x, y)) 123

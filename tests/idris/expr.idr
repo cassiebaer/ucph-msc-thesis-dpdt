@@ -1,8 +1,6 @@
 module ExprTests
 
-import Database.PowerOfPi
-import Database.Backend.Idris.Row
-import Database.Backend.Idris.Expr
+import Database.PowerOfPi.Idris
 
 testSchema : Schema
 testSchema = ["id":::Int, "name":::String, "city":::String, "age":::Int]
@@ -24,3 +22,4 @@ nameAndCity [id, name, city, age] = name ++ " and " ++ city
 
 exprPureFn : Int
 exprPureFn = eval (PureFn (+10) (testSchema ^ "age")) testRow
+

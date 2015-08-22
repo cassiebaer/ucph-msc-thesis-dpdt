@@ -10,7 +10,7 @@ import public Database.Backend.PINQuery
 instance Aggregation (PINQuery SQLite) where
   noisyCount (MkPINQuery q) e = MkPrivate $ \g => 
          let (rx,g') = rndDouble g
-             noise   = samplePure 0 (1 / toFloat e) (rx-0.5)
+             noise   = samplePure 0 (1 / toFloat e) rx
              count   = fromInteger $ fromNat $ length (eval q)
          in (count + noise, g')
 

@@ -1,11 +1,10 @@
-module Database.Backend.PINQuery
+module Database.PINQ.Abstract.PINQuery
 
+import Data.Rational
 import Database.PowerOfPi
-import Database.PINQ
-import Database.Backend.Backend
+import Database.PINQ.Abstract.Types
 
-data PINQuery : Backend -> Schema -> Stability -> Type  where
-  MkPINQuery : Query b s -> PINQuery b s c
+-- Transformations work by unwrapping the Query from a PINQuery and rewrapping it with a new data and type constructor
 
 where' : PINQuery b s c -> Expr s Bool -> PINQuery b s c
 where' (MkPINQuery q) e = MkPINQuery (Select e q)

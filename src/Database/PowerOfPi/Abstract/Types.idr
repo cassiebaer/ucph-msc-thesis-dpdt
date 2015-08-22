@@ -1,4 +1,5 @@
-module Database.PowerOfPi.Types
+module Database.PowerOfPi.Abstract.Types
+
 %default total
 
 namespace Attribute

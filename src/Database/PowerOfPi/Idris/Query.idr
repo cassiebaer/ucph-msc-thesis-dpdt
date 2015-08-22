@@ -1,9 +1,8 @@
-module Database.Backend.Idris.Query
+module Database.PowerOfPi.Idris.Query
 
-import Database.PowerOfPi.Query
-import Database.Backend.Idris.Row
-import Database.Backend.Idris.Expr
-import Database.Backend.Backend
+import Database.PowerOfPi.Abstract.Query
+import Database.PowerOfPi.Idris.Types
+import Database.PowerOfPi.Idris.Expr
 %default total
 
 namespace Query

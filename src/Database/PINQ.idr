@@ -1,6 +1,7 @@
 module Database.PINQ
-import public Database.PINQ.Types
-import public Database.PINQ.Transformation
-import public Database.PINQ.Aggregations
+
+import public Database.PINQ.Abstract.Aggregations
+import public Database.PINQ.Abstract.Transformation
+import public Database.PINQ.Abstract.Types
 %default total
 

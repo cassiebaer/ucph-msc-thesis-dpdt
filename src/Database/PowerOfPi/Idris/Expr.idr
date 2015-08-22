@@ -1,7 +1,7 @@
-module Database.Backend.Idris.Expr
+module Database.PowerOfPi.Idris.Expr
 
-import Database.PowerOfPi.Expr
-import Database.Backend.Idris.Row
+import Database.PowerOfPi
+import Database.PowerOfPi.Idris.Types
 
 ||| Get the value of an attribute given a proof that the
 ||| attribute exists
@@ -17,3 +17,4 @@ eval ((^) _ nm {p}) r = lookupVal r nm p
 eval (x == y)       r = eval x r == eval y r
 eval (PureFn f x)   r = f (eval x r)
 eval (Couple x y)   r = (eval x r, eval y r)
+

@@ -1,4 +1,5 @@
 module Data.Rational
+
 import Data.So
 %default total
 
