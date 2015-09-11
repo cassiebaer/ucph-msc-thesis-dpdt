@@ -31,6 +31,10 @@ mutual
     ||| Represents the grouping of a query into an associative map
     GroupBy : Eq k => Expr s k -> Query t s -> Grouping t s k
 
+  data Partitioning : (t:Schema -> Type) -> (s:Schema) -> (k:Type) -> Type where
+    ||| Represents the partitioning of a query into a dictionary
+    Partition : Eq k => List k -> Expr s k -> Query t s -> Partitioning t s k
+
 getSchema : Query b s -> Schema
 getSchema {s} _ = s
 
