@@ -19,16 +19,16 @@ toList = id
 |||
 ||| The arguments to the combining function are the old and then
 ||| the new value, respectively.
-insertWith : Eq k => k -> v -> (v -> v -> v) -> Dictionary k v -> Dictionary k v
-insertWith k v f []            = [(k,v)]
-insertWith k v f ((k',v')::ps) = if k == k'
+insertWith : Eq k => (v -> v -> v) -> k -> v -> Dictionary k v -> Dictionary k v
+insertWith f k v []            = [(k,v)]
+insertWith f k v ((k',v')::ps) = if k == k'
                                     then (k',f v' v)::ps
-                                    else (k',v')::insertWith k v f ps
+                                    else (k',v')::insertWith f k v ps
 
 ||| Inserts the key+element pair into the Dictionary,
 ||| overwriting any previously existing value at that key.
 insert : Eq k => k -> v -> Dictionary k v -> Dictionary k v
-insert k v = insertWith k v (\_,new => new)
+insert k v = insertWith (\_,new => new) k v
 --insert k v []            = [(k,v)]
 --insert k v ((k',v')::ps) = if k == k'
                               --then (k',v)::ps
@@ -36,9 +36,9 @@ insert k v = insertWith k v (\_,new => new)
 
 ||| Looks up the value associated with a given key, and
 ||| if it doesn't exist, returns the provided default value.
-lookupWithDefault : Eq k => k -> v -> Dictionary k v -> v
-lookupWithDefault k def []            = def
-lookupWithDefault k def ((k',v')::ps) = if k == k'
+lookupWithDefault : Eq k => v -> k -> Dictionary k v -> v
+lookupWithDefault def k []            = def
+lookupWithDefault def k ((k',v')::ps) = if k == k'
                                            then v'
-                                           else lookupWithDefault k def ps
+                                           else lookupWithDefault def k ps
 
