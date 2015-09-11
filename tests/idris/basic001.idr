@@ -101,3 +101,8 @@ namespace Aggregation
   sumAges : eval (Aggregation people (+) (the Nat 0) (Person^"Age")) = 79
   sumAges = Refl
 
+namespace Partition
+
+  partitionByAge : GroupingMap Nat Person
+  partitionByAge = eval (Partition [2,26] (Person^"Age") people)
+

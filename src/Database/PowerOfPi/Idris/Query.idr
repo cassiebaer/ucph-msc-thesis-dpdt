@@ -1,6 +1,7 @@
 module Database.PowerOfPi.Idris.Query
 
 import Data.Dictionary
+import Data.List
 import Database.PowerOfPi.Abstract
 import Database.PowerOfPi.Idris.Expr
 import Database.PowerOfPi.Idris.Types
@@ -15,6 +16,12 @@ GroupingMap k s = Dictionary k (List $ Row s)
 mkGroupingMap : Eq k => Expr s k -> Table s -> GroupingMap k s
 mkGroupingMap e []      = []
 mkGroupingMap e (r::rs) = insertWith (++) (eval e r) [r] (mkGroupingMap e rs)
+
+mkPartitionMap : Eq k => List k -> Expr s k -> Table s -> GroupingMap k s
+mkPartitionMap ks e []      = []
+mkPartitionMap ks e (r::rs) with (eval e r `elem` ks)
+  mkPartitionMap ks e (r::rs) | False = mkPartitionMap ks e rs
+  mkPartitionMap ks e (r::rs) | True = insertWith (++) (eval e r) [r] (mkPartitionMap ks e rs)
 
 mutual
 
@@ -37,6 +44,11 @@ mutual
     %assert_total
     eval : (q:Grouping Table s k) -> GroupingMap k s
     eval (GroupBy e q) = mkGroupingMap e (eval q)
+
+  namespace Partitioning
+
+    eval : (q:Partitioning Table s k) -> GroupingMap k s
+    eval (Partition ks e q) = mkPartitionMap ks e (eval q)
 
 namespace QueryAggregation
 
