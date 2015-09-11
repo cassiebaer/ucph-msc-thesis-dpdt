@@ -49,3 +49,13 @@ namespace Aggregations
     ||| Represents an arbitrary aggregation over a monoid
     AggregationM : (Monoid a) => Query t s -> Expr s a -> QueryAggregation t s a
 
+namespace CommonAggregations
+
+  ||| Counts the number of rows in a Query
+  count : Query t s -> QueryAggregation t s Nat
+  count q = Aggregation q (+) 0 (Lit 1)
+
+  ||| Computes the sum of the expression applied to each row.
+  sum : Num a => Query t s -> Expr s a -> QueryAggregation t s a
+  sum q e = Aggregation q (+) 0 e
+
