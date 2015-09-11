@@ -6,8 +6,6 @@ import public Database.PINQ
 
 import System.Random.CrapGen
 import Statistics.Distribution.Laplace
---import Database.PowerOfPi.Idris.Query
---import public Database.Backend.PINQuery
 %default total
 
 ||| Clamps a value to [-1.0,+1.0]
@@ -23,24 +21,25 @@ bounds width tally = let lb = cdf 0 width (-1 - tally)
                          ub = cdf 0 width ( 1 - tally)
                       in (lb,ub)
 
-instance Aggregation (PINQuery Idris) where
-  noisyCount (MkPINQuery q) eps = MkPrivate $ \g => 
-    let (rx,g') = rndDouble g
-        noise   = samplePure 0 (1 / toFloat eps) rx
-        count   = fromInteger $ fromNat $ length (eval q)
-     in (count + noise, g')
+noisyCount : (PINQuery Table s c) -> (e:Epsilon) -> Private (c*e) Double
+noisyCount (MkPINQuery q) eps = MkPrivate $ \g => 
+  let (rx,g') = rndDouble g
+      noise   = samplePure 0 (1 / toFloat eps) rx
+      count   = fromInteger $ fromNat $ length (eval q)
+   in (count + noise, g')
 
-  noisyAverage exp (MkPINQuery q) eps = MkPrivate $ \g =>
-    let rs      = map (clamp . eval exp) (eval q)
-        (tt,ct) = foldl (\(tt,ct),x => (tt+x,ct+1)) (0.0,0.0) rs
-        trueAvg = tt / ct
-     in if ct == 0 then -- We need to return a value in the range (-1,+1)
-                        let (rx,g') = rndDouble g
-                         in ((rx - 0.5)*2,g')
-                   else -- We need to add Lap. noise
-                        let width   = 2 / toFloat eps
-                            (lb,ub) = bounds width trueAvg
-                            (rx,g') = rndDouble g
-                            noise   = samplePure 0 width (rx * (ub-lb) + lb)
-                         in (trueAvg + noise,g')
+noisyAverage : Expr s Double -> (PINQuery Table s c) -> (e:Epsilon) -> Private (c*e) Double
+noisyAverage exp (MkPINQuery q) eps = MkPrivate $ \g =>
+  let rs      = map (clamp . eval exp) (eval q)
+      (tt,ct) = foldl (\(tt,ct),x => (tt+x,ct+1)) (0.0,0.0) rs
+      trueAvg = tt / ct
+   in if ct == 0 then -- We need to return a value in the range (-1,+1)
+                      let (rx,g') = rndDouble g
+                       in ((rx - 0.5)*2,g')
+                 else -- We need to add Lap. noise
+                      let width   = 2 / toFloat eps
+                          (lb,ub) = bounds width trueAvg
+                          (rx,g') = rndDouble g
+                          noise   = samplePure 0 width (rx * (ub-lb) + lb)
+                       in (trueAvg + noise,g')
 

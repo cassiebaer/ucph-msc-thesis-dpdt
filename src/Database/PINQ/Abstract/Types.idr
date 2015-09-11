@@ -13,5 +13,9 @@ Sensitivity = Rational
 Stability : Type
 Stability = Rational
 
-data PINQuery : Backend -> Schema -> Stability -> Type  where
+data PINQuery : (Schema -> Type) -> Schema -> Stability -> Type  where
   MkPINQuery : Query b s -> PINQuery b s c
+
+data PINGrouping : (Schema -> Type) -> Schema -> Type -> Stability -> Type where
+  MkPINGrouping : Grouping t s k -> PINGrouping t s k c
+

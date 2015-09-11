@@ -14,7 +14,7 @@ Point = [ "x" ::: Float , "y" ::: Float ]
 data ClassifiedPoint : (k:Nat) -> Type where
   MkClassifiedPoint : (pt:(Float, Float)) -> (cl:Fin k)  -> ClassifiedPoint k
 
-points : PINQuery Idris Point 1
+points : PINQuery Table Point 1
 points = MkPINQuery $ Table [ [ 0  , 0   ]
                             , [ 0.2, 0   ]
                             , [ 0.2 ,0.1 ]
@@ -53,7 +53,7 @@ classifyTest = Refl
 classifyExpr : Vect 3 (ClassifiedPoint 3) -> Expr Point (Fin 3) 
 classifyExpr centers = PureFn (classify centers) $ Couple (Point^"x") (Point^"y")
 
-updateCenters : Vect n (ClassifiedPoint 3) -> PINQuery Idris ["k":::(Fin 3), "v":::(List (Row Point)) ] c -> Epsilon -> Vect n $ ClassifiedPoint 3
+updateCenters : Vect n (ClassifiedPoint 3) -> PINGrouping Table Point (Fin 3) c -> Epsilon -> Vect n $ ClassifiedPoint 3
 updateCenters []                                    _      _ = []
 updateCenters ((MkClassifiedPoint _ cl) :: centers) groups e = 
   let group     = lookup cl groups
@@ -62,7 +62,7 @@ updateCenters ((MkClassifiedPoint _ cl) :: centers) groups e =
                                    return (x, y)) 123
   in (MkClassifiedPoint newCenter cl) :: updateCenters centers groups e
 
-kMeans : Nat -> Vect 3 (ClassifiedPoint 3) -> PINQuery Idris Point c -> Epsilon -> Vect 3 (ClassifiedPoint 3)
+kMeans : Nat -> Vect 3 (ClassifiedPoint 3) -> PINQuery Table Point c -> Epsilon -> Vect 3 (ClassifiedPoint 3)
 kMeans Z     centers q e = centers
 kMeans (S k) centers q e = let groups = groupBy (classifyExpr centers) q
                            in  kMeans k (updateCenters centers groups e) q e
