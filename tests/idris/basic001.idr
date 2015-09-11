@@ -8,14 +8,14 @@ Person = [ "Name" ::: String , "Age" ::: Nat ]
 Food : Schema
 Food = [ "Name" ::: String , "Food" ::: String ]
 
-people : Query Idris Person
+people : Query Table Person
 people = Table [ [ "Casper" , 25 ]
                , [ "Knut"   , 26 ]
                , [ "Tor"    , 26 ]
                , [ "Gismo"  ,  2 ]
                ]
 
-foods : Query Idris Food
+foods : Query Table Food
 foods = Table [ [ "Casper" , "Bruschetta" ]
               , [ "Knut"   , "Prim"       ]
               , [ "Gismo"  , "Dog food"   ]
@@ -23,49 +23,49 @@ foods = Table [ [ "Casper" , "Bruschetta" ]
 
 namespace Union
 
- unionPeopleWithItself : List (Row Person)
- unionPeopleWithItself = eval (people `Union` people)
+  unionPeopleWithItself : Table Person
+  unionPeopleWithItself = eval (people `Union` people)
 
- lengthUnionPeopleWithItself : length unionPeopleWithItself = 8
- lengthUnionPeopleWithItself = Refl
+  lengthUnionPeopleWithItself : length unionPeopleWithItself = 8
+  lengthUnionPeopleWithItself = Refl
 
- unionPeopleWithNew : List (Row Person)
- unionPeopleWithNew = eval (people `Union` (Table [["Alice",18]]))
+  unionPeopleWithNew : Table Person
+  unionPeopleWithNew = eval (people `Union` (Table [["Alice",18]]))
 
- lengthUnionPeopleWithNew : length unionPeopleWithNew = 5
- lengthUnionPeopleWithNew = Refl
+  lengthUnionPeopleWithNew : length unionPeopleWithNew = 5
+  lengthUnionPeopleWithNew = Refl
 
 namespace Diff
 
- diffPeopleWithItself : List (Row Person)
- diffPeopleWithItself = eval (people `Diff` people)
+  diffPeopleWithItself : Table Person
+  diffPeopleWithItself = eval (people `Diff` people)
 
- lengthDiffPeopleWithItself : length diffPeopleWithItself = 0
- lengthDiffPeopleWithItself = Refl
+  lengthDiffPeopleWithItself : length diffPeopleWithItself = 0
+  lengthDiffPeopleWithItself = Refl
 
- diffPeopleWithNew : List (Row Person)
- diffPeopleWithNew = eval (people `Diff` (Table [["Gismo",2]]))
+  diffPeopleWithNew : List (Row Person)
+  diffPeopleWithNew = eval (people `Diff` (Table [["Gismo",2]]))
 
- lengthDiffPeopleWithNew : length diffPeopleWithNew = 3
- lengthDiffPeopleWithNew = Refl
+  lengthDiffPeopleWithNew : length diffPeopleWithNew = 3
+  lengthDiffPeopleWithNew = Refl
 
 namespace Product
 
- prodPeopleWithABC : List (Row (Person ++ ["Foo":::Char]))
- prodPeopleWithABC = eval (Product people fooTable) where 
-   fooTable : Query Idris ["Foo":::Char]
-   fooTable = Table [ [ 'A' ] , [ 'B' ] , [ 'C' ] ]
+  prodPeopleWithABC : List (Row (Person ++ ["Foo":::Char]))
+  prodPeopleWithABC = eval (Product people fooTable) where 
+    fooTable : Query Table ["Foo":::Char]
+    fooTable = Table [ [ 'A' ] , [ 'B' ] , [ 'C' ] ]
 
- lengthProdPeopleWithABC : length prodPeopleWithABC = 12
- lengthProdPeopleWithABC = Refl
+  lengthProdPeopleWithABC : length prodPeopleWithABC = 12
+  lengthProdPeopleWithABC = Refl
 
 namespace Projection
 
- projPeopleFirstNames : List (Row ["FirstName":::String])
- projPeopleFirstNames = eval (Projection fooProj people) where 
-   fooProj : String -> Maybe String
-   fooProj "Name" = Just "FirstName"
-   fooProj _      = Nothing
+  projPeopleFirstNames : List (Row ["FirstName":::String])
+  projPeopleFirstNames = eval (Projection fooProj people) where 
+    fooProj : String -> Maybe String
+    fooProj "Name" = Just "FirstName"
+    fooProj _      = Nothing
 
 namespace Select
 
@@ -79,7 +79,7 @@ namespace Select
 
 namespace GroupBy
 
-  groupByAge : List (Row ["k":::Nat, "v":::TableType Idris Person])
+  groupByAge : GroupingMap Nat Person
   groupByAge = eval (GroupBy (Person ^ "Age") people)
 
   lengthGroupByAge : length groupByAge = 3

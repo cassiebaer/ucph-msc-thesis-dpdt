@@ -1,6 +1,6 @@
 module Database.PowerOfPi.Idris.Expr
 
-import Database.PowerOfPi
+import Database.PowerOfPi.Abstract
 import Database.PowerOfPi.Idris.Types
 
 ||| Get the value of an attribute given a proof that the
