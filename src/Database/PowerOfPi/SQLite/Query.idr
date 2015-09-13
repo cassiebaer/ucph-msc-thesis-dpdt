@@ -5,12 +5,15 @@ import Database.PowerOfPi.SQLite.Expr
 
 namespace Query
 
+  SQLiteTable : Schema -> Type
+  SQLiteTable _ = String
+
   commasBetween : List String -> String
   commasBetween xs = concat $ intersperse ", " xs
 
   ||| Evaluates a Query, returning a List of Rows.
   %assert_total
-  eval : Query SQLite s -> String
+  eval : Query SQLiteTable s -> String
   eval (Table xs)       = xs
   eval (Union x y)      = "(" ++ eval x ++ ") Union (" ++ eval y ++ ")"
   eval (Diff x y)       = "(" ++ eval x ++ ") Intersect (" ++ eval y ++ ")"
