@@ -21,7 +21,7 @@ bounds width tally = let lb = cdf 0 width (-1 - tally)
                          ub = cdf 0 width ( 1 - tally)
                       in (lb,ub)
 
-eval : Aggregation Idris c -> Private c Double
+eval : Aggregation Table c -> Private c Double
 eval (NoisyCount   (MkPINQuery q) eps)     = MkPrivate $ \g =>
     let (rx,g') = rndDouble g
         noise   = samplePure 0 (1 / toFloat eps) rx

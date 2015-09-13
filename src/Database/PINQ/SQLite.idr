@@ -19,7 +19,7 @@ samplePure mu b = "("   ++ show mu ++
                   " * " ++ signum rndVar ++ 
                   " * log(1 - 2 * abs(" ++ rndVar ++ "))" 
 
-eval : Aggregation SQLite c -> Private c String
+eval : Aggregation SQL_Table c -> Private c String
 eval (NoisyCount   (MkPINQuery q) eps)     = MkPrivate $ \g =>
     let noise = samplePure 0 (1 / toFloat eps)
      in ("SELECT (count(*) + " ++ noise ++ ") FROM table", g)

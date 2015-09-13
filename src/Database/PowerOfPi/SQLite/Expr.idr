@@ -1,6 +1,6 @@
 module Database.PowerOfPi.SQLite.Expr
 
-import Database.PowerOfPi.Abstract.Expr
+import public Database.PowerOfPi.Abstract.Expr
 
 ||| Evaluates an Expr to an SQLite expression
 %assert_total

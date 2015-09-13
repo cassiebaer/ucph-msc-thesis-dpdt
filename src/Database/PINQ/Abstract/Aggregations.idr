@@ -26,7 +26,7 @@ return x = MkPrivate $ \s => (x,s)
                                             in sf' st1
 
 ||| Represents differentially private aggregations
-data Aggregation : Backend -> Sensitivity -> Type where
+data Aggregation : (Schema -> Type) -> Sensitivity -> Type where
  -- (>>=)        : Aggregation b c a -> Aggregation b c' a ->         Aggregation b (c+c') a
-  NoisyCount   : PINQuery b s c -> (e:Epsilon) ->                   Aggregation b (c*e) 
-  NoisyAverage : PINQuery b s c -> (e:Epsilon) -> Expr s Double ->  Aggregation b (c*e)
+  NoisyCount   : PINQuery t s c -> (e:Epsilon) ->                   Aggregation t (c*e) 
+  NoisyAverage : PINQuery t s c -> (e:Epsilon) -> Expr s Double ->  Aggregation t (c*e)

@@ -1,6 +1,6 @@
 module Database.PowerOfPi.Abstract.Expr
 
-import Database.PowerOfPi.Abstract.Types
+import public Database.PowerOfPi.Abstract.Types
 %default total
 
 ||| Looks up the Type associated with 'nm'
