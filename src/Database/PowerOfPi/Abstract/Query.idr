@@ -1,7 +1,7 @@
 module Database.PowerOfPi.Abstract.Query
 
 import Database.PowerOfPi.Abstract.Types
-import Database.PowerOfPi.Abstract.Expr
+import public Database.PowerOfPi.Abstract.Expr
 %default total
 
 mutual
