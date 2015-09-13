@@ -23,4 +23,4 @@ samplePure mu b = "("   ++ show mu ++
 noisyCount : (PINQuery SQLiteTable s c) -> (e:Epsilon) -> Private (c*e) String
 noisyCount  (MkPINQuery q) eps  = MkPrivate $ \g =>
     let noise = samplePure 0 (1 / toFloat eps)
-     in ("SELECT (count(*) + " ++ noise ++ ") FROM table", g)
+     in ("SELECT (count(*) + " ++ noise ++ ") FROM " ++ eval q, g)
