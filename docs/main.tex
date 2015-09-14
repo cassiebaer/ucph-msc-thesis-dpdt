@@ -43,6 +43,8 @@ As the producers of this data, we should be concerned with how it is being used.
 
 Concepts used later in the paper that need to be defined here:
 \begin{itemize}
+\item Idris data constructors cannot share names with type constructors
+\item Very small segment about sections (e.g. \texttt{(*10)})
 \item TBD
 \end{itemize}
 
@@ -67,7 +69,7 @@ Now sample two random values from a 1D line: $x,y$.
 Consider the case where $f(x) = \texttt{add10}(x) = x + 10$.
 Clearly, it doesn't matter which $x$ and $y$ you sample; the distance $d_{\mathbb R}(x,y)$ will always equal $d_{\mathbb R}(f(x),f(y))$.
 We say that \texttt{add10} is a 1-sensitive function.
-Now consider the case where $f(x) = \texttt{doubleThenAddTen}(x) = 2x + 10$.
+Now consider the case where $f(x) = \texttt{doubleThenAdd10}(x) = 2x + 10$.
 Distances can be now be doubled (but no more), so it is a 2-sensitive function.
 Intuitively, when dealing with linear functions and the Euclidian distance function, the largest linear coefficient will dictate the c-sensitivity.
 Higher order polynomials can be only be described as being $\infty$-sensitive.
@@ -81,13 +83,52 @@ Our distance function will just be the symmetric difference of two databases; i.
 There is a common case in the differential privacy literature where two databases differ by exactly 1 row (i.e. $d_{\mathbb D}(D_1,D_2)=1$).
 This is notationally represented by $D_1 \sim D_2$.
 
-Function sensitivies compose intuitively, too.
+Function sensitivies compose, too.
 The composition of \texttt{add10 . doubleThenAdd10} is 2-sensitive.
 \texttt{doubleThenAdd10 . doubleThenAdd10} is 4-sensitive.
-Function sensitivity represents the maximum multiplicative factor by which the distances increase.
-So the composition of two functions, $f$ and $g$, which are $c$- and $c'$-sensitive, respectively, intuitively is going to be $(c \times c')$-sensitive.
+Function sensitivity represents the maximum multiplicative factor by which the distances can increase.
+So it follows that the composition of two functions, $f$ and $g$, which are $c$- and $c'$-sensitive, respectively, will be $(c \times c')$-sensitive.
 
 % TODO : discuss any function that is c-sensitive is also c'-sensitive, for all $c < c'$.
+
+\subsection{Function sensitivity in Idris}
+
+Modelling function sensitivity in Idris is simple.
+Obviously we will need to index the type by sensitivity.
+To keep this example simple, we will use \texttt{Float} to represent it, but our implementation uses an implementation of \texttt{Rational}s, which should be numerically more stable than IEEE floating point numbers.
+
+We define a type constructor indexed by the sensitivity, input and output types, with just one data constructor for wrapping native functions.
+
+\begin{lstlisting}
+data SensitiveFunction : Float -> Type -> Type -> Type where
+    MkSensitiveFunction : (a -> b) -> SensitiveFunction s a b
+
+namespace Examples
+
+    add10 : SensitiveFunction 1 Float Float
+    add10 = MkSensitiveFunction (+10)
+
+    doubleThenAdd10 : SensitiveFunction 2 Float Float
+    doubleThenAdd10 = MkSensitiveFunction (*2)
+
+    cheat : SensitiveFunction 1 Float Float
+    cheat = MkSensitiveFunction (*20)
+\end{lstlisting}
+
+Notice the \texttt{cheat} example above.
+It is possible to define so-called ``sensitive functions'' which intentionally misrepresent themselves.
+Our focus here is not on the verification of a function's sensitivity, but rather on the interaction between sensitivity and the type system under operations such as function composition or application.
+Unrestricted application is as simple as unwrapping the function and applying it.
+Composition returns a new data constructor indexed on the appropriate sensitivity.
+
+\begin{lstlisting}
+apply : SensitiveFunction s a b -> a -> b
+apply (MkSensitiveFunction f) x = f x
+
+(.) : SensitiveFunction s b c -> SensitiveFunction s' a b -> SensitiveFunction (s*s') a c
+(.) (MkSensitiveFunction g) (MkSensitiveFunction f) = MkSensitiveFunction (g . f)
+\end{lstlisting}
+% TODO: Fix text running off page
 
 \section{Typing the Relational Algebra}\label{sec:typing_the_relational_algebra}
 
