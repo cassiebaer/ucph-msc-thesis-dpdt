@@ -25,7 +25,7 @@ noisyCount : (PINQuery Table s c) -> (e:Epsilon) -> Private (c*e) Double
 noisyCount (MkPINQuery q) eps = MkPrivate $ \g => 
   let (rx,g') = rndDouble g
       noise   = samplePure 0 (1 / toFloat eps) rx
-      count   = fromInteger $ fromNat $ length (eval q)
+      count   = the Double $ fromInteger $ fromNat $ length (eval q)
    in (count + noise, g')
 
 noisyAverage : Expr s Double -> (PINQuery Table s c) -> (e:Epsilon) -> Private (c*e) Double
