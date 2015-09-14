@@ -32,13 +32,78 @@ This is the paper's abstract \ldots
 \end{abstract}
 
 \section{Introduction}\label{sec:introduction}
+
+With each passing day, more and more of our personal information is being collected, cataloged and analyzed by an ever increasing number of interested parties.
+Their interests can range from targeted advertising to malicious and potentially illegal actions and everything in between.
+As the producers of this data, we should be concerned with how it is being used.
+
+[maybe copy paste the rest of this from the original?]
+
 \section{Dependent Types in Idris}\label{sec:dependent_types_in_idris}
+
+Concepts used later in the paper that need to be defined here:
+\begin{itemize}
+\item TBD
+\end{itemize}
+
 \section{Differential Privacy}\label{sec:differential_privacy}
+
+In this section, we describe the central ideas and metrics behind differential privacy.
+
 \section{Function Sensitivity}\label{sec:function_sensitivity}
+
+Function sensitivity plays a central role in much of the differential privacy literature.
+We can make assertions about an entire program if we understand the sensitivities of the functions with which it is composed.
+In this section, we describe function sensitivity and then demonstrate how we use dependent types to model it in Idris.
+
+Function sensitivity captures the idea of how relatively ``far'' a function can magnify the distance between pairs of inputs.
+We say that a function is $c$-sensitive if, for all pairs of inputs, the distance between the outputs is not $c$ times greater than the original distance between the inputs.
+
+	$$ \forall x,y. d(f(x),f(y)) \le c \times d(x,y) $$
+
+For example, imagine a function $f : \mathbb R \rightarrow \mathbb R$ and Euclidian distance function $d_{\mathbb R}(x,y) = |x-y|$.
+Now sample two random values from a 1D line: $x,y$.
+
+Consider the case where $f(x) = \texttt{add10}(x) = x + 10$.
+Clearly, it doesn't matter which $x$ and $y$ you sample; the distance $d_{\mathbb R}(x,y)$ will always equal $d_{\mathbb R}(f(x),f(y))$.
+We say that \texttt{add10} is a 1-sensitive function.
+Now consider the case where $f(x) = \texttt{doubleThenAddTen}(x) = 2x + 10$.
+Distances can be now be doubled (but no more), so it is a 2-sensitive function.
+Intuitively, when dealing with linear functions and the Euclidian distance function, the largest linear coefficient will dictate the c-sensitivity.
+Higher order polynomials can be only be described as being $\infty$-sensitive.
+
+Linear functions and Euclidian distances are not terribly interesting.
+Function sensitivity applies to many other interesting domains such as databases containing private tax records or health information.
+
+We will use $\mathbb D$ to describe the domain of databases.
+Hence, a function $f : \mathbb D \rightarrow \mathbb D$ is a function across databases.
+Our distance function will just be the symmetric difference of two databases; i.e. $d_{\mathbb D}(D_1,D_2) = | D_1 \oplus D_2 |$.
+There is a common case in the differential privacy literature where two databases differ by exactly 1 row (i.e. $d_{\mathbb D}(D_1,D_2)=1$).
+This is notationally represented by $D_1 \sim D_2$.
+
+Function sensitivies compose intuitively, too.
+The composition of \texttt{add10 . doubleThenAdd10} is 2-sensitive.
+\texttt{doubleThenAdd10 . doubleThenAdd10} is 4-sensitive.
+Function sensitivity represents the maximum multiplicative factor by which the distances increase.
+So the composition of two functions, $f$ and $g$, which are $c$- and $c'$-sensitive, respectively, intuitively is going to be $(c \times c')$-sensitive.
+
+% TODO : discuss any function that is c-sensitive is also c'-sensitive, for all $c < c'$.
+
 \section{Typing the Relational Algebra}\label{sec:typing_the_relational_algebra}
+
+In this section, we review the relational algebra and show how it can be modelled in a dependently typed language.
+
 \section{Our implementation}\label{sec:our_implementation}
+
+In this section, we bring together the material of the previous chapters and outline our entire implementation.
+
 \section{Evaluation}\label{sec:evaluation}
+
+In this section, we evaluate our language and discuss various things about it.
+
 \section{Conclusion}\label{sec:conclusion}
+
+We worked very hard, but achieved very little.
 
 \bibliographystyle{abbrv}
 \bibliography{main}
