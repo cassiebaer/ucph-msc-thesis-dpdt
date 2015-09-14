@@ -95,10 +95,10 @@ namespace Foo
 
 namespace Aggregation
 
-  countTable : eval (Aggregation people (+) (the Nat 0) (Lit 1)) = length (eval people)
+  countTable : eval (count people) = length (eval people)
   countTable = Refl
 
-  sumAges : eval (Aggregation people (+) (the Nat 0) (Person^"Age")) = 79
+  sumAges : eval (sum people (Person^"Age")) = 79
   sumAges = Refl
 
 namespace Partition
