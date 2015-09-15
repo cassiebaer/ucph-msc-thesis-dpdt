@@ -219,6 +219,14 @@ Thus, an expression with the type \texttt{Expr s a} can be read as an expression
 Notice that we have not yet defined any underlying representation for the rows.
 % TODO : expand on this idea
 
+\begin{figure}[tb]
+    \centering
+    \includegraphics[]{assets/expr_tree.png}
+    \caption{Caption here}
+    \label{fig:figure1}
+\end{figure}
+% TODO : resize and work with this graph. write about it in the neighboring text
+
 Expressions can be built up from other expressions, forming an expression tree.
 What type will a complex expression tree have?
 Expressions cannot change the schema, so it must remain constant even as we grow the tree.
