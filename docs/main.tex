@@ -289,7 +289,121 @@ We just use type unification to express the first two and a machine-decidable pr
 
 \section{Our implementation}\label{sec:our_implementation}
 
-In this section, we bring together the material of the previous chapters and outline our entire implementation.
+In this section, we describe how we bring together the material of the previous chapters and outline our entire implementation.
+
+Our goal is to leverage Idris's type-checker to statically verify differential privacy constraints.
+We create new types to capture the necessities.
+We will focus on \texttt{PINQuery} because the other two have similar implementations, but are case-specific.
+
+\begin{lstlisting}
+data PINQuery : (Schema -> Type) -> Schema -> Stability -> Type where
+    MkPINQuery : Query t s -> PINQuery t s c
+data PINGrouping : (Schema -> Type) -> Schema -> Type -> Stability -> Type where
+    MkPINGrouping : Grouping t s k -> PINGrouping t s k c
+data PINPartitioning : (Schema -> Type) -> Schema -> Type -> Stability -> Type where
+    MkPINPartitioning : Partitioning t s k -> PINPartitioning t s k c
+\end{lstlisting}
+
+% TODO 1 : discuss transformation stability vs. function sensitivity
+
+A \texttt{PINQuery t s c} describes a \texttt{c}-differentially private query with schema \texttt{s} (and backend table representation \texttt{(t s)}).
+There is only one data constructor which serves simply to wrap a \texttt{Query}, which was defined in Section~\ref{sec:typing_the_relational_algebra}.
+This allows us to define a \texttt{Query} and assign it an arbitrary stability.
+
+Next, we provide the standard operators from the relational algebra.
+This time, however, we do not build up abstract syntax trees with ADTs.
+That approach proved to be unnecessarily complex with regards to satisfying the type-checker.
+% TODO 2 : probably expand on this point
+Instead, we unwrap the \texttt{Query} and then rewrap it in the same data constructor, but using a different type constructor.
+This is because the schema and stability could potentially change.
+We control the API that is exported, so we carefully implement the relational algebra operators with the correct stability costs.
+% TODO 3 : make the PINQuery ADT abstract
+By unwrapping and rewrapping the \texttt{Query} trees from Section~\ref{sec:typing_the_relational_algebra} in our new type, we are now able to build query trees that carry privacy metrics in the type.
+
+\begin{lstlisting}
+where' : PINQuery b s c -> Expr s Bool -> PINQuery b s c
+where' (MkPINQuery q) e = MkPINQuery (Select e q)
+
+select : PINQuery b s c -> (f:String -> Maybe  String) -> PINQuery b (projectedSchema f s) c
+select (MkPINQuery q) f = MkPINQuery (Projection f q)
+
+union : PINQuery b s c -> PINQuery b s c' -> PINQuery b s (c + c')
+union (MkPINQuery q) (MkPINQuery q') = MkPINQuery (Union q q')
+
+intersect : PINQuery b s c -> PINQuery b s c' -> PINQuery b s (c + c')
+intersect (MkPINQuery q) (MkPINQuery q') = MkPINQuery (Diff q q')
+
+groupBy : Eq k => Expr s k -> PINQuery b s c -> PINGrouping b s k (c * 2)
+groupBy e (MkPINQuery q) = MkPINGrouping (GroupBy e q)
+\end{lstlisting}
+
+\texttt{where'} is a 1-sensitive function and it's type declaration reflects that.
+% TODO 2 : give proof
+The \texttt{c} parameter remains unchanged through the rewrapping.
+
+\texttt{union}, however, costs the sum of the costs of the operands.
+Notice how easily this is described in Idris.
+
+Of course, we can't just return the results of any query.
+A query might just return the database contents untouched, potentially violating every single participant's privacy.
+Differential privacy essentially requires that any query response be the result of some sort of aggregation.
+
+Additionally, the control flow of a program may be predicated on the value returned from an aggregation.
+Sequential queries are additive in cost.
+Sequencing computations in functional programming is traditionally accomplished using the infamous \texttt{Monad}.
+In many languages, Idris included, types implementing \texttt{Monad} instances have access to special syntactic sugar, commonly known as \texttt{do}-notation.
+It is important to note that \texttt{do}-notation is not magic!
+It just allows developers an alternative method for writing monadic code.
+
+We want to take advantage of this, but the type signatures required to satisfy a monad instance preclude our ability to reflect sensitivities in the types.
+Fortunately, Idris does not actually require a \texttt{Monad} instance to overload \texttt{do}-notation.
+We just need to provide the functions \texttt{(>>=)} and \texttt{return}.
+
+\begin{lstlisting}
+data Private : Sensitivity -> Type -> Type
+    MkPrivate : (CrapGen -> (a,CrapGen)) -> Private budget a
+
+return : a -> Private 0 a
+return x = MkPrivate $ \s => (x,s)
+
+(>>=) : Private s a -> (a -> Private s' b) -> Private (s + s') b
+(>>=) (MkPrivate sf) f = MkPrivate $ \st => let (x,st1)       = sf st
+                                                MkPrivate sf' = f x
+                                             in sf' st1
+
+evalPrivate : Private s a -> CrapGen -> a
+evalPrivate (MkPrivate f) g = fst (f g)
+
+namespace Examples
+
+    nestedAggregations : Private 3 Double
+    nestedAggregations = do x <- the (Private 1 Double) someAggregation
+                            y <- the (Private 2 Double) someOtherAggr
+                            return ((x+y*2)/3)
+\end{lstlisting}
+
+Experienced functional programmers will probably recognize that \texttt{Private} is functionally equivalent to a \texttt{State} monad instance.
+Laplace noise requires pseudorandom number generation, so we are keeping track of a generator throughout the computation.
+
+Each aggregation is responsible for providing differential privacy.
+Our implementation provides several common aggregations, such as \texttt{noisyCount} and \texttt{noisyAverage}.
+Experts will be able to write their own aggregations to provide to the public.
+
+Of course, aggregation alone is not sufficient for guaranteeing privacy.
+We must add Laplace noise according to the sensitivity of the \texttt{PINQuery} and a user-provided epsilon.
+
+\texttt{noisyCount} is a good example of a simple aggregation.
+The user provides a \texttt{PINQuery} (which has an associated stability cost) and an arbitrary epsilon reflecting how accurate they want the result to be.
+The added noise is scaled according to the user provided epsilon while the privacy cost of the entire computation is computed in the types.
+
+\begin{lstlisting}
+noisyCount : (PINQuery Table s c) -> (e:Epsilon) -> Private (c*e) Double
+noisyCount (MkPINQuery q) eps = MkPrivate $ \g => 
+  let (rx,g') = rndDouble g
+      noise   = samplePure 0 (1 / toFloat eps) rx
+      count   = the Double $ fromInteger $ fromNat $ length (eval q)
+   in (count + noise, g')
+\end{lstlisting}
 
 \section{Evaluation}\label{sec:evaluation}
 
