@@ -31,13 +31,57 @@
 This is the paper's abstract \ldots
 \end{abstract}
 
+% TODO 2 : merge Background section from old_main.tex into paper
+
 \section{Introduction}\label{sec:introduction}
 
 With each passing day, more and more of our personal information is being collected, cataloged and analyzed by an ever increasing number of interested parties.
 Their interests can range from targeted advertising to malicious and potentially illegal actions and everything in between.
 As the producers of this data, we should be concerned with how it is being used.
 
-[maybe copy paste the rest of this from the original?]
+For example, our medical records consist of very personal information which we expect to remain private.
+Some countries even require legal privacy guarantees for systems maintaining sensitive information, e.g, the Health Insurance Portability and Acountability Act (HIPAA) in the USA.
+The availability of an entire population's medical records would be a gold mine for medical researchers in need of statistical data.
+And so we are faced with a classic balancing act: how do we balance individuals' privacy against the usefulness of a dataset?
+
+Differential privacy\cite{journals/cacm/Dwork11} is an emerging field aiming to answer this question.
+The central concept in differential privacy is indistinguishability, i.e, a query against a dataset should return more-or-less the same result regardless of whether or not a particular individuals records were included in the data.
+If the results are indistinguishable, then the records of that particular individual must be unidentifiable.
+
+Many metrics and algorithms have been developed by the differential privacy community.
+Each algorithm is typically bundled with a formal proof that it meets some constraints or has some privacy-related properties.
+The burden of producing such a proof and implementing the described algorithm is typically manual, and therefore error-prone.
+
+PINQ\cite{conf/sigmod/McSherry09} is a differential privacy framework that takes a different approach.
+It is a SQL-like query DSL for the .NET languages which guarantees differential privacy by construction.
+Users of PINQ are able to compose carefully implemented primitives to build computations which run against raw data but cannot break differential privacy guarantees.
+A protected runtime-system rejects queries whose cost exceed the remaining privacy budget.
+
+These cost vs. budget checks are made at runtime.
+An analyst has no way of knowing whether a query will be accepted by the runtime-system unless they are manually tracking their budget.
+Reed and Pierce\cite{conf/icfp/ReedP10} solve this by building a strongly-typed programming language which represents query costs in the types.
+We aim to extend this idea by showing that a dependent type system is a natural fit for capturing differential privacy requirements.
+
+Strongly-typed languages are capable of statically verifying programs for type-correctness, precluding many potential sources of runtime errors: ``well-typed programs can't go wrong''.
+We extend this notion of being ``well-typed'' to include differential privacy metrics.
+Just as PINQ is embedded in the .NET languages (particularly C\#), we plan to embed our implementation within the dependently-typed, functional programming language: Idris\footnote{http://idris-lang.org}.
+This allows us to take advantage of Idris' parser and advanced type checker, as well as the many constant improvements being made to them by the open-source community.
+
+Well-typed programs in our embedded language can't go wrong and also can't violate their privacy requirements.
+Formal proofs for type-correct algorithms written in our language are unnecessary - the program itself is the proof.
+Thus, all type-correct programs must respect expected privacy requirements.
+
+\subsection{Contributions}
+
+This paper describes an implementation of an embedded prototype language, [NAME], for describing differentially private computations.
+Dependent type systems have come a long way since Martin-L\"of's original intuitionistic type theory.
+We show that dependent types in a practical setting are a natural fit for describing concepts from differential privacy.
+
+% TODO 1 : write contributions
+
+\paragraph{Outline}
+
+% TODO 1 : write the outline
 
 \section{Dependent Types in Idris}\label{sec:dependent_types_in_idris}
 
@@ -45,6 +89,7 @@ Concepts used later in the paper that need to be defined here:
 \begin{itemize}
 \item Idris data constructors cannot share names with type constructors
 \item Very small segment about sections (e.g. \texttt{(*10)})
+\item do-notation overloading, even without Monad instance
 \item TBD
 \end{itemize}
 
