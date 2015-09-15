@@ -9,19 +9,24 @@ Person = [ "Name" ::: String , "Age" ::: Double ]
 Food : Schema
 Food = [ "Name" ::: String , "Food" ::: String ]
 
-people : PINQuery Idris Person 1
+people : PINQuery Table Person 1
 people = MkPINQuery $ Table [ [ "Casper" , 26 ]
                             , [ "Knut"   , 26 ]
                             , [ "Gismo"  ,  2 ]
                             ]
 
-foods : PINQuery Idris Food 1
+foods : PINQuery Table Food 1
 foods = MkPINQuery ( Table [ [ "Casper" , "Bruschetta" ]
                            , [ "Knut"   , "Prim"       ]
                            , [ "Gismo"  , "Dog food"   ]
                            ])
 
 namespace Aggregations
+
+  nestedAggrs : Private 3 Double
+  nestedAggrs = do x <- noisyCount people 1
+                   y <- noisyCount people 2
+                   return ((x+y*2)/3)
 
   testNoisyCount : Double
   testNoisyCount = evalPrivate (do x <- noisyCount people 1
