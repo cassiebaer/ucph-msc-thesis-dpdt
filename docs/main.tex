@@ -133,6 +133,151 @@ apply (MkSensitiveFunction f) x = f x
 \section{Typing the Relational Algebra}\label{sec:typing_the_relational_algebra}
 
 In this section, we review the relational algebra and show how it can be modelled in a dependently typed language.
+Our approach is based on \cite{OurySwierstra08PowerOfPi}.
+
+The relational algebra describes semantics for modelling and querying data in relational databases (e.g. MySQL\footnote{https://www.mysql.com/}).
+E.F. Codd described relational databases and their associated algebra back in the 1970's.
+% TODO : find reference to paper
+The relational model quickly became popular for its simplicity and good performance.
+
+In the relational algebra, relations are modelled as tables.
+The rows of a table represent individual entities and the columns represent their attributes.
+Each of these columns is associated with a data type.
+Every table has a \textit{schema}, which is the last of its column names and types.
+For example, the table below contains four columns; each has a unique name and an associated data type.
+
+\begin{table}[tb]
+    \caption{caption here}
+    \label{tab:tablename}
+    \centering
+
+    \begin{tabular}{|c|c|c|c|}
+    \hline
+
+    \hline
+    \textbf{Key} & \textbf{Name} & \textbf{Age} & \textbf{FavoriteFood} \\
+    \hline
+    \textit{Int} & \textit{String} & \textit{Int} & \textit{String} \\
+    \hline
+    \hline
+       1 & Casper & 26 & Chicken Curry \\
+       2 & Knut & 26 & ??? \\
+       % TODO : Knut fills out fav. food
+    \hline
+
+    \end{tabular}
+\end{table}
+
+The relational algebra allows us to build structured queries against relational databases.
+The primary operators are listed below.
+Note that some of the operators may require expressions to be provided (e.g. for filtering a table with a conditional).
+
+\begin{itemize}
+    \item selection
+    \item projection
+    \item Cartesian product\footnote{\label{fn:set_ops} These operations function identically to their set counterparts, but impose additional requirements regarding table schemas. In particular, union and difference (and therefore intersection) require that the schemas of the two operands match. The Cartesian product operator requires that the two schemas are disjoint.}
+    \item set union\footnotemark[\ref{fn:set_ops}]
+    \item set difference\footnotemark[\ref{fn:set_ops}]
+\end{itemize}
+
+Note that the set operations and Cartesian product impose additional requirements in this context.
+They have precluded many type systems from being able to fully type-check the relational algebra.
+Strongly-typed languages, such as Haskell, have devised clever solutions to this problem, but none are as straight-forward as the approach available to a dependent type system.
+The ability to capture schemas directly in the types and to manipulate them yields a deceptively simple, but powerful typing framework for relational databases.
+
+\subsection{Relational Algebra in Idris}
+
+This section will briefly outline a simple implementation of the relational algebra in Idris.
+We begin by defining some simple algebraic datatypes (ADTs) for keeping the types clear.
+We then define a toy expression language before defining the query language.
+
+First, we need to be able to represent table attributes (columns).
+An attribute is just the pairing of a name and a data type.
+Following David Christiansen's lead, we opt to use \texttt{(:::)} instead of the more traditional \texttt{(,)} for constructing our pairs.
+We believe this enhances readability of long schemas, which are just lists of attributes.
+
+\begin{lstlisting}
+data Attribute : Type where
+  (:::) : String -> Type -> Attribute
+
+Schema : Type
+Schema = List Attribute
+
+namespace Examples
+
+    people : Schema
+    people = [ "Key"          ::: Int 
+             , "Name"         ::: String
+             , "Age"          ::: Int
+             , "FavoriteFood" ::: String
+             ]
+\end{lstlisting}
+
+The relational algebra assumes the existence of an expression language, so we implement a primitive one for demonstration.
+An expression will have access to all of the attributes of a row during evaluation and will return a value of some arbitrary type.
+Thus, an expression with the type \texttt{Expr s a} can be read as an expression with access to the attributes in schema \texttt{s} returning type \texttt{a}.
+Notice that we have not yet defined any underlying representation for the rows.
+% TODO : expand on this idea
+
+Expressions can be built up from other expressions, forming an expression tree.
+What type will a complex expression tree have?
+Expressions cannot change the schema, so it must remain constant even as we grow the tree.
+The root of the tree represents the last ``operation'' to be applied under evaluation.
+The return type of the root of the tree is the return type of the tree.
+Only well-typed expression trees will be allowed by the type checker.
+
+\begin{lstlisting}
+data Expr : Schema -> Type -> Type where
+    (^)    : (s:Schema) -> (nm:String) -> { auto p : (map cast s) `ContainsKey` nm } -> Expr s (lookupType s p)
+    (+)    : Num t => Expr s t -> Expr s t -> Expr s t
+    (==)   : Eq t  => Expr s t -> Expr s t -> Expr s Bool
+    Lit    : t -> Expr s t
+    PureFn : (a -> b) -> Expr s a -> Expr s b
+
+namespace Examples
+
+    fountain_of_youth : Expr s Int
+    fountain_of_youth = people^"Age" - 10
+\end{lstlisting}
+
+The \texttt{PureFn} data constructor lifts pure Idris functions into the expression language, which should allow programmers to bend even this toy expression language to the task at hand.
+Unfortunately, this functionality is only available to the Idris backend.
+% TODO: true?
+\texttt{ContainsKey} is just a proof that the given schema contains the attribute in question.
+It is derived automatically, so users of our language should never have to worry about it.
+\texttt{lookupType} is able to use this proof to statically verify the types.
+
+% TODO : insert image of expr AST
+
+The core of the relational algebra consists of the query operators.
+They are modelled as follows.
+Note that \texttt{Query} is a data family.
+This allows us to adjust its data representation just enough to implement a variety of backends.
+The leaves of all queries will be very backend specific.
+An in-memory Idris backend might store pointers to the tables directly in the data constructor, whereas a SQL backend might just store the name of the table.
+One of the benefits of this is that any dataset which can be modelled using the relational algebra is usable.
+
+\begin{lstlisting}
+mutual
+    data Query : (Schema -> Type) -> Schema -> Type where
+        Table   :       t s -> Query t s
+        Union   : Query t s -> Query t s -> Query t s
+        Diff    : Query t s -> Query t s -> Query t s
+        Product : Query t s -> Query t s' -> { auto p : Disjoint s s' } -> Query t (s ++ s')
+        Projection : (f:String -> Maybe String) -> Query t s -> Query t (projectedSchema f s)
+        Select  : Expr s Bool -> Query t s -> Query t s
+    data Grouping : (Schema -> Type) -> Schema -> Type -> Type where
+        GroupBy : Eq k => Expr s k -> Query t s -> Grouping t s k
+    data Partitioning : (Schema -> Type) -> Schema -> Type -> Type where
+        Partition : Eq k => List k -> Expr s k -> Query t s -> Partitioning t s k
+\end{lstlisting}
+
+Recall that the set operators require additional constraints that less powerful type systems have a difficult time capturing.
+Set union and difference require that the two operands share matching schemas.
+Cartesian product requires that they be disjoint.
+We just use type unification to express the first two and a machine-decidable proof of disjointness for the other.
+
+% TODO : write about backends
 
 \section{Our implementation}\label{sec:our_implementation}
 
