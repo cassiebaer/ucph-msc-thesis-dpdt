@@ -83,6 +83,148 @@ We show that dependent types in a practical setting are a natural fit for descri
 
 % TODO 1 : write the outline
 
+\section{Differential Privacy}\label{sec:differential_privacy}
+
+In this section, we describe the central ideas and metrics behind differential privacy.
+
+In today's Big Data world, more and more of our data is being stored on servers belonging to others.
+We are not the consumers of free online services, we are the product.
+But regardless of whether we freely volunteered it, were legally compelled to share it, or just bought something online, we have a reasonable expectation to privacy of our data.
+
+However, databases containing large amounts of personal data can be tremendously valuable for researchers looking into a variety of important questions.
+For example, epidemiologists may be able to detect and prevent the spread of disease and doctors may be able to monitor and/or analyze the long-term health trends of a large population over time.
+Big Data offers us huge potential for learning about ourselves, but most of these databases are held under lock and key.
+How best to balance database utility against individual privacy is the question differential privacy aims to answer.
+
+Many approaches have been devised for sharing data while respecting privacy.
+One approach, which has made news headlines a few times by now, is to anonymize or otherwise ``fuzz'' a dataset before releasing it to the public.
+However, it is increasingly evident that it is not possible to release a database accurate enough to be usable while still respecting privacy\cite{journals/cacm/Dwork11}.
+
+Differential privacy aims to maximize database utility while minimizing the risk for all individuals contained within.
+Traditionally, privacy research has focused on preventing a malicious attacker from learning anything about any given individual.
+However, this has proved to be nearly impossible in the presence of auxiliary information. ((WHY))
+% TODO: why?
+
+Rather than trying to prove the impossibility of a privacy breach, differential privacy guarantees that a users participation in a database will only increase their risk of a privacy breach by some small amount.
+This holds true regardless of how much auxiliary information a would-be attacker knows.
+
+Analysts are able to run differentially private algorithms against raw data knowing that no individuals' privacy can be compromised.
+Suddenly, many of the Big Data databases which would otherwise be off limits can be made available to researchers.
+Each individuals participation in the database does not have a large effect on their privacy risk, so honest participation is almost a direct consequence.
+
+\subsection{Function Sensitivity}
+% TODO: give a better subsubsection name
+
+One of the key metrics used in differential privacy, and in our type system, is function sensitivity.
+Function sensitivity provides an upper bound on how much a function can magnify distances between inputs.
+
+\begin{defn}\label{def:csens}
+  A function, $f : \mathbb{R} \rightarrow \mathbb{R}$, is $c$-sensitive if
+  $\forall x,y.d(f(x),f(y)) \le c \times d(x,y)$.
+\end{defn}
+
+As an example, take the Euclidian distance function, $d_\mathbb{R}(x,y) = |x - y|$, for $d$.
+Clearly, the function $f_1(x)=x$ cannot magnify distances at all.
+For any two real numbers, their difference will equal the difference between them after applying $f_1$.
+
+\[
+  \forall x,y.d_\mathbb{R}(f_1(x),f_1(y)) = d_\mathbb{R}(x,y)
+\]
+
+We say $f_1$ is 1-sensitive.
+Another example of a 1-sensitive function is $f_2(x) = x/2$.
+
+By choosing a different distance function, function sensitivity can be extended to be applicable to almost anything.
+Differential privacy is primarily concerned with databases, so we choose an appropriate distance function over $\mathbb{D}$.
+Given two databases, $D_1, D_2 \in \mathbb{D}$, we define the distance between them to be the length of the symmetric difference of their elements (or rows).
+That is, $d_\mathbb{D}(D_1,D_2) = |D_1 \oplus D_2|$.
+
+We define a special case when two databases differ by exactly one row (i.e. $d_\mathbb{D}(D_1,D_2)=1$), which we denote by $D_1 \sim D_2$.
+This is a common-case in the differential privacy literature because we are concerned with the inclusion of any particular individual's data in the database.
+One of the databases contains that individual's data; the other is the same database with exactly that row removed.
+
+\subsection{Indistinguishability}
+
+One of the key concepts driving differential privacy research is that of indistinguishability.
+The idea is simple: if an attacker, based on the output from a query, is unable to determine whether your data was even included in the database, then he can't deduce much about your data from the database.
+We turn to randomness to achieve this kind of property.
+
+Consider a randomized function, $f_r(x)$.
+Assume that we have two variables, $x, y \in Domain(f_r)$.
+If the probability of $f_r$'s output being in $S \subseteq Codomain(f_r)$ is almost the same regardless of whether $f_r$ was applied to $x$ or $y$, then it is nearly impossible to determine which input was used.
+
+\[
+  Pr[f_r(x)\in S] \qquad\approx\qquad  Pr[f_r(y)\in S]
+\]
+
+This is the core idea behind indistinguishability.
+Now consider a randomized query, or mechanism, $\mathcal{M}(D) : \mathbb{D} \rightarrow \mathbb{R}$.
+We say that such a query is $\epsilon$-differentially-private if the inclusion of your data affects your privacy risk by at most $e^\epsilon$.
+
+\begin{defn}\label{def:diffpriv}
+  A randomized mechanism, $\mathcal{M}(D)$, is $\epsilon$-differentially-private if, for all databases $D_1 \sim D_2$, and all $S \in Codomain(M)$,
+  $Pr[\mathcal{M}(D_1)\in S] \le e^\epsilon \times Pr[\mathcal{M}(D_2)\in S]$.
+\end{defn}
+
+\begin{itemize}
+  \item Quick talk about PINQ?
+  \item Other stuff
+\end{itemize}
+
+\subsection{PINQ}\label{sec:pinq}
+
+This section will provide an overview of PINQ, the framework we used as model for our language.
+PINQ is a layer built on top of the query language LINQ, providing some differential privacy guarantees.
+
+\subsubsection{Aggregations}
+
+The only way to extract data from the underlying database in PINQ is by using the built-in aggregation functions.
+These aggregations are proven to be $\epsilon$-differentially private.
+$\epsilon$ is a precision parameter passed in with aggregation applications.
+
+One of these aggregations is \texttt{count}, which counts the number of rows in the given query.
+In order to prove the sensitivity of this function we can use definition $\ref{def:csens}$.
+Let the distance function \texttt{d} be the Euclidean distance.
+Let the domain of \texttt{f} be two databases $D_1$ and $D_2$ where $D_1 \sim D_2$, representing a database with and without a particular individuals record.
+If we take the count of both these databases, we see that the Euclidean distance between the counts will always be 1, and thus count is a 1-sensitive function.
+
+Following definition $\ref{def:diffpriv}$, we can make count $\epsilon$-differentially private by adding zero mean Laplacian noise with 1/$\epsilon$ standard deviation to the result (TODO: Why).
+We call this version of count \texttt{noisyCount}.
+$\epsilon$ is a parameter of all the noisy aggregations and represents the balance between precision and privacy.
+
+Another aggregation we provide is average.
+Using the same approach, we find that the distance is dependent on the range of the type we are averaging.
+PINQ chooses to clamp the range between -1 and 1, which makes the function 1-sensitive.
+The consequence is that users have to pre-process the data by normalization before they use \texttt{noisyAverage}, which is the name of the average function with the added Laplacian noise as with count.
+
+\subsubsection{Transformations}
+
+Aggregations on their own are somewhat limited in their analytic power, but combined with transformations they become more powerful.
+The raw data results produced from transformations can not be exposed to users, as this would leak large amounts of privacy, but can be used as input to the aggregations, providing more flexibility.
+
+In PINQ, the sensitivity of a transformation is referred to as its stability.
+Proving the stability of a transformation is an application of definition \ref{def:csens} where \texttt{c} is the stability, \texttt{f} is of type  $D_1 \sim D_2 -> D$ and the distance function \texttt{d} is the symmetric difference.
+
+Examples of 1-stable transformations are \texttt{select} and \texttt{where}.
+
+\texttt{select} is a projection and will return the same number of rows as the input, and thus removing a particular row in the input will remove exactly one row and affect no other row of the result.
+
+\texttt{where} is a selection and will return a subset of the input rows.
+If we remove one of the input rows, the change in the result will be at most one row.
+
+\texttt{groupBy} is an example of a 2-stable transformation.
+This is because removing one row of the input can potentially both remove a group and the member in this group, leading to a symmetric difference of 2.
+
+For an aggregation applied to subsequent transformations the sensitivity is the stability of the transformations multiplied by $\epsilon$.
+
+For example $\texttt{count} \circ \texttt{groupBy} \circ \texttt{groupBy}$ will be a $4\epsilon$-differentially private function.
+
+\subsubsection{Budget}
+
+For every data source in PINQ a global budget is user-defined.
+Whenever a successful aggregation has been performed, its sensitivity is subtracted from the budget.
+If the privacy cost of the aggregation exceeds the remaining budget, the aggregation request gets denied.
+
 \section{Dependent Types in Idris}\label{sec:dependent_types_in_idris}
 
 Concepts used later in the paper that need to be defined here:
@@ -92,10 +234,6 @@ Concepts used later in the paper that need to be defined here:
 \item do-notation overloading, even without Monad instance
 \item TBD
 \end{itemize}
-
-\section{Differential Privacy}\label{sec:differential_privacy}
-
-In this section, we describe the central ideas and metrics behind differential privacy.
 
 \section{Function Sensitivity}\label{sec:function_sensitivity}
 
@@ -452,32 +590,49 @@ noisyCount (MkPINQuery q) eps = MkPrivate $ \g =>
 
 \section{Evaluation}\label{sec:evaluation}
 
-In this section we will present our results. More specifically, we will compare DPINQ to our inspirational library, PINQ.
+In this section we will present our results.
+More specifically, we will compare DPINQ to our inspirational library, PINQ.
 
 \subsection{API and flexibility}
 
-In order for a query language to be useful, it should be flexible, such that it can be used to express a range of algorithms. Differential privacy guarantees limits the flexibility in comparison to query languages without privacy concerns. Therefore, we have concidered flexibility to be an important success criteria for us.
+In order for a query language to be useful, it should be flexible, such that it can be used to express a range of algorithms.
+Differential privacy guarantees limits the flexibility in comparison to query languages without privacy concerns.
+Therefore, we have concidered flexibility to be an important success criteria for us.
 
-PINQ is fairly flexible considering its privacy guarantees. It is achieved by implementing simple primitives that are guaranteed to be differentially private, which can be mixed and matched together.
-PINQ also gets a lot of flexibility from the fact that it is built on top of LINQ, which grants users access to the powerful expression language of LINQ. This has its downside when it comes to safety though, which will be discussed later.
+PINQ is fairly flexible considering its privacy guarantees.
+It is achieved by implementing simple primitives that are guaranteed to be differentially private, which can be mixed and matched together.
+PINQ also gets a lot of flexibility from the fact that it is built on top of LINQ, which grants users access to the powerful expression language of LINQ.
+This has its downside when it comes to safety though, which will be discussed later.
 
-Our language has the same API as PINQ, but currently lack some of the flexibility PINQ provides. For our Idris backend, the expression operation \texttt{PureFn} provides flexible expressions only limited by Idris' capabilities, as it lifts an arbitrary Idris function to our expression language. 
-Unfortunately we are unable to compile an arbitrary Idris function to SQLite, so this functionality is not supported by our SQLite backend. This means that there are algorithms that can be written in our language using the Idris backend, but not using the SQLite backend. 
-We describe a possible solution in Future work to grant more flexibility to external database backends. 
+Our language has the same API as PINQ, but currently lack some of the flexibility PINQ provides.
+For our Idris backend, the expression operation \texttt{PureFn} provides flexible expressions only limited by Idris' capabilities, as it lifts an arbitrary Idris function to our expression language.
+Unfortunately we are unable to compile an arbitrary Idris function to SQLite, so this functionality is not supported by our SQLite backend.
+This means that there are algorithms that can be written in our language using the Idris backend, but not using the SQLite backend.
+We describe a possible solution in Future work to grant more flexibility to external database backends.
 
-Some algorithms are also inherently more difficult to represent in a dependently typed language than in languages with more limited type systems. An example is a k-means algorithm with a dynamic termination. The standard k-means algorithms runs for \texttt{n} iterations. Another version is one where the algorithm terminates based on some condition, e.g. that half of the remaining budget is used every iteration until some defined convergence point. This algorithm is difficult to represent in a dependent type system.
+Some algorithms are also inherently more difficult to represent in a dependently typed language than in languages with more limited type systems.
+An example is a k-means algorithm with a dynamic termination.
+The standard k-means algorithms runs for \texttt{n} iterations.
+Another version is one where the algorithm terminates based on some condition, e.g. that half of the remaining budget is used every iteration until some defined convergence point.
+This algorithm is difficult to represent in a dependent type system.
 
 \subsection{Type safety and security}
 
-For all practical purposes, LINQ is type safe. It has powerful lambda expressions that use the data source schema to reference fields with type safety. 
+For all practical purposes, LINQ is type safe.
+It has powerful lambda expressions that use the data source schema to reference fields with type safety.
 PINQ only validates privacy constraints dynamically, which means that users can write valid PINQ programs that violate privacy constraints.
 
 With Idris' flexible type system, we were able to make our language completely type safe, as described in the Power of Pi section.
 As we perform privacy calculations on the type level, users of our language are unable to write valid programs that violates privacy constraints.
 
-As mentioned in the previous subsection, PINQ allows users access to powerful LINQ lambda expressions. This freedom comes at the cost of security. Because the expressions has the whole .NET runtime at its disposal, side-channel attacks are possible. An example could be an expression that sends the raw, sensitive data off to a remote database. A rewrite function intended to remove such unsafe code from expressions is planned, but not implemented in the current version of PINQ.
+As mentioned in the previous subsection, PINQ allows users access to powerful LINQ lambda expressions.
+This freedom comes at the cost of security.
+Because the expressions has the whole .NET runtime at its disposal, side-channel attacks are possible.
+An example could be an expression that sends the raw, sensitive data off to a remote database.
+A rewrite function intended to remove such unsafe code from expressions is planned, but not implemented in the current version of PINQ.
 
-Side-channel attacks is not a problem in our language due to the pure nature of Idris. It is simply impossible to create side-effecting functions without specifically defining an effectful function, which can not be called by another function unless also that function is effectful.
+Side-channel attacks is not a problem in our language due to the pure nature of Idris.
+It is simply impossible to create side-effecting functions without specifically defining an effectful function, which can not be called by another function unless also that function is effectful.
 
 \section{Discussion}\label{sec:discussion}
 
