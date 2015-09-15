@@ -293,6 +293,25 @@ In this section, we bring together the material of the previous chapters and out
 
 \section{Evaluation}\label{sec:evaluation}
 
+In this section we will present our results. More specifically, we will compare DPINQ to our inspirational library, PINQ.
+
+\subsection{API and flexibility}
+
+In order for a query language to be useful, it should be flexible, such that it can be used to express a range of algorithms. Differential privacy guarantees limits the flexibility in comparison to query languages without privacy concerns. Therefore, we have concidered flexibility to be an important success criteria for us.
+
+PINQ is fairly flexible considering its privacy guarantees. It is achieved by implementing simple primitives that are guaranteed to me differentially privatei, which can be mixed and matched together.
+PINQ also gets a lot of flexibility from the fact that it is built on top of LINQ, which grants users access to the powerful expression language of LINQ. This has its downside when it comes to safety though, which will be discussed later.
+
+Our language has the same API as PINQ, but currently lack some of the flexibility PINQ provides. For our Idris backend, the expression operation \texttt{PureFn} provides flexible expressions only limited by Idris' capabilities, as it lifts an arbitrary Idris function to our expression language. Unfortunately we are unable to compile an arbitrary Idris function to SQLite, so this functionality is not supported by our SQLite backend. This means that there are algorithms that can be written in our language using the Idris backend, but not using the SQLite backend. We describe a possible solution in Future work to grant more flexibility to external database backends. 
+
+\subsection{Type Safety}
+
+
+
+DPINQ's API includes all the aggregations and transformations of the PINQ API. (TODO: Either implement or edit)However, PINQ is getting the power of LINQ expressions. 
+
+\section{Discussion}\label{sec:discussion}
+
 In this section, we evaluate our language and discuss various things about it.
 
 \section{Conclusion}\label{sec:conclusion}
