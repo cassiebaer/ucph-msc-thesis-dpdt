@@ -299,16 +299,26 @@ In this section we will present our results. More specifically, we will compare 
 
 In order for a query language to be useful, it should be flexible, such that it can be used to express a range of algorithms. Differential privacy guarantees limits the flexibility in comparison to query languages without privacy concerns. Therefore, we have concidered flexibility to be an important success criteria for us.
 
-PINQ is fairly flexible considering its privacy guarantees. It is achieved by implementing simple primitives that are guaranteed to me differentially privatei, which can be mixed and matched together.
+PINQ is fairly flexible considering its privacy guarantees. It is achieved by implementing simple primitives that are guaranteed to be differentially private, which can be mixed and matched together.
 PINQ also gets a lot of flexibility from the fact that it is built on top of LINQ, which grants users access to the powerful expression language of LINQ. This has its downside when it comes to safety though, which will be discussed later.
 
-Our language has the same API as PINQ, but currently lack some of the flexibility PINQ provides. For our Idris backend, the expression operation \texttt{PureFn} provides flexible expressions only limited by Idris' capabilities, as it lifts an arbitrary Idris function to our expression language. Unfortunately we are unable to compile an arbitrary Idris function to SQLite, so this functionality is not supported by our SQLite backend. This means that there are algorithms that can be written in our language using the Idris backend, but not using the SQLite backend. We describe a possible solution in Future work to grant more flexibility to external database backends. 
+Our language has the same API as PINQ, but currently lack some of the flexibility PINQ provides. For our Idris backend, the expression operation \texttt{PureFn} provides flexible expressions only limited by Idris' capabilities, as it lifts an arbitrary Idris function to our expression language. 
+Unfortunately we are unable to compile an arbitrary Idris function to SQLite, so this functionality is not supported by our SQLite backend. This means that there are algorithms that can be written in our language using the Idris backend, but not using the SQLite backend. 
+We describe a possible solution in Future work to grant more flexibility to external database backends. 
 
-\subsection{Type Safety}
+Some algorithms are also inherently more difficult to represent in a dependently typed language than in languages with more limited type systems. An example is a k-means algorithm with a dynamic termination. The standard k-means algorithms runs for \texttt{n} iterations. Another version is one where the algorithm terminates based on some condition, e.g. that half of the remaining budget is used every iteration until some defined convergence point. This algorithm is difficult to represent in a dependent type system.
 
+\subsection{Type safety and security}
 
+For all practical purposes, LINQ is type safe. It has powerful lambda expressions that use the data source schema to reference fields with type safety. 
+PINQ only validates privacy constraints dynamically, which means that users can write valid PINQ programs that violate privacy constraints.
 
-DPINQ's API includes all the aggregations and transformations of the PINQ API. (TODO: Either implement or edit)However, PINQ is getting the power of LINQ expressions. 
+With Idris' flexible type system, we were able to make our language completely type safe, as described in the Power of Pi section.
+As we perform privacy calculations on the type level, users of our language are unable to write valid programs that violates privacy constraints.
+
+As mentioned in the previous subsection, PINQ allows users access to powerful LINQ lambda expressions. This freedom comes at the cost of security. Because the expressions has the whole .NET runtime at its disposal, side-channel attacks are possible. An example could be an expression that sends the raw, sensitive data off to a remote database. A rewrite function intended to remove such unsafe code from expressions is planned, but not implemented in the current version of PINQ.
+
+Side-channel attacks is not a problem in our language due to the pure nature of Idris. It is simply impossible to create side-effecting functions without specifically defining an effectful function, which can not be called by another function unless also that function is effectful.
 
 \section{Discussion}\label{sec:discussion}
 
