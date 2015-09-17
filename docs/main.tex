@@ -107,16 +107,18 @@ Our privacy layer leverages the power of dependent types to verify that privacy 
 
 % TODO 1 : write the outline
 
-In Section~\ref{sec:differential_privacy}, we cover some necessary background for understanding the basics of differential privacy.
-Section~\ref{sec:dependent_types_in_idris} serves as a brief tutorial to Idris with a focus on the language features we make use of in our implementation.
-Section~\ref{sec:function_sensitivity} combines the contents of the previous two sections in an example implementation of function sensitivity.
-Section~\ref{sec:typing_the_relational_algebra} reviews the relational algebra and how we represent it using dependent types.
-Section~\ref{sec:our_implementation} covers the differential privacy layer that we built over top of the fully-typed relational algebra.
-We evaluate our work in Section~\ref{sec:evaluation} and provide concluding remarks in Section~\ref{sec:conclusion}.
+In Chapter~\ref{sec:differential_privacy}, we cover some necessary background for understanding the basics of differential privacy.
+Chapter~\ref{sec:dependent_types_in_idris} serves as a brief tutorial to Idris with a focus on the language features we make use of in our implementation.
+Chapter~\ref{sec:function_sensitivity} combines the contents of the previous two chapters in an example implementation of function sensitivity.
+Chapter~\ref{sec:typing_the_relational_algebra} reviews the relational algebra and how we represent it using dependent types.
+Chapter~\ref{sec:our_implementation} covers the differential privacy layer that we built over top of the fully-typed relational algebra.
+We evaluate our work in Chapter~\ref{sec:evaluation} and provide concluding remarks in Chapter~\ref{sec:conclusion}.
 
 \section{Differential Privacy}\label{sec:differential_privacy}
 
 In this section, we describe the central ideas and metrics behind differential privacy.
+
+% TODO 1 : first part of this section and Intro overlap a lot!
 
 In today's Big Data world, more and more of our data is being stored on servers belonging to others.
 We are not the consumers of free online services, we are the product.
@@ -128,16 +130,16 @@ Big Data offers us huge potential for learning about ourselves, but most of thes
 How best to balance database utility against individual privacy is the question differential privacy aims to answer.
 
 Many approaches have been devised for sharing data while respecting privacy.
-One approach, which has made news headlines a few times by now, is to anonymize or otherwise ``fuzz'' a dataset before releasing it to the public.
-However, it is increasingly evident that it is not possible to release a database accurate enough to be usable while still respecting privacy\cite{journals/cacm/Dwork11}.
+One approach, which has made news headlines a few times by now (not for anything good), is to anonymize or otherwise ``fuzz'' a dataset before releasing it to the public.
+However, it is becoming increasingly evident that it is not possible to release a database accurate enough to be usable while still respecting privacy\cite{journals/cacm/Dwork11}.
 
 Differential privacy aims to maximize database utility while minimizing the risk for all individuals contained within.
 Traditionally, privacy research has focused on preventing a malicious attacker from learning anything about any given individual.
 However, this has proved to be nearly impossible in the presence of auxiliary information. ((WHY))
 % TODO: why?
 
-Rather than trying to prove the impossibility of a privacy breach, differential privacy guarantees that a users participation in a database will only increase their risk of a privacy breach by some small amount.
-This holds true regardless of how much auxiliary information a would-be attacker knows.
+Rather than trying to prove the impossibility of a privacy breach, differential privacy guarantees that a users participation in a database will only increase their risk of a privacy breach by some negligible amount.
+This is true regardless of how much auxiliary information a would-be attacker knows.
 
 Analysts are able to run differentially private algorithms against raw data knowing that no individuals' privacy can be compromised.
 Suddenly, many of the Big Data databases which would otherwise be off limits can be made available to researchers.
@@ -145,6 +147,7 @@ Each individuals participation in the database does not have a large effect on t
 
 \subsection{Function Sensitivity}
 % TODO: give a better subsubsection name
+% TODO 1 : this section overlaps with chapter on function sensitivity
 
 One of the key metrics used in differential privacy, and in our type system, is function sensitivity.
 Function sensitivity provides an upper bound on how much a function can magnify distances between inputs.
@@ -177,7 +180,7 @@ One of the databases contains that individual's data; the other is the same data
 \subsection{Indistinguishability}
 
 One of the key concepts driving differential privacy research is that of indistinguishability.
-The idea is simple: if an attacker, based on the output from a query, is unable to determine whether your data was even included in the database, then he can't deduce much about your data from the database.
+The idea is simple: if an attacker, based on the output from a query, is unable to determine whether your data was even included in the database, then he can't deduce much about the contents of your data from the database.
 We turn to randomness to achieve this kind of property.
 
 Consider a randomized function, $f_r(x)$.
