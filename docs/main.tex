@@ -198,7 +198,7 @@ If the probability of $f_r$'s output being in $S \subseteq Codomain(f_r)$ is alm
 
 This is the core idea behind indistinguishability.
 Now consider a randomized query, or mechanism, $\mathcal{M}(D) : \mathbb{D} \rightarrow \mathbb{R}$.
-We say that such a query is $\epsilon$-differentially-private if the inclusion of your data affects your privacy risk by at most $e^\epsilon$.
+We say that such a query is $\epsilon$-differentially-private if the inclusion of your data affects your privacy risk by at most $e^\epsilon$. % TODO: What is 'privacy risk'
 
 \begin{defn}\label{def:diffpriv}
   A randomized mechanism, $\mathcal{M}(D)$, is $\epsilon$-differentially-private if, for all databases $D_1 \sim D_2$, and all $S \in Codomain(M)$,
@@ -644,16 +644,32 @@ PINQ also gets a lot of flexibility from the fact that it is built on top of LIN
 This has its downside when it comes to safety though, which will be discussed later.
 
 Our language has the same API as PINQ, but currently lack some of the flexibility PINQ provides.
-For our Idris backend, the expression operation \texttt{PureFn} provides flexible expressions only limited by Idris' capabilities, as it lifts an arbitrary Idris function to our expression language.
+For our Idris backend, the expression operation \texttt{PureFn} provides flexible expressions only limited by Idris' capabilities,
+\texttt{PureFn) lifts an arbitrary Idris function to our expression language.
 Unfortunately we are unable to compile an arbitrary Idris function to SQLite, so this functionality is not supported by our SQLite backend.
-This means that there are algorithms that can be written in our language using the Idris backend, but not using the SQLite backend.
-We describe a possible solution in Future work to grant more flexibility to external database backends.
 
-Some algorithms are also inherently more difficult to represent in a dependently typed language than in languages with more limited type systems.
-An example is a k-means algorithm with a dynamic termination.
-The standard k-means algorithms runs for \texttt{n} iterations.
+This means that there are algorithms that can be written in our language using the Idris backend, but not using the SQLite backend.
+An example of such an algorithm is k-means clustering, which we have implemented in our language for the Idris backend.
+K-means clustering is an algorithm for grouping n-dimentional points in k distinct clusters.
+Below are the steps performed by the basic k-means clustering algorithm.
+
+\begin{enumerate}
+	\item k initial cluster centers are chosen
+	\item All points are assigned a cluster based on the closest cluster center 
+	\item Each cluster center is updated to the mean of the points assigned it
+	\item Repeat step 1 and 2 \texttt{X} number of times
+\end{enumerate}
+
+Step 2 requires checking the distance from each point to all the current cluster centers.
+Because SQLite does not provide any looping construct, it is not trivial to implement it as a SQLite query.
+We describe possible solutions in Future work to grant more flexibility to external database backends.
+
+Some algorithms are also inherently more difficult to represent in a dependently typed language than in languages with more limited type systems, such as C#.
+An example is a k-means clustering algorithm with a dynamic termination.
+The standard k-means algorithms runs for \texttt{X} iterations.
+
 Another version is one where the algorithm terminates based on some condition, e.g. that half of the remaining budget is used every iteration until some defined convergence point.
-This algorithm is difficult to represent in a dependent type system.
+This algorithm is difficult to represent in a dependent type system. % TODO: Oh, but why?
 
 \subsection{Type safety and security}
 
