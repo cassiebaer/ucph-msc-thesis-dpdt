@@ -645,7 +645,7 @@ This has its downside when it comes to safety though, which will be discussed la
 
 Our language has the same API as PINQ, but currently lack some of the flexibility PINQ provides.
 For our Idris backend, the expression operation \texttt{PureFn} provides flexible expressions only limited by Idris' capabilities,
-\texttt{PureFn) lifts an arbitrary Idris function to our expression language.
+\texttt{PureFn} lifts an arbitrary Idris function to our expression language.
 Unfortunately we are unable to compile an arbitrary Idris function to SQLite, so this functionality is not supported by our SQLite backend.
 
 This means that there are algorithms that can be written in our language using the Idris backend, but not using the SQLite backend.
@@ -664,7 +664,7 @@ Step 2 requires checking the distance from each point to all the current cluster
 Because SQLite does not provide any looping construct, it is not trivial to implement it as a SQLite query.
 We describe possible solutions in Future work to grant more flexibility to external database backends.
 
-Some algorithms are also inherently more difficult to represent in a dependently typed language than in languages with more limited type systems, such as C#.
+Some algorithms are also inherently more difficult to represent in a dependently typed language than in languages with more limited type systems, such as C\#.
 An example is a k-means clustering algorithm with a dynamic termination.
 The standard k-means algorithms runs for \texttt{X} iterations.
 
