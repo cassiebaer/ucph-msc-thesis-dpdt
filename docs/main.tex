@@ -93,13 +93,26 @@ Thus, all type-correct programs must respect expected privacy constraints.
 
 This paper describes an implementation of an embedded prototype language, [TODO : NAME], for describing differentially private computations.
 Dependent type systems have come a long way since Martin-L\"of's original intuitionistic type theory.
-We show that dependent types in a practical setting are a natural fit for describing and verifying differential privacy metrics.
+We show that dependent types are a natural fit for describing and verifying differential privacy constraints.
 
-% TODO 1 : write contributions
+We implemented a fully-typed abstract language for describing the relational algebra; and we developed a simple in-memory Idris database backend.
+% TODO 3 : include reference to Power of Pi paper again?
+Our main contribution is the layering of differential privacy metrics over top of the relational algebra.
+PINQ's differential privacy metrics are checked dynamically at runtime.
+Our privacy layer leverages the power of dependent types to verify that privacy constraints are not violated \textit{at compile time}.
+
+% TODO 1 : add more contributions if there are any
 
 \paragraph{Outline}
 
 % TODO 1 : write the outline
+
+In Section~\ref{sec:differential_privacy}, we cover some necessary background for understanding the basics of differential privacy.
+Section~\ref{sec:dependent_types_in_idris} serves as a brief tutorial to Idris with a focus on the language features we make use of in our implementation.
+Section~\ref{sec:function_sensitivity} combines the contents of the previous two sections in an example implementation of function sensitivity.
+Section~\ref{sec:typing_the_relational_algebra} reviews the relational algebra and how we represent it using dependent types.
+Section~\ref{sec:our_implementation} covers the differential privacy layer that we built over top of the fully-typed relational algebra.
+We evaluate our work in Section~\ref{sec:evaluation} and provide concluding remarks in Section~\ref{sec:conclusion}.
 
 \section{Differential Privacy}\label{sec:differential_privacy}
 
@@ -652,9 +665,11 @@ A rewrite function intended to remove such unsafe code from expressions is plann
 Side-channel attacks is not a problem in our language due to the pure nature of Idris.
 It is simply impossible to create side-effecting functions without specifically defining an effectful function, which can not be called by another function unless also that function is effectful.
 
-\section{Discussion}\label{sec:discussion}
+% TODO 1 : should we have a discussion section? I think we can cover it in Evaluation+Conclusion
 
-In this section, we evaluate our language and discuss various things about it.
+% \section{Discussion}\label{sec:discussion}
+
+% In this section, we evaluate our language and discuss various things about it.
 
 \section{Conclusion}\label{sec:conclusion}
 
