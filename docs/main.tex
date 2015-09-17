@@ -120,34 +120,48 @@ We evaluate our work in Chapter~\ref{sec:evaluation} and provide concluding rema
 
 \section{Differential Privacy}\label{sec:differential_privacy}
 
-In this section, we describe the central ideas and metrics behind differential privacy.
+In this section, we describe some of the central ideas and metrics behind differential privacy.
+We begin by motivating the necessity for differential privacy before moving on to outlining the key concepts used in our implementation.
 
 % TODO 1 : first part of this section and Intro overlap a lot!
 
 In today's Big Data world, more and more of our data is being stored on servers belonging to others.
-We are not the consumers of free online services, we are the product.
+Even though it may feel like it, we are not the consumers of free online services: we are the product.
 But regardless of whether we freely volunteered it, were legally compelled to share it, or just bought something online, we have a reasonable expectation to privacy of our data.
 
 However, databases containing large amounts of personal data can be tremendously valuable for researchers looking into a variety of important questions.
 For example, epidemiologists may be able to detect and prevent the spread of disease and doctors may be able to monitor and/or analyze the long-term health trends of a large population over time.
 Big Data offers us huge potential for learning about ourselves, but most of these databases are held under lock and key.
-How best to balance database utility against individual privacy is the question differential privacy aims to answer.
+How to best balance database utility with individual privacy is the question differential privacy aims to answer.
 
 Many approaches have been devised for sharing data while respecting privacy.
-One approach, which has made news headlines a few times by now (not for anything good), is to anonymize or otherwise ``fuzz'' a dataset before releasing it to the public.
-However, it is becoming increasingly evident that it is not possible to release a database accurate enough to be usable while still respecting privacy\cite{journals/cacm/Dwork11}.
+One approach, which has made news headlines a few times by now (not in a positive light), is to anonymize or otherwise ``fuzz'' a dataset before releasing it to the public.
+However, it has quickly become evident that it is not possible to release a database that is both accurate enough to be useful and that respects the privacy of the participants\cite{journals/cacm/Dwork11}.
 
 Differential privacy aims to maximize database utility while minimizing the risk for all individuals contained within.
-Traditionally, privacy research has focused on preventing a malicious attacker from learning anything about any given individual.
+Traditionally, privacy research has focused on preventing a malicious attacker from learning anything about a particular individual (e.g. our dear friend Alice).
 However, this has proved to be nearly impossible in the presence of auxiliary information. ((WHY))
-% TODO: why?
+% TODO 2 : why?
+% TODO 2 : talk about the parallel to cryptography guarantees
 
-Rather than trying to prove the impossibility of a privacy breach, differential privacy guarantees that a users participation in a database will only increase their risk of a privacy breach by some negligible amount.
-This is true regardless of how much auxiliary information a would-be attacker knows.
+Rather than trying to prove the impossibility of a privacy breach, differential privacy guarantees that a users participation in a database can only increase their risk of a privacy breach by a negligible amount.
+This is true regardless of how much auxiliary information a would-be attacker knows or might learn in the future.
 
-Analysts are able to run differentially private algorithms against raw data knowing that no individuals' privacy can be compromised.
+Analysts are able to run differentially private algorithms against private data knowing that no individuals' privacy can be compromised.
 Suddenly, many of the Big Data databases which would otherwise be off limits can be made available to researchers.
-Each individuals participation in the database does not have a large effect on their privacy risk, so honest participation is almost a direct consequence.
+Each individuals participation in the database has a negligible effect on their risk of a privacy breach, so honest participation follows as a direct consequence.
+
+In fact, a classic example of differentially private thinking is randomized response.
+Randomized response is a technique originally proposed in 1965 for encouraging survey respondents to answer potentially embarassing questions honestly.
+By introducing an element of randomness, participants are given plausible deniability regardless of how they respond.
+
+After reading the question, participants are instructed to flip a coin.
+If the coin yields ``tails,'' the participant responds ``No''.
+If the coin reads ``heads,'' he/she answers truthfully.
+The net result is that $1/2$ of the responses are ``No'' by default, while the other half should be a representative sampling of the population.
+Thus, if researchers using randomized response find that 10\% of participants admit to an illegal activity, the true percentage is actually around 20\%.
+
+% TODO 1 : outline the metrics to come
 
 \subsection{Function Sensitivity}
 % TODO: give a better subsubsection name
