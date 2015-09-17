@@ -41,29 +41,29 @@ This is the paper's abstract \ldots
 \section{Introduction}\label{sec:introduction}
 
 With each passing day, more and more of our personal information is being collected, cataloged and analyzed by an ever increasing number of interested parties.
-Their interests range from selective marketing to business performance metrics to malicious and potentially illegal surveillance.
-We don't curate and control the data they are collecting.
-In many ways, the data we produce actually gives a better picture of who we are than any data we might try to curate and control.
+Their interests range from selective marketing of products and services to collecting business performance metrics and even to malicious and potentially illegal surveillance.
+We don't curate and control the data they are collecting;
+in many ways, the data we produce actually gives a better picture of who we are than any data we might try to curate and control.
 Therefore, as the producers of this data, we should be concerned with how it is being used.
 
 Our medical records consist of very personal information which we reasonably expect to remain private.
-Some countries even require legal privacy guarantees for systems maintaining sensitive information, e.g. the Health Insurance Portability and Acountability Act (HIPAA) in the USA.
+Many countries even require legal privacy guarantees for systems maintaining sensitive information, e.g. the Health Insurance Portability and Acountability Act (HIPAA) in the USA.
 However, our medical records contain valuable information for researchers aiming to understand health trends in our society.
 
-The benefits are not limited to medicine, either.
+The benefits of ubiquitous data are not limited to medicine, either.
 ``Big Data'' is a hot buzzword right now and for good reason: almost everything we do is being quantified and recorded.
-Imagine the potential insights we as a society could uncover with unlimited access to all of our own data.
-We are faced with a classic balancing act: how do we protect the privacy of the individual while maximizing the usefulness of the data available to us?
+Imagine the potential insights we as a society could discover about ourselves with unlimited access to all of our own data.
+We are faced with a classic balancing act: how do we protect the privacy of the individual while maximizing the usefulness of our data?
 
 Differential privacy\cite{journals/cacm/Dwork11} is an emerging field aiming to answer this question.
-The central concept driving differential privacy is indistinguishability, i.e, a query against a dataset should return more-or-less the same result regardless of whether or not Alice's records are included in the data.
-If the results are indistinguishable, with and without Alice, then the contents of Alice's records must be indistinguishable, too.
+The central concept driving differential privacy is indistinguishability, i.e. a query against a dataset should return more-or-less the same result regardless of whether or not Alice's records are included in the data.
+If the results are indistinguishable, with or without Alice, then the contents of Alice's records must be indistinguishable, too.
 
-Indistinguishability is most often achieved by combining the true (distinguishable) result of a query with random noise.
-However, this is insufficient by itself to guarantee privacy.
-A malicious data analyst could repeat semantically equivalent queries and compute the average of the results.
-The average will approach the true result as the number of queries increases.
+Indistinguishability is achieved by combining the true (distinguishable) result of a query with random noise.
+However, the addition of noise is insufficient by itself to guarantee privacy.
+A malicious data analyst could repeat semantically equivalent queries and compute the average of the results, eventually approaching the true mean as he runs more and more queries.
 How can this be prevented?
+By imposing a hard limit on how many queries can be run against a data set.
 Another key idea in differential privacy is that of the privacy ``budget''.
 The privacy budget is a value which limits the number of queries that can be run against a particular data set.
 Each query has a cost associated with it which is subtracted from the budget when it is evaluated.
@@ -83,7 +83,7 @@ PINQ and its trusted system manage the budget at runtime.
 An analyst has no way of knowing whether a query will be accepted without manually tracking their budget.
 Reed and Pierce\cite{conf/icfp/ReedP10} solve this by building a strongly-typed programming language which represents query costs in the types.
 % TODO 3 : Include more about DFuzz to lead into our hypothesis?
-We hope to build on this idea by demonstrating that a dependent type system is a natural fit for capturing differential privacy requirements.
+We aim to build on this idea by demonstrating that a dependent type system is a natural fit for capturing differential privacy requirements.
 
 Strongly-typed programming languages are capable of statically verifying programs for type-correctness, precluding many potential sources of runtime errors: ``well-typed programs can't go wrong''.
 We extend this notion of being ``well-typed'' to include differential privacy metrics.
@@ -96,15 +96,14 @@ Thus, all type-correct programs must respect expected privacy constraints.
 
 \subsection{Contributions}
 
-This paper describes an implementation of an embedded prototype language, [TODO : NAME], for describing differentially private computations.
+This paper describes an implementation of an embedded prototype language, \texttt{DPDT}, for describing differentially private computations.
 Dependent type systems have come a long way since Martin-L\"of's original intuitionistic type theory.
 We show that dependent types are a natural fit for describing and verifying differential privacy constraints.
 
-We implemented a fully-typed abstract language for describing the relational algebra; and we developed a simple in-memory Idris database backend.
+We implemented a fully-typed abstract language for describing the relational algebra; and we developed a simple in-memory Idris database backend for it.
 % TODO 3 : include reference to Power of Pi paper again?
-Our main contribution is the layering of differential privacy metrics over top of the relational algebra.
-PINQ's differential privacy metrics are checked dynamically at runtime.
-Our privacy layer leverages the power of dependent types to verify that privacy constraints are not violated \textit{at compile time}.
+Our main contribution is the layering of differential privacy metrics into the types over top of the fully-typed relational algebra.
+PINQ's differential privacy metrics are checked dynamically at runtime, whereas our privacy layer leverages the power of dependent types to verify that privacy constraints are not violated \textit{at compile time}.
 
 % TODO 1 : add more contributions if there are any
 
