@@ -275,20 +275,53 @@ Then, for all $x,y \in A$, if the probability of both $f_r(x)$ and $f_r(y)$ bein
 $$ Pr[f_r(x)\in S] \qquad\approx\qquad  Pr[f_r(y)\in S] $$
 
 This is the core idea behind indistinguishability.
-The intrinsic randomness of the function prevents an attacker from deducing anything about the input.
+The intrinsic randomness of the function prevents an attacker from deducing anything about the input based on the output.
 Now consider a randomized query, or mechanism, $\mathcal M(D) : \mathbb D \rightarrow \mathbb R$.
-We say that such a query is $\epsilon$-differentially-private if the inclusion of your data affects your privacy risk by at most $e^\epsilon$. % TODO: What is 'privacy risk'
+We say that such a query is $\epsilon$-differentially-private if the inclusion of Alice's data affects her privacy risk by at most $e^\epsilon$. % TODO 4 : What is 'privacy risk'
 
 \begin{defn}\label{def:diffpriv}
-  A randomized mechanism, $\mathcal{M}(D) : \mathbb D \rightarrow \mathbb R$, is $\epsilon$-differentially-private if, for all databases $D_1 \sim D_2$, and all $S \in \mathbb R$,
+  A randomized mechanism, $\mathcal{M}(D) : \mathbb D \rightarrow A$, is $\epsilon$-differentially-private if, for all databases $D_1 \sim D_2$, and all $S \in A$,
   $$Pr[\mathcal M(D_1)\in S] \le e^\epsilon \times Pr[\mathcal M(D_2)\in S]$$
 \end{defn}
 % TODO 1 : check whether S \in R should be \in or \subseteq
 
+% TODO 1 : discuss how to use noise
+% TODO 1 : discuss aggregations
+There are a few restrictions on mechanisms in the context of sensitive databases.
+Obviously, there are limits to the types of data that queries are allowed to return.
+We can't allow entire tables (computed or otherwise) to be returned, because they will potentially contain the sensitive rows we are trying to protect!
+Additionally, queries should not be allowed to return data directly from any particular row.
+
+In fact, queries must be restricted to aggregation operations.
+This may seem limiting, but in practice is not so.
+Certainly, entire classes of queries and algorithms are precluded by this necessity, but the vast majority of statistical research is performed using aggregations over tables, not querying for the information pertaining to particular individuals.
+
+An additional constraint emerges from the previous one: the data type returned by the aggregation must be a semigroup; i.e. it must have an associative binary operator for folding new values into the aggregate.
+However, aggregations alone are not capable of protecting privacy.
+
+Consider a database consisting of all patients who have ever been treated at the \textit{ABC ABortion Clinic}.
+Alice is one of those patients.
+Regardless of what Alice's records actually contain, her mere presence in that database could have serious consequences for her private life if the wrong people found out.
+Consider the result of the following query: \textit{How many people named Alice are in the database?}
+One.
+That is a valid aggregation and Alice is now in trouble.
+
+So how could we have saved Alice?
+The final requirement is randomness.
+When we run an aggregation, we need to randomize the output to satisfy indistinguishability.
+If not, an attacker can draft clever aggregations to deduce private information about particular individuals.
+Noising the result before returning it gives Alice plausible deniability.
+The aggregation function from earlier will no longer be enough to determine whether any records in the database related to Alice and what they contain if they do.
+
+Generally, the Laplace distribution is used because XX.
+% TODO 1 : why do we prefer Laplace? it scales well with e and is symmetric. what else?
+
 \subsection{PINQ}\label{sec:pinq}
 
-This section will provide an overview of PINQ, the framework we used as model for our language.
-PINQ is a layer built on top of the query language LINQ, providing some differential privacy guarantees.
+This section provides an overview of PINQ, the framework we modelled our language after.
+PINQ is a privacy layer built over top of the .NET query DSL LINQ.
+% TODO 3 : expand on what LINQ is to make PINQ's contribution more clear?
+It provides carefully implemented primitives and the ability to build arbitrarily complex, differentially private algorithms from them.
 
 \subsubsection{Aggregations}
 
