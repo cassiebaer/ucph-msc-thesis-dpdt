@@ -848,7 +848,23 @@ syntax select [f] from [q] where [e] group by [e'] = ...
 
 \section{Conclusion}\label{sec:conclusion}
 
-We worked very hard, but achieved very little.
+We have demonstrated that a differentially private query languge can be represented in a dependently typed type system, where the privacy guarantees are enforced statically in types.
+A prototype named DPDT is implemented in Idris, providing basic transformation and aggregation operations.
+DPDT guarantees differential privacy statically, which means that any valid program written in it is differtially private.
+
+In comparison to our inspiration PINQ, DPDT currently lacks a bit of flexibility and usability.
+PINQ can use all the data source types supported by LINQ for .NET, while DPDT has limited support for external databases.
+The syntax is also currently less convoluted in PINQ, but this can be improved in DPDT in the future by the use of Idris' syntax rules.
+
+However, DPDT is more secure than PINQ.
+Firstly, as our differential privacy guarantees are enforced on type level, users don't have to run a program to see if it violates privacy constraints.
+In PINQ these privacy guarantees are inforced dynamically.
+
+Secondly, because $C\#$ allows side effects, PINQ is exposed to side-channel attacks.
+An example of such an attack could be where an expression evaluated on the database as part of a query sends off the raw data to an expernal server.
+Because idris is a purely functional language, such attacks are easily avoided.
+In Idris functions with side effects must be declared as effectful
+So to avoid these kinds of attacks we simply don't define the expressions in DPDT as effectful.
 
 \bibliographystyle{abbrv}
 \bibliography{main}
