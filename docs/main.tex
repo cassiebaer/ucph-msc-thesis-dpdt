@@ -109,8 +109,6 @@ PINQ's differential privacy metrics are checked dynamically at runtime, whereas 
 
 \paragraph{Outline}
 
-% TODO 1 : write the outline
-
 In Chapter~\ref{sec:differential_privacy}, we cover some necessary background for understanding the basics of differential privacy.
 Chapter~\ref{sec:dependent_types_in_idris} serves as a brief tutorial to Idris with a focus on the language features we make use of in our implementation.
 Chapter~\ref{sec:function_sensitivity} combines the contents of the previous two chapters in an example implementation of function sensitivity.
@@ -431,7 +429,6 @@ Concepts used later in the paper that need to be defined here:
 
 \section{Function Sensitivity in Idris}\label{sec:function_sensitivity}
 
-% TODO 1 : fix this section based on diff.priv. subsection
 This section demonstrate how we use dependent types to model function sensitivity in Idris.
 
 Modelling function sensitivity with dependent types is fairly straight-forward.
@@ -503,8 +500,7 @@ In this section, we review the relational algebra and show how it can be modelle
 Our approach is based on \cite{OurySwierstra08PowerOfPi}.
 
 The relational algebra describes semantics for modelling and querying data in relational databases (e.g. MySQL\footnote{https://www.mysql.com/}).
-E.F. Codd described relational databases and their associated algebra back in the 1970's.
-% TODO : find reference to paper
+E.F. Codd described relational databases and their associated algebra back in the 1970's\cite{codd70}.
 The relational model quickly became popular for its simplicity and good performance.
 
 In the relational algebra, relations are modelled as tables.
@@ -944,7 +940,7 @@ In comparison to our inspiration PINQ, DPDT currently lacks a bit of flexibility
 PINQ can use all the data source types supported by LINQ for .NET, while DPDT has limited support for external databases.
 The syntax is also currently less convoluted in PINQ, but this can be improved in DPDT in the future by the use of Idris' syntax rules.
 
-However, DPDT is more secure than PINQ.
+However, DPDT is safer than PINQ.
 Firstly, as our differential privacy guarantees are enforced on type level, users don't have to run a program to see if it violates privacy constraints.
 In PINQ these privacy guarantees are enforced dynamically.
 
@@ -953,8 +949,7 @@ An example of such an attack could be where an expression evaluated on the datab
 Because idris is a purely functional language, a large category of such attacks are easily avoided.
 In Idris functions with side effects must be declared as effectful
 So to avoid attacks that use side effects we simply don't define the expressions in DPDT as effectful.
-However, some side-channel attacks are still possible in DPDT, i.e. timing attacks.
-end{lstlisting}
+However, some side-channel attacks are still possible in DPDT, e.g. timing attacks.
 
 \bibliographystyle{abbrv}
 \bibliography{main}
