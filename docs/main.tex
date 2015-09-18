@@ -41,29 +41,29 @@ This is the paper's abstract \ldots
 \section{Introduction}\label{sec:introduction}
 
 With each passing day, more and more of our personal information is being collected, cataloged and analyzed by an ever increasing number of interested parties.
-Their interests range from selective marketing to business performance metrics to malicious and potentially illegal surveillance.
-We don't curate and control the data they are collecting.
-In many ways, the data we produce actually gives a better picture of who we are than any data we might try to curate and control.
+Their interests range from selective marketing of products and services to collecting business performance metrics and even to malicious and potentially illegal surveillance.
+We don't curate and control the data they are collecting;
+in many ways, the data we produce actually gives a better picture of who we are than any data we might try to curate and control.
 Therefore, as the producers of this data, we should be concerned with how it is being used.
 
 Our medical records consist of very personal information which we reasonably expect to remain private.
-Some countries even require legal privacy guarantees for systems maintaining sensitive information, e.g. the Health Insurance Portability and Acountability Act (HIPAA) in the USA.
+Many countries even require legal privacy guarantees for systems maintaining sensitive information, e.g. the Health Insurance Portability and Acountability Act (HIPAA) in the USA.
 However, our medical records contain valuable information for researchers aiming to understand health trends in our society.
 
-The benefits are not limited to medicine, either.
+The benefits of ubiquitous data are not limited to medicine, either.
 ``Big Data'' is a hot buzzword right now and for good reason: almost everything we do is being quantified and recorded.
-Imagine the potential insights we as a society could uncover with unlimited access to all of our own data.
-We are faced with a classic balancing act: how do we protect the privacy of the individual while maximizing the usefulness of the data available to us?
+Imagine the potential insights we as a society could discover about ourselves with unlimited access to all of our own data.
+We are faced with a classic balancing act: how do we protect the privacy of the individual while maximizing the usefulness of our data?
 
 Differential privacy\cite{journals/cacm/Dwork11} is an emerging field aiming to answer this question.
-The central concept driving differential privacy is indistinguishability, i.e, a query against a dataset should return more-or-less the same result regardless of whether or not Alice's records are included in the data.
-If the results are indistinguishable, with and without Alice, then the contents of Alice's records must be indistinguishable, too.
+One of the key ideas in differential privacy is that of indistinguishability, i.e. a query against a dataset should return more-or-less the same result regardless of whether or not Alice's records are included in the data.
+If the results are indistinguishable, with or without Alice's data, then the contents of her records must be indistinguishable, too.
 
-Indistinguishability is most often achieved by combining the true (distinguishable) result of a query with random noise.
-However, this is insufficient by itself to guarantee privacy.
-A malicious data analyst could repeat semantically equivalent queries and compute the average of the results.
-The average will approach the true result as the number of queries increases.
+Indistinguishability is achieved by combining the true (distinguishable) result of a query with random noise.
+However, the addition of noise is insufficient by itself to guarantee privacy.
+A malicious data analyst could repeat semantically equivalent queries and compute the average of the results, eventually approaching the true mean as he runs more and more queries.
 How can this be prevented?
+By imposing a hard limit on how many queries can be run against a data set.
 Another key idea in differential privacy is that of the privacy ``budget''.
 The privacy budget is a value which limits the number of queries that can be run against a particular data set.
 Each query has a cost associated with it which is subtracted from the budget when it is evaluated.
@@ -83,7 +83,7 @@ PINQ and its trusted system manage the budget at runtime.
 An analyst has no way of knowing whether a query will be accepted without manually tracking their budget.
 Reed and Pierce\cite{conf/icfp/ReedP10} solve this by building a strongly-typed programming language which represents query costs in the types.
 % TODO 3 : Include more about DFuzz to lead into our hypothesis?
-We hope to build on this idea by demonstrating that a dependent type system is a natural fit for capturing differential privacy requirements.
+We aim to build on this idea by demonstrating that a dependent type system is a natural fit for capturing differential privacy requirements.
 
 Strongly-typed programming languages are capable of statically verifying programs for type-correctness, precluding many potential sources of runtime errors: ``well-typed programs can't go wrong''.
 We extend this notion of being ``well-typed'' to include differential privacy metrics.
@@ -96,15 +96,14 @@ Thus, all type-correct programs must respect expected privacy constraints.
 
 \subsection{Contributions}
 
-This paper describes an implementation of an embedded prototype language, [TODO : NAME], for describing differentially private computations.
+This paper describes an implementation of an embedded prototype language, \texttt{DPDT}, for describing differentially private computations.
 Dependent type systems have come a long way since Martin-L\"of's original intuitionistic type theory.
 We show that dependent types are a natural fit for describing and verifying differential privacy constraints.
 
-We implemented a fully-typed abstract language for describing the relational algebra; and we developed a simple in-memory Idris database backend.
+We implemented a fully-typed abstract language for describing the relational algebra; and we developed a simple in-memory Idris database backend for it.
 % TODO 3 : include reference to Power of Pi paper again?
-Our main contribution is the layering of differential privacy metrics over top of the relational algebra.
-PINQ's differential privacy metrics are checked dynamically at runtime.
-Our privacy layer leverages the power of dependent types to verify that privacy constraints are not violated \textit{at compile time}.
+Our main contribution is the layering of differential privacy metrics into the types over top of the fully-typed relational algebra.
+PINQ's differential privacy metrics are checked dynamically at runtime, whereas our privacy layer leverages the power of dependent types to verify that privacy constraints are not violated \textit{at compile time}.
 
 % TODO 1 : add more contributions if there are any
 
@@ -121,99 +120,208 @@ We evaluate our work in Chapter~\ref{sec:evaluation} and provide concluding rema
 
 \section{Differential Privacy}\label{sec:differential_privacy}
 
-In this section, we describe the central ideas and metrics behind differential privacy.
+In this section, we describe some of the central ideas and metrics behind differential privacy.
+We begin by motivating the necessity for differential privacy before moving on to outlining the key concepts used in our implementation.
 
 % TODO 1 : first part of this section and Intro overlap a lot!
 
 In today's Big Data world, more and more of our data is being stored on servers belonging to others.
-We are not the consumers of free online services, we are the product.
+Even though it may feel like it, we are not the consumers of free online services: we are the product.
 But regardless of whether we freely volunteered it, were legally compelled to share it, or just bought something online, we have a reasonable expectation to privacy of our data.
 
 However, databases containing large amounts of personal data can be tremendously valuable for researchers looking into a variety of important questions.
 For example, epidemiologists may be able to detect and prevent the spread of disease and doctors may be able to monitor and/or analyze the long-term health trends of a large population over time.
 Big Data offers us huge potential for learning about ourselves, but most of these databases are held under lock and key.
-How best to balance database utility against individual privacy is the question differential privacy aims to answer.
+How to best balance database utility with individual privacy is the question differential privacy aims to answer.
 
 Many approaches have been devised for sharing data while respecting privacy.
-One approach, which has made news headlines a few times by now (not for anything good), is to anonymize or otherwise ``fuzz'' a dataset before releasing it to the public.
-However, it is becoming increasingly evident that it is not possible to release a database accurate enough to be usable while still respecting privacy\cite{journals/cacm/Dwork11}.
+One approach, which has made news headlines a few times by now (not in a positive light), is to anonymize or otherwise ``fuzz'' a dataset before releasing it to the public.
+However, it has quickly become evident that it is not possible to release a database that is both accurate enough to be useful and that respects the privacy of the participants\cite{journals/cacm/Dwork11}.
 
 Differential privacy aims to maximize database utility while minimizing the risk for all individuals contained within.
-Traditionally, privacy research has focused on preventing a malicious attacker from learning anything about any given individual.
+Traditionally, privacy research has focused on preventing a malicious attacker from learning anything about a particular individual (e.g. our dear friend Alice).
 However, this has proved to be nearly impossible in the presence of auxiliary information. ((WHY))
-% TODO: why?
+% TODO 2 : why?
+% TODO 2 : talk about the parallel to cryptography guarantees
 
-Rather than trying to prove the impossibility of a privacy breach, differential privacy guarantees that a users participation in a database will only increase their risk of a privacy breach by some negligible amount.
-This is true regardless of how much auxiliary information a would-be attacker knows.
+Rather than trying to prove the impossibility of a privacy breach, differential privacy guarantees that a users participation in a database can only increase their risk of a privacy breach by a negligible amount.
+This is true regardless of how much auxiliary information a would-be attacker knows or might learn in the future.
 
-Analysts are able to run differentially private algorithms against raw data knowing that no individuals' privacy can be compromised.
+Analysts are able to run differentially private algorithms against private data knowing that no individuals' privacy can be compromised.
 Suddenly, many of the Big Data databases which would otherwise be off limits can be made available to researchers.
-Each individuals participation in the database does not have a large effect on their privacy risk, so honest participation is almost a direct consequence.
+Each individuals participation in the database has a negligible effect on their risk of a privacy breach, so honest participation follows as a direct consequence.
+
+In fact, a classic example of differentially private thinking is randomized response.
+Randomized response is a technique originally proposed in 1965 for encouraging survey respondents to answer potentially embarassing questions honestly.
+By introducing an element of randomness, participants are given plausible deniability regardless of how they respond.
+
+After reading the question, participants are instructed to flip a coin.
+If the coin yields ``tails,'' the participant responds ``No''.
+If the coin reads ``heads,'' he/she answers truthfully.
+The net result is that $1/2$ of the responses are ``No'' by default, while the other half should be a representative sampling of the population.
+Thus, if researchers using randomized response find that 10\% of participants admit to an illegal activity, the true percentage is actually around 20\%.
+
+% TODO 1 : outline the metrics to come
+
+The rest of this section will focus on specific ideas from the differential privacy literature as it relates to our implementation of DPDT.
+In particular, we will discuss function sensitivity, which is a relative measure of how much a function can magnify the distances between collections of objects; and indistinguishability, which is the key idea which quantifies what it means for a computation to be differentially private.
+Finally, we describe PINQ, the framework that allows users to build differentially private computations by construction.
 
 \subsection{Function Sensitivity}
-% TODO: give a better subsubsection name
 % TODO 1 : this section overlaps with chapter on function sensitivity
 
-One of the key metrics used in differential privacy, and in our type system, is function sensitivity.
-Function sensitivity provides an upper bound on how much a function can magnify distances between inputs.
+Function sensitivity is an important concept from the differential privacy literature.
+We can make assertions about an entire program if we understand the sensitivities of the functions with which it is composed.
+Sensitivity is a key part in making our type system work.
+
+Function sensitivity captures the idea of how relatively ``far'' a function can magnify the distances between pairs of objects.
+We say that a function is $c$-sensitive if, for all pairs of inputs, the distance between the outputs is not $c$ times greater than the original distance between the inputs.
 
 \begin{defn}\label{def:csens}
-  A function, $f : \mathbb{R} \rightarrow \mathbb{R}$, is $c$-sensitive if
-  $\forall x,y.d(f(x),f(y)) \le c \times d(x,y)$.
+  A function, $f : \mathbb A \rightarrow \mathbb A$, is $c$-sensitive if
+  $$\forall x,y.\; d_{\mathbb A}(f(x),f(y)) \le c \times d_{\mathbb A}(x,y)$$
 \end{defn}
 
-As an example, take the Euclidian distance function, $d_\mathbb{R}(x,y) = |x - y|$, for $d$.
-Clearly, the function $f_1(x)=x$ cannot magnify distances at all.
-For any two real numbers, their difference will equal the difference between them after applying $f_1$.
+For a concrete example, let us turn our attention to the domain of real numbers.
+We will take the distance function to be $d_\mathbb{R}(x,y) = |x - y|$.
+Obviously, the function $f_{id}(x)=x$ cannot magnify distances at all.
+For any two real numbers, their difference will equal the difference between them after applying $f_{id}$.
 
 \[
-  \forall x,y.d_\mathbb{R}(f_1(x),f_1(y)) = d_\mathbb{R}(x,y)
+  \forall x,y.\; d_\mathbb{R}(f_{id}(x),f_{id}(y)) = d_\mathbb{R}(x,y)
 \]
 
-We say $f_1$ is 1-sensitive.
-Another example of a 1-sensitive function is $f_2(x) = x/2$.
+We say $f_{id}$ is 1-sensitive because distances can't be magnified at all.
+Another example of a 1-sensitive function is $f_{1/2}(x) = x/2$; in fact, $f_{1/2}$ is also $\frac{1}{2}$-sensitive.
 
-By choosing a different distance function, function sensitivity can be extended to be applicable to almost anything.
-Differential privacy is primarily concerned with databases, so we choose an appropriate distance function over $\mathbb{D}$.
-Given two databases, $D_1, D_2 \in \mathbb{D}$, we define the distance between them to be the length of the symmetric difference of their elements (or rows).
-That is, $d_\mathbb{D}(D_1,D_2) = |D_1 \oplus D_2|$.
+\begin{defn}\label{def:clessthancprime}
+  A function that is $c$-sensitive is also $c'$-sensitive for all $c < c'$.
+\end{defn}
 
-We define a special case when two databases differ by exactly one row (i.e. $d_\mathbb{D}(D_1,D_2)=1$), which we denote by $D_1 \sim D_2$.
-This is a common-case in the differential privacy literature because we are concerned with the inclusion of any particular individual's data in the database.
-One of the databases contains that individual's data; the other is the same database with exactly that row removed.
+Similarly, consider the case where $f_{+10}(x) = x + 10$.
+Clearly, it doesn't matter which $x$ and $y$ you sample; the distance $d_{\mathbb R}(x,y)$ will always equal $d_{\mathbb R}(f(x),f(y))$.
+Therefore, $f_{+10}$ is a 1-sensitive function.
+Now consider the case of $f_{\times 2+10}(x) = 2x + 10$.
+Distances between input and output objects can be now be doubled (but no more), so it is a 2-sensitive function.
+Intuitively, when dealing with linear functions on $\mathbb R$ and the absolute value norm, the largest linear coefficient will dictate the c-sensitivity.
+Higher order polynomials are necessarily $\infty$-sensitive.
+
+Simple functions on $\mathbb R$ and one dimensional distance functions are not terribly interesting.
+However, function sensitivity can be applied much more generally and to much more interesting domains, such as databases containing sensitive information (e.g. Alice's tax records or health information).
+
+We will use $\mathbb D$ to describe the domain of all possible databases.
+Hence, a function $f : \mathbb D \rightarrow \mathbb D$ is an endomorphism for databases.
+The distance between two databases is their symmetric difference; i.e. $d_{\mathbb D}(D_1,D_2) = | D_1 \oplus D_2 |$.
+There is a special case that turns up often in the differential privacy literature.
+We are primarily concerned with whether a particular individual's records are included in the database or not.
+
+\begin{defn}
+  We denote the case when two databases, $D_1$ and $D_2$, differ by exactly 1 row (i.e. $d_{\mathbb D}(D_1,D_2)=1$) with the special notation: $D_1 \sim D_2$.
+\end{defn}
+
+% TODO 1 : add example of sensitivity of a database endomorphism
+
+Despite the change of scenery, function sensitivity behaves as outlined above.
+Consider a database endomorphism, $filter_p : \mathbb D \rightarrow \mathbb D$, which filters rows according to some pre-specified predicate, $p$.
+$filter_p$ is a 1-sensitive function.
+
+For all pairs of databases, $D_1$ and $D_2$, the distance between them is $d_{in} = d_{\mathbb D}(D_1,D_2)$.
+The distance $d_{out} = d_{\mathbb D}(filter_p(D_1),filter_p(D_2))$ cannot exceed $d_{in}$.
+$filter_p$ will only remove rows from a database, so we have only to consider the possible cases.
+There are three main cases to consider:
+1) the filter removes a row that is in both of the databases,
+2) the filter removes a row that is in exactly one of the databases, and
+3) the filter removes a row that is in neither of the databases (does nothing).
+
+\paragraph{Case: the filter removes a row that is in both of the databases.}
+Because the row is included in both of the input databases, their symmetric difference is unaffected by its presence.
+The row is in neither of the output databases, so their symmetric difference is also unaffected.
+Therefore, after the removal of the one row, $d_{out} = d_{in}$.
+
+\paragraph{Case: the filter removes a row that is in exactly one of the databases.}
+The symmetric difference of the input databases is affected by this row, because it is in one, but not the other.
+Therefore, this row is increasing the distance between the input databases.
+Its removal brings the output databases closer together.
+Therefore, $d_{out} < d_{in}$.
+
+\paragraph{Case: the filter removes a row that is in neither of the databases.}
+This is nearly the same as the first case.
+The output distance is equal to the input distance.
+
+\paragraph{} % to get a blank line between last P and this one
+In all cases, $d_{out}$ is either less than or equal to $d_{in}$.
+Thus, we can fix $c=1$ and conclude that filtering is a 1-sensitive function.
+
+Similar proofs exist for the other relational algebra operators.
+Proofs like these provide the basic building blocks used by PINQ and DPDT.
+The real power of PINQ and DPDT, however, comes from the ability to freely combine these building blocks without having to manually consider sensitivies.
+
+Consider two functions, $f : \mathbb D \rightarrow \mathbb D$ and $g : \mathbb D \rightarrow \mathbb D$, with sensitivities $c$ and $c'$, respectively.
+What is the sensitivity of the function resulting from their composition, $k = f . g$?
+Function sensitivities compose multiplicatively; i.e. $k$ is $(c\times c')$-sensitive.
+Sensitivity represents the largest factor by which the distances between pairs of objects can be increased, so it follows that the composition of sensitivities is multiplicative.
 
 \subsection{Indistinguishability}
 
-One of the key concepts driving differential privacy research is that of indistinguishability.
-The idea is simple: if an attacker, based on the output from a query, is unable to determine whether your data was even included in the database, then he can't deduce much about the contents of your data from the database.
-We turn to randomness to achieve this kind of property.
+Indistinguishability is the key idea that distinguishes differential privacy from similar approaches in privacy research.
+If an attacker is unable to determine whether Alice's data even exists in the database, he will be unable to determine the contents of her data.
+A query is said to be differentially private if it satisfies this property.
 
-Consider a randomized function, $f_r(x)$.
-Assume that we have two variables, $x, y \in Domain(f_r)$.
-If the probability of $f_r$'s output being in $S \subseteq Codomain(f_r)$ is almost the same regardless of whether $f_r$ was applied to $x$ or $y$, then it is nearly impossible to determine which input was used.
+We turn to randomness to achieve this kind of behavior.
+Consider a randomized function, $f_r : A \rightarrow B$.
+Then, for all $x,y \in A$, if the probability of both $f_r(x)$ and $f_r(y)$ being in $S \subseteq B$ is nearly equal, then it is nearly impossible to determine which input was used.
+% TODO 3 : clarify what $S$ is in this case
 
-\[
-  Pr[f_r(x)\in S] \qquad\approx\qquad  Pr[f_r(y)\in S]
-\]
+$$ Pr[f_r(x)\in S] \qquad\approx\qquad  Pr[f_r(y)\in S] $$
 
 This is the core idea behind indistinguishability.
-Now consider a randomized query, or mechanism, $\mathcal{M}(D) : \mathbb{D} \rightarrow \mathbb{R}$.
-We say that such a query is $\epsilon$-differentially-private if the inclusion of your data affects your privacy risk by at most $e^\epsilon$. % TODO: What is 'privacy risk'
+The intrinsic randomness of the function prevents an attacker from deducing anything about the input based on the output.
+Now consider a randomized query, or mechanism, $\mathcal M(D) : \mathbb D \rightarrow \mathbb R$.
+We say that such a query is $\epsilon$-differentially-private if the inclusion of Alice's data affects her privacy risk by at most $e^\epsilon$. % TODO 4 : What is 'privacy risk'
 
 \begin{defn}\label{def:diffpriv}
-  A randomized mechanism, $\mathcal{M}(D)$, is $\epsilon$-differentially-private if, for all databases $D_1 \sim D_2$, and all $S \in Codomain(M)$,
-  $Pr[\mathcal{M}(D_1)\in S] \le e^\epsilon \times Pr[\mathcal{M}(D_2)\in S]$.
+  A randomized mechanism, $\mathcal{M}(D) : \mathbb D \rightarrow A$, is $\epsilon$-differentially-private if, for all databases $D_1 \sim D_2$, and all $S \in A$,
+  $$Pr[\mathcal M(D_1)\in S] \le e^\epsilon \times Pr[\mathcal M(D_2)\in S]$$
 \end{defn}
+% TODO 1 : check whether S \in R should be \in or \subseteq
 
-\begin{itemize}
-  \item Quick talk about PINQ?
-  \item Other stuff
-\end{itemize}
+% TODO 1 : discuss how to use noise
+% TODO 1 : discuss aggregations
+There are a few restrictions on mechanisms in the context of sensitive databases.
+Obviously, there are limits to the types of data that queries are allowed to return.
+We can't allow entire tables (computed or otherwise) to be returned, because they will potentially contain the sensitive rows we are trying to protect!
+Additionally, queries should not be allowed to return data directly from any particular row.
+
+In fact, queries must be restricted to aggregation operations.
+This may seem limiting, but in practice is not so.
+Certainly, entire classes of queries and algorithms are precluded by this necessity, but the vast majority of statistical research is performed using aggregations over tables, not querying for the information pertaining to particular individuals.
+
+An additional constraint emerges from the previous one: the data type returned by the aggregation must be a semigroup; i.e. it must have an associative binary operator for folding new values into the aggregate.
+However, aggregations alone are not capable of protecting privacy.
+
+Consider a database consisting of all patients who have ever been treated at the \textit{ABC ABortion Clinic}.
+Alice is one of those patients.
+Regardless of what Alice's records actually contain, her mere presence in that database could have serious consequences for her private life if the wrong people found out.
+Consider the result of the following query: \textit{How many people named Alice are in the database?}
+One.
+That is a valid aggregation and Alice is now in trouble.
+
+So how could we have saved Alice?
+The final requirement is randomness.
+When we run an aggregation, we need to randomize the output to satisfy indistinguishability.
+If not, an attacker can draft clever aggregations to deduce private information about particular individuals.
+Noising the result before returning it gives Alice plausible deniability.
+The aggregation function from earlier will no longer be enough to determine whether any records in the database related to Alice and what they contain if they do.
+
+Generally, the Laplace distribution is used because XX.
+% TODO 1 : why do we prefer Laplace? it scales well with e and is symmetric. what else?
 
 \subsection{PINQ}\label{sec:pinq}
 
-This section will provide an overview of PINQ, the framework we used as model for our language.
-PINQ is a layer built on top of the query language LINQ, providing some differential privacy guarantees.
+This section provides an overview of PINQ, the framework we modelled our language after.
+PINQ is a privacy layer built over top of the .NET query DSL LINQ.
+% TODO 3 : expand on what LINQ is to make PINQ's contribution more clear?
+It provides carefully implemented primitives and the ability to build arbitrarily complex, differentially private algorithms from them.
 
 \subsubsection{Aggregations}
 
@@ -274,44 +382,13 @@ Concepts used later in the paper that need to be defined here:
 \item TBD
 \end{itemize}
 
-\section{Function Sensitivity}\label{sec:function_sensitivity}
+\section{Function Sensitivity in Idris}\label{sec:function_sensitivity}
 
-Function sensitivity plays a central role in much of the differential privacy literature.
-We can make assertions about an entire program if we understand the sensitivities of the functions with which it is composed.
+% TODO 1 : fix this section based on diff.priv. subsection
 In this section, we describe function sensitivity and then demonstrate how we use dependent types to model it in Idris.
-
-Function sensitivity captures the idea of how relatively ``far'' a function can magnify the distance between pairs of inputs.
-We say that a function is $c$-sensitive if, for all pairs of inputs, the distance between the outputs is not $c$ times greater than the original distance between the inputs.
 
 	$$ \forall x,y. d(f(x),f(y)) \le c \times d(x,y) $$
 
-For example, imagine a function $f : \mathbb R \rightarrow \mathbb R$ and Euclidian distance function $d_{\mathbb R}(x,y) = |x-y|$.
-Now sample two random values from a 1D line: $x,y$.
-
-Consider the case where $f(x) = \texttt{add10}(x) = x + 10$.
-Clearly, it doesn't matter which $x$ and $y$ you sample; the distance $d_{\mathbb R}(x,y)$ will always equal $d_{\mathbb R}(f(x),f(y))$.
-We say that \texttt{add10} is a 1-sensitive function.
-Now consider the case where $f(x) = \texttt{doubleThenAdd10}(x) = 2x + 10$.
-Distances can be now be doubled (but no more), so it is a 2-sensitive function.
-Intuitively, when dealing with linear functions and the Euclidian distance function, the largest linear coefficient will dictate the c-sensitivity.
-Higher order polynomials can be only be described as being $\infty$-sensitive.
-
-Linear functions and Euclidian distances are not terribly interesting.
-Function sensitivity applies to many other interesting domains such as databases containing private tax records or health information.
-
-We will use $\mathbb D$ to describe the domain of databases.
-Hence, a function $f : \mathbb D \rightarrow \mathbb D$ is a function across databases.
-Our distance function will just be the symmetric difference of two databases; i.e. $d_{\mathbb D}(D_1,D_2) = | D_1 \oplus D_2 |$.
-There is a common case in the differential privacy literature where two databases differ by exactly 1 row (i.e. $d_{\mathbb D}(D_1,D_2)=1$).
-This is notationally represented by $D_1 \sim D_2$.
-
-Function sensitivies compose, too.
-The composition of \texttt{add10 . doubleThenAdd10} is 2-sensitive.
-\texttt{doubleThenAdd10 . doubleThenAdd10} is 4-sensitive.
-Function sensitivity represents the maximum multiplicative factor by which the distances can increase.
-So it follows that the composition of two functions, $f$ and $g$, which are $c$- and $c'$-sensitive, respectively, will be $(c \times c')$-sensitive.
-
-% TODO : discuss any function that is c-sensitive is also c'-sensitive, for all $c < c'$.
 
 \subsection{Function sensitivity in Idris}
 
@@ -383,8 +460,7 @@ For example, the table below contains four columns; each has a unique name and a
     \hline
     \hline
        1 & Casper & 26 & Chicken Curry \\
-       2 & Knut & 26 & ??? \\
-       % TODO : Knut fills out fav. food
+       2 & Knut & 26 & Moussaka \\
     \hline
 
     \end{tabular}
