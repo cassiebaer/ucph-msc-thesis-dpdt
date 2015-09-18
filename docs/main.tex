@@ -56,8 +56,8 @@ Imagine the potential insights we as a society could discover about ourselves wi
 We are faced with a classic balancing act: how do we protect the privacy of the individual while maximizing the usefulness of our data?
 
 Differential privacy\cite{journals/cacm/Dwork11} is an emerging field aiming to answer this question.
-The central concept driving differential privacy is indistinguishability, i.e. a query against a dataset should return more-or-less the same result regardless of whether or not Alice's records are included in the data.
-If the results are indistinguishable, with or without Alice, then the contents of Alice's records must be indistinguishable, too.
+One of the key ideas in differential privacy is that of indistinguishability, i.e. a query against a dataset should return more-or-less the same result regardless of whether or not Alice's records are included in the data.
+If the results are indistinguishable, with or without Alice's data, then the contents of her records must be indistinguishable, too.
 
 Indistinguishability is achieved by combining the true (distinguishable) result of a query with random noise.
 However, the addition of noise is insufficient by itself to guarantee privacy.
@@ -263,31 +263,27 @@ Sensitivity represents the largest factor by which the distances between pairs o
 
 \subsection{Indistinguishability}
 
-One of the key concepts driving differential privacy research is that of indistinguishability.
-The idea is simple: if an attacker, based on the output from a query, is unable to determine whether your data was even included in the database, then he can't deduce much about the contents of your data from the database.
-We turn to randomness to achieve this kind of property.
+Indistinguishability is the key idea that distinguishes differential privacy from similar approaches in privacy research.
+If an attacker is unable to determine whether Alice's data even exists in the database, he will be unable to determine the contents of her data.
+A query is said to be differentially private if it satisfies this property.
 
-Consider a randomized function, $f_r(x)$.
-Assume that we have two variables, $x, y \in Domain(f_r)$.
-If the probability of $f_r$'s output being in $S \subseteq Codomain(f_r)$ is almost the same regardless of whether $f_r$ was applied to $x$ or $y$, then it is nearly impossible to determine which input was used.
+We turn to randomness to achieve this kind of behavior.
+Consider a randomized function, $f_r : A \rightarrow B$.
+Then, for all $x,y \in A$, if the probability of both $f_r(x)$ and $f_r(y)$ being in $S \subseteq B$ is nearly equal, then it is nearly impossible to determine which input was used.
+% TODO 3 : clarify what $S$ is in this case
 
-\[
-  Pr[f_r(x)\in S] \qquad\approx\qquad  Pr[f_r(y)\in S]
-\]
+$$ Pr[f_r(x)\in S] \qquad\approx\qquad  Pr[f_r(y)\in S] $$
 
 This is the core idea behind indistinguishability.
-Now consider a randomized query, or mechanism, $\mathcal{M}(D) : \mathbb{D} \rightarrow \mathbb{R}$.
+The intrinsic randomness of the function prevents an attacker from deducing anything about the input.
+Now consider a randomized query, or mechanism, $\mathcal M(D) : \mathbb D \rightarrow \mathbb R$.
 We say that such a query is $\epsilon$-differentially-private if the inclusion of your data affects your privacy risk by at most $e^\epsilon$. % TODO: What is 'privacy risk'
 
 \begin{defn}\label{def:diffpriv}
-  A randomized mechanism, $\mathcal{M}(D)$, is $\epsilon$-differentially-private if, for all databases $D_1 \sim D_2$, and all $S \in Codomain(M)$,
-  $Pr[\mathcal{M}(D_1)\in S] \le e^\epsilon \times Pr[\mathcal{M}(D_2)\in S]$.
+  A randomized mechanism, $\mathcal{M}(D) : \mathbb D \rightarrow \mathbb R$, is $\epsilon$-differentially-private if, for all databases $D_1 \sim D_2$, and all $S \in \mathbb R$,
+  $$Pr[\mathcal M(D_1)\in S] \le e^\epsilon \times Pr[\mathcal M(D_2)\in S]$$
 \end{defn}
-
-\begin{itemize}
-  \item Quick talk about PINQ?
-  \item Other stuff
-\end{itemize}
+% TODO 1 : check whether S \in R should be \in or \subseteq
 
 \subsection{PINQ}\label{sec:pinq}
 
