@@ -649,6 +649,14 @@ mutual -- required for mutual definitions
     GroupBy : Eq k => Expr s k -> Query t s -> Grouping t s k
   data Partitioning : (Schema -> Type) -> Schema -> Type -> Type where
     Partition : Eq k => List k -> Expr s k -> Query t s -> Partitioning t s k
+
+-- Tables in our Idris backend are: List (Row s)
+IdrisBackend : Schema -> Type
+IdrisBackend s = List (Row s)
+
+-- Tables in our SQLite backend are just represented by their names
+SQLiteBackend : Schema -> Type
+SQLiteBackend _ = String
 \end{lstlisting}
 
 Recall that the set operators require additional constraints that less powerful type systems have a difficult time capturing.
@@ -658,6 +666,46 @@ Notice how easily type unification allows us to express the first two constraint
 The disjoint proof is only slightly more complex; but because it is decidable it can be automatically derived, so the users will be unaware of any additional complexity.
 
 % TODO : write about backends
+
+In trying to emulate PINQ, we chose to focus most of our efforts on implementing an in-memory Idris backend.
+However, we believe that our abstract representation of the relational algebra allows for a wide variety of backends to be developed.
+The exception to this is \texttt{PureFn}, which is only available to Idris-based backends (e.g. an Idris-based server a la LINQ providers).
+Many uses of \texttt{PureFn} could be replaced by extensions to the expression language.
+
+There are two main components required to make a functioning backend implementation:
+1) an underlying data representation and
+2) evaluator functions that understand our abstract expression and query trees.
+Existing database systems such as \texttt{MySQL}\footnote{https://www.mysql.com/} and \texttt{SQLite}\footnote{https://sqlite.org/} already have their underlying data representations.
+Implementing backends for them would likely require compiling abstract syntax trees down to SQL strings which could then be submitted to the database.
+
+Our Idris backend uses a basic \texttt{cons}-list structure indexed over \texttt{Schema}s.
+Listing~\ref{lst:idris_backend} shows this.
+It also shows snippets from expression and query evaluation functions written for Idris and SQLite backends, respectively.
+
+\begin{lstlisting}[caption={Backend Implementation Snippets},label={lst:idris_backend}]
+-- Idris backend
+data Row : Schema -> Type where
+  Nil  : Row []
+  (::) : Eq t => t -> Row s -> Row (name:::t::s)
+
+namespace IdrisBackend
+  evalE : Expr s t -> Row s -> t
+  evalE (x + y) r = eval x r + eval y r
+    [..]
+
+  evalQ : (q:Query Table s) -> Table s
+  evalQ (Product x y) = [ x' ++ y' | x' <- eval x, y' <- eval y ]
+    [..]
+
+namespace SQLiteBackend
+  evalE : Expr s t -> String
+  evalE (x + y) = "(" ++ eval x ++ ") + ("  ++ eval y ++ ")"
+    [..]
+
+  evalQ : Query SQLiteTable s -> String
+  evalQ (Product x y)    = "(" ++ eval x ++ ") , (" ++ eval y ++ ")"
+    [..]
+\end{lstlisting}
 
 \section{Our implementation}\label{sec:our_implementation}
 
