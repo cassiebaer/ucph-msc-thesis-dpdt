@@ -322,8 +322,32 @@ This section provides an overview of PINQ, the framework we modelled our languag
 PINQ is a privacy layer built over top of the .NET query DSL LINQ.
 % TODO 3 : expand on what LINQ is to make PINQ's contribution more clear?
 It provides carefully implemented primitives and the ability to build arbitrarily complex, differentially private algorithms from them.
-There are two main components to PINQ: aggregations and transformations.
-% TODO 3 : switch order of these?
+There are two main components to PINQ: transformations and aggregations.
+
+\subsubsection{Transformations}
+
+LINQ is a query DSL written for the .NET languages allowing users to manipulate data with relational algebra operators directly in the host language.
+In LINQ terminology, these operations are called transformations.
+Our work includes a fully-typed LINQ-like implementation in Idris (\texttt{Database.PowerOfPi.Idris}).
+
+PINQ's big contribution is the addition of a privacy layer around LINQ.
+Most of LINQ's transformations are still available in the PINQ API.
+% TODO 4 : which ones aren't and why
+However, they have all been carefully reimplemented to keep track of their function sensitivities.
+Each transformation is aware of its own sensitivity and the sensitivies of the subqueries beneath it.
+The word ``stability'' is commonly used when discussing sensitivity in the context of database transformations.
+We have already seen a proof that a filtering function (selection) is 1-sensitive.
+Similar proofs exist for all of the other transformations provided by PINQ.
+
+% TODO 1 : figure out what to do with the rest of this subsection
+
+\texttt{select} is a projection and will return the same number of rows as the input, and thus removing a particular row in the input will remove exactly one row and affect no other row of the result.
+
+\texttt{where} is a selection and will return a subset of the input rows.
+If we remove one of the input rows, the change in the result will be at most one row.
+
+\texttt{groupBy} is an example of a 2-stable transformation.
+This is because removing one row of the input can potentially both remove a group and the member in this group, leading to a symmetric difference of 2.
 
 \subsubsection{Aggregations}
 
@@ -390,27 +414,7 @@ Then, if we get a response of $0$, we can translate that back to $20$.
 
 % TODO 4 : talk about more aggregations? Or at least mention them
 
-\subsubsection{Transformations}
 
-Aggregations on their own are somewhat limited in their analytic power, but combined with transformations they become more powerful.
-The raw data results produced from transformations can not be exposed to users, as this would leak large amounts of privacy, but can be used as input to the aggregations, providing more flexibility.
-
-In PINQ, the sensitivity of a transformation is referred to as its stability.
-Proving the stability of a transformation is an application of definition \ref{def:csens} where \texttt{c} is the stability, \texttt{f} is of type  $D_1 \sim D_2 -> D$ and the distance function \texttt{d} is the symmetric difference.
-
-Examples of 1-stable transformations are \texttt{select} and \texttt{where}.
-
-\texttt{select} is a projection and will return the same number of rows as the input, and thus removing a particular row in the input will remove exactly one row and affect no other row of the result.
-
-\texttt{where} is a selection and will return a subset of the input rows.
-If we remove one of the input rows, the change in the result will be at most one row.
-
-\texttt{groupBy} is an example of a 2-stable transformation.
-This is because removing one row of the input can potentially both remove a group and the member in this group, leading to a symmetric difference of 2.
-
-For an aggregation applied to subsequent transformations the sensitivity is the stability of the transformations multiplied by $\epsilon$.
-
-For example $\texttt{count} \circ \texttt{groupBy} \circ \texttt{groupBy}$ will be a $4\epsilon$-differentially private function.
 
 \subsubsection{Budget}
 
