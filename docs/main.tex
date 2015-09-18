@@ -322,27 +322,73 @@ This section provides an overview of PINQ, the framework we modelled our languag
 PINQ is a privacy layer built over top of the .NET query DSL LINQ.
 % TODO 3 : expand on what LINQ is to make PINQ's contribution more clear?
 It provides carefully implemented primitives and the ability to build arbitrarily complex, differentially private algorithms from them.
+There are two main components to PINQ: aggregations and transformations.
+% TODO 3 : switch order of these?
 
 \subsubsection{Aggregations}
 
-The only way to extract data from the underlying database in PINQ is by using the built-in aggregation functions.
-These aggregations are proven to be $\epsilon$-differentially private.
-$\epsilon$ is a precision parameter passed in with aggregation applications.
+As shown earlier, the only safe way to return data from a sensitive database is through aggregations.
+PINQ provides a few carefully implemented aggregation operations and disallows everything else.
+Each aggregation is proven to be $\epsilon$-differentially private.
+$\epsilon$ is an argument provided by the user to specify how much of the privacy budget should be consumed to run the aggregation.
+The more budget used, the more accurate the result may be.
 
-One of these aggregations is \texttt{count}, which counts the number of rows in the given query.
-In order to prove the sensitivity of this function we can use definition $\ref{def:csens}$.
-Let the distance function \texttt{d} be the Euclidean distance.
-Let the domain of \texttt{f} be two databases $D_1$ and $D_2$ where $D_1 \sim D_2$, representing a database with and without a particular individuals record.
-If we take the count of both these databases, we see that the Euclidean distance between the counts will always be 1, and thus count is a 1-sensitive function.
+The simplest of PINQ's mechanisms is \texttt{noisyCount}, which just returns the number of rows described by the given query plus some noise.
+\texttt{noisyCount} is a 1-sensitive function.
+Consider two databases which differ by exactly one row, $D_1 \sim D_2$.
+Because we know the databases differ by only one row, the distance between the inputs is $d_{\mathbb D}(D_1,D_2)=1$.
+Similarly, we know that the counts of the two databases must differ by one; i.e. $d_{\mathbb R}(noisyCount(D_1),noisyCount(D_2))=1$.
+% TODO 1 : fix the line breaking issue here
+We can fix $c=1$ and conclude that \texttt{noisyCount} is a 1-sensitive function.
+\texttt{noisyCount} is made $\epsilon$-differentially private by adding Laplacian noise scaled according to $1/\epsilon$.
+% TODO 3 : add \qed after each ``proof''?
 
-Following definition $\ref{def:diffpriv}$, we can make count $\epsilon$-differentially private by adding zero mean Laplacian noise with 1/$\epsilon$ standard deviation to the result (TODO: Why).
-We call this version of count \texttt{noisyCount}.
-$\epsilon$ is a parameter of all the noisy aggregations and represents the balance between precision and privacy.
+Another aggregation mechanism PINQ provides is \texttt{noisyAverage}.
+This aggregation adds a unique challenge with regards to function sensitivity.
+Let us assume that we have a function, $r : \texttt{Row} \rightarrow \mathbb R$.
+$r$ yields a numeric value for each row and we want to compute the average value of all the rows contained in the query.
+Let $f : \mathbb D \rightarrow \mathbb R$ be the aggregation function which maps $r$ onto all rows and reduces them to their average (i.e. $f = \texttt{average . map r}$).
+What is $f$'s sensitivity?
 
-Another aggregation we provide is average.
-Using the same approach, we find that the distance is dependent on the range of the type we are averaging.
-PINQ chooses to clamp the range between -1 and 1, which makes the function 1-sensitive.
-The consequence is that users have to pre-process the data by normalization before they use \texttt{noisyAverage}, which is the name of the average function with the added Laplacian noise as with count.
+Consider the pair of databases $D_1 \sim D_2$.
+Just as before, the distance between them is 1.
+How much of an effect can that one row have on the distance between the output averages?
+It is impossible to say with the information we have now.
+
+Imagine a database containing the ages of students at a particular university.
+In the United States, their ages will most likely range from 18 to 22.
+For illustrative purposes, let us assume that $trueAverage(D_1) = 20$.
+Alice, who just turned 40 and is having a mid-life crisis, has decided to go back to college.
+How will her participation in the database affect $trueAverage(D_2)$?
+
+It depends on how many students already attend the college.
+Let's say it is a small college of just one prior student.
+Alice's participation has brought $trueAverage(D_2) = 30$!
+College of 20,000?
+$trueAverage(D_2) = 20.000999$.
+And we had to assume that we knew Alice's age to get this far!
+In reality, we will have no idea what outlier values $r$ might yield.
+We are unable to quantify the effect of that one row on the aggregate.
+Thus, we must conclude that $trueAverage$ is $\infty$-sensitive.
+
+PINQ solves this by making \texttt{noisyAverage} clamp values to the range $[-1,+1]$.
+In doing so, PINQ is able to conclude that no row is able to affect the aggregate by more than 2.
+Then we can add noise scaled according to $2/\epsilon$.
+What if $trueAverage(D) + Lap(2/\epsilon)$ falls outside of the specified range?
+
+PINQ solves this by looping over new noise values until the constraint is satisfied.
+We make improve on this behavior by noting that the Laplace cumulative distribution function (CDF), which is used to sample from the Laplace distribution, is invertible.
+We usually use a uniform random variable sampled from the interval $[0,1)$ to draw from the Laplace distribution.
+Our implementation computes the subinterval for the uniform random variable that guarantees the constraint will be met.
+
+% TODO 2 : make a figure of the invertible CDF?
+
+Of course, the decision to clamp values to the interval $[-1,+1]$ will require analysts to pre-process their data.
+This will require users to explicitly express their assumptions regarding the range of possible values that $r$ could return.
+If we wanted to compute the average age of the college students from before, we might draft an invertible function mapping the interval $[18,22]$ to $[-1,+1]$.
+Then, if we get a response of $0$, we can translate that back to $20$.
+
+% TODO 4 : talk about more aggregations? Or at least mention them
 
 \subsubsection{Transformations}
 
