@@ -175,7 +175,7 @@ We can make assertions about an entire program if we understand the sensitivitie
 Sensitivity is a key part in making our type system work.
 
 Function sensitivity captures the idea of how relatively ``far'' a function can magnify the distances between pairs of objects.
-We say that a function is $c$-sensitive if, for all pairs of inputs, the distance between the outputs is not $c$ times greater than the original distance between the inputs.
+We say that a function is $c$-sensitive if, for all pairs of inputs, the distance between the outputs does not exceed $c$ times the original distance between the inputs.
 
 \begin{defn}\label{def:csens}
   A function, $f : \mathbb A \rightarrow \mathbb A$, is $c$-sensitive if
@@ -793,6 +793,52 @@ This way, we can get more of the flexibility that PINQ has got from LINQ.
 
 \subsubsection{Improved syntax}
 
+In order for a programming language to be usable, it should be reasonbly easy to read and write programs in it.
+The current implementation of our languge does not score too high on usability measures.
+The syntax of complex queries becomes rather awkward because the current way of building up queries is by nested function applications.
+
+\begin{lstlisting}
+where' : PINQuery b s c -> Expr s Bool -> PINQuery b s c
+select : PINQuery b s c -> (f:String -> Maybe  String) -> PINQuery b (projectedSchema f s) c
+
+select (where'' (union q q') e) f
+\end{lstlisting}
+
+The above listing shows how a combined select, where and union application looks in DPDT.
+Notice that combining more transformations will decrease the readability of the query.
+
+Idris provides some measures for making embedded DSLs easier to read and write.
+One of these measures is syntax rules.
+Syntax rules allow developers to define custom ways of executing functions beyond the standard $f x \: y$ application of the function $f$ on the arguments $x$ and $y$.
+Below are two examples of syntax rules and the same $select \circ where \circ union$ query written using the $select \circ where$ syntax rule.
+
+\begin{lstlisting}
+||| Definition
+syntax select [f] from [q] = select q f
+syntax select [f] from [q] where [e] = select (where q e) f
+
+||| Application
+select f from (union q q') where e
+\end{lstlisting}
+
+The above examples utilize keywords and non-terminals to construct the syntax rules.
+The keywords in the examples are $select$, $from$ and $where$, while the non-terminals are [f], [q] and [e].
+
+We assume the use of syntax rules could improve the usability of DPDT, but we are not sure how much work it is to implement it in a flexible way. 
+As you can see in the example above, we are including the \texttt{select [f] from [q]} as part of the $where$ syntax rule.
+This is the typical SQL syntax, and is therefore a syntax to stride for, as it is familiar to users and well understood.
+If we add more operations into the mix with this syntax rule design, we end up with combinations of the operations that are additional to $select$.
+Below is an example of syntax rule definitions if we add support for $groupBy$ with this design.
+
+\begin{lstlisting}
+||| Definition
+syntax select [f] from [q]                         = ...
+syntax select [f] from [q] where [e]               = ...
+syntax select [f] from [q] group by [e]            = ...
+syntax select [f] from [q] where [e] group by [e'] = ...
+\end{lstlisting}
+
+
 
 % TODO 1 : should we have a discussion section? I think we can cover it in Evaluation+Conclusion
 
@@ -802,7 +848,23 @@ This way, we can get more of the flexibility that PINQ has got from LINQ.
 
 \section{Conclusion}\label{sec:conclusion}
 
-We worked very hard, but achieved very little.
+We have demonstrated that a differentially private query languge can be represented in a dependently typed type system, where the privacy guarantees are enforced statically in types.
+A prototype named DPDT is implemented in Idris, providing basic transformation and aggregation operations.
+DPDT guarantees differential privacy statically, which means that any valid program written in it is differtially private.
+
+In comparison to our inspiration PINQ, DPDT currently lacks a bit of flexibility and usability.
+PINQ can use all the data source types supported by LINQ for .NET, while DPDT has limited support for external databases.
+The syntax is also currently less convoluted in PINQ, but this can be improved in DPDT in the future by the use of Idris' syntax rules.
+
+However, DPDT is more secure than PINQ.
+Firstly, as our differential privacy guarantees are enforced on type level, users don't have to run a program to see if it violates privacy constraints.
+In PINQ these privacy guarantees are inforced dynamically.
+
+Secondly, because $C\#$ allows side effects, PINQ is exposed to side-channel attacks.
+An example of such an attack could be where an expression evaluated on the database as part of a query sends off the raw data to an expernal server.
+Because idris is a purely functional language, such attacks are easily avoided.
+In Idris functions with side effects must be declared as effectful
+So to avoid these kinds of attacks we simply don't define the expressions in DPDT as effectful.
 
 \bibliographystyle{abbrv}
 \bibliography{main}
