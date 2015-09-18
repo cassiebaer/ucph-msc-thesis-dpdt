@@ -774,7 +774,7 @@ noisyCount (MkPINQuery q) eps = MkPrivate $ \g =>
 \section{Evaluation}\label{sec:evaluation}
 
 In this section we will present our results.
-More specifically, we will compare DPINQ to our inspirational library, PINQ.
+More specifically, we will compare DPDT to our inspirational library, PINQ.
 
 \subsection{API and flexibility}
 
@@ -784,24 +784,26 @@ Therefore, we have concidered flexibility to be an important success criteria fo
 
 PINQ is fairly flexible considering its privacy guarantees.
 It is achieved by implementing simple primitives that are guaranteed to be differentially private, which can be mixed and matched together.
-PINQ also gets a lot of flexibility from the fact that it is built on top of LINQ, which grants users access to the powerful expression language of LINQ.
+PINQ also gets a lot of flexibility from the fact that it is built on top of LINQ, which grants users access to its powerful expression language.
 This has its downside when it comes to safety though, which will be discussed later.
+A variety of machine learning algorithms are implemented with success in PINQ: perceptron, k-means clusteirng, SVM and logical regression.
+Other uses include network analysis and classic statistical work.
 
-Our language has the same API as PINQ, but currently lack some of the flexibility PINQ provides.
+DPDT has roughly the same API as PINQ, but currently lack some of the flexibility PINQ provides.
 For our Idris backend, the expression operation \texttt{PureFn} provides flexible expressions only limited by Idris' capabilities,
 \texttt{PureFn} lifts an arbitrary Idris function to our expression language.
 Unfortunately we are unable to compile an arbitrary Idris function to SQLite, so this functionality is not supported by our SQLite backend.
-
-This means that there are algorithms that can be written in our language using the Idris backend, but not using the SQLite backend.
-An example of such an algorithm is k-means clustering, which we have implemented in our language for the Idris backend.
-K-means clustering is an algorithm for grouping n-dimentional points in k distinct clusters.
-Below are the steps performed by the basic k-means clustering algorithm.
+With the Idris backend we are able to write most algorithms that can be written in PINQ.
+However, there are algorithms that can be written in DPDT using the Idris backend, but not using the SQLite backend.
+An example of such an algorithm is \textit{k-means clustering}, which we have implemented in DPDT for the Idris backend.
+K-means clustering is an algorithm for grouping n-dimentional points into $k$ distinct clusters.
+Below are the steps performed by the basic version of the algorithm.
 
 \begin{enumerate}
-	\item k initial cluster centers are chosen
+	\item $k$ initial cluster centers are chosen
 	\item All points are assigned a cluster based on the closest cluster center 
 	\item Each cluster center is updated to the mean of the points assigned it
-	\item Repeat step 2 and 3 \texttt{X} number of times
+	\item Repeat step 2 and 3 $x$ times (the greater the $x$, the greater the precision)
 \end{enumerate}
 
 Step 2 requires checking the distance from each point to all the current cluster centers.
@@ -809,27 +811,28 @@ Because SQLite does not provide any looping construct, it is not trivial to impl
 We describe possible solutions in Future work to grant more flexibility to external database backends.
 
 Some algorithms are also inherently more difficult to represent in a dependently typed language than in languages with more limited type systems, such as C\#.
-An example is a k-means clustering algorithm with a dynamic termination.
-The standard k-means algorithms runs for \texttt{X} iterations.
+An example is a k-means clustering algorithm with dynamic termination.
+The standard k-means algorithms runs for $x$ iterations.
 
 Another version is one where the algorithm terminates based on some condition, e.g. that half of the remaining budget is used every iteration until some defined convergence point.
 This algorithm is difficult to represent in a dependent type system. % TODO: Oh, but why?
 
 \subsection{Type safety and security}
 
-For all practical purposes, LINQ is type safe.
+PINQ's foundation, LINQ, is for all practical purposes type safe.
 It has powerful lambda expressions that use the data source schema to reference fields with type safety.
 
-\begin{lstlisting}[caption = LINQ where query, captionpos=b]
+\begin{lstlisting}[caption = Where query in LINQ, captionpos=b]
 var osloCustomers = customers.Where(cust => cust.City == "Oslo"); 
 \end{lstlisting}
 
-PINQ only validates privacy constraints dynamically, which means that users can write valid PINQ programs that violate privacy constraints.
+However, PINQ only validates privacy constraints dynamically.
+The consequence is that users can write valid PINQ programs that violate privacy constraints, and have to execute the programs in order to find out if they do.
 
-With Idris' flexible type system, we were able to make our language completely type safe, as described in the Power of Pi section.
-As we perform privacy calculations on the type level, users of our language are unable to write valid programs that violates privacy constraints.
+With Idris' flexible type system, we were able to make queries and expressions in DPDT completely type safe, as described in the Section \ref{sec:typing_the_relational_algebra}.
+As we also perform privacy calculations on the type level, users of our language are unable to write valid programs that violate privacy constraints, with an exception discussed later in this section.
 
-\begin{lstlisting}[caption = LANGUAGE NAME where query, captionpos=b]
+\begin{lstlisting}[caption = Where query in DPDT, captionpos=b]
 osloCustomers : PINQuery Table Customer 1
 osloCustomers = where' customers $ Customer^"City" == Lit "Oslo"
 \end{lstlisting}
@@ -840,17 +843,35 @@ Because the expressions has the whole .NET runtime at its disposal, side-channel
 An example could be an expression that sends the raw, sensitive data off to a remote database.
 A rewrite function intended to remove such unsafe code from expressions is planned, but not implemented in the current version of PINQ.
 
-Side-channel attacks is not a problem in our language due to the pure nature of Idris.
+Side-channel attacks are less of a problem in our language due to the pure nature of Idris.
+This property of Idris allows us to easily avoid the category of attacks that utilize side effects for malicious means.
 It is simply impossible to create side-effecting functions without specifically defining an effectful function, which can not be called by another function unless also that function is effectful.
+
+However, some side-channel attacks are possible in DPDT.
+Timing attacks are probably the most effective of them.
+The code snippet below illustrates how an expression could take advantage of this vulnerability.
+
+\begin{lstlisting}
+if name == "Casper" performHeavyComputation 
+else no-op
+\end{lstlisting}
+
+The attacker could in this case determine if Casper is in the database based on the response time of the query.
+
+\subsection{Related work}\label{sec:related_work}
+
+\subsubsection{DFUZZ}
+% TODO 2 Write something
+
 
 \subsection{Future work}\label{sec:future_work}
 
 \subsubsection{External backends}
 
-We have implemented a simple SQLite backend for our language. 
-Currently, this backend compiles queries to single SQLite queries.
+While PINQ has support for all data source types supported by LINQ (e.g., SQL servers, XML), DPDT's current support for external backends is limited.
+We have implemented a simple SQLite backend that compiles queries to single SQLite queries.
 As the name implies, SQLite is one of the more lightweight derivatives of SQL.
-It is not a full-fledged programming language, and the lack of a looping construct is an example of that.
+It is not a full-fledged programming language, and the lack of a looping construct is an example of its limitations.
 As such, with our current design, the SQLite backend flexibility is limited to functionality which can be represented in a single SQLite query.
 We have for instance concidered using nested if statements as a substitute for looping constructs in SQLite.
 Even though this might be a feasible solution, it does not scale, and will result in spaghetti output.
@@ -862,21 +883,20 @@ This way, we can get more of the flexibility that PINQ has got from LINQ.
 \subsubsection{Improved syntax}
 
 In order for a programming language to be usable, it should be reasonbly easy to read and write programs in it.
-The current implementation of our languge does not score too high on usability measures.
+The current implementation of DPDT does not score too well on usability measures.
 The syntax of complex queries becomes rather awkward because the current way of building up queries is by nested function applications.
 
 \begin{lstlisting}
 where' : PINQuery b s c -> Expr s Bool -> PINQuery b s c
 select : PINQuery b s c -> (f:String -> Maybe  String) -> PINQuery b (projectedSchema f s) c
 
-select (where'' (union q q') e) f
+select (where' (union q q') e) f
 \end{lstlisting}
 
 The above listing shows how a combined select, where and union application looks in DPDT.
 Notice that combining more transformations will decrease the readability of the query.
 
-Idris provides some measures for making embedded DSLs easier to read and write.
-One of these measures is syntax rules.
+One of Idris' many neat language features is the ability to describe syntax desugaring rules using regular expressions which the parser can then make use of.
 Syntax rules allow developers to define custom ways of executing functions beyond the standard $f x \: y$ application of the function $f$ on the arguments $x$ and $y$.
 Below are two examples of syntax rules and the same $select \circ where \circ union$ query written using the $select \circ where$ syntax rule.
 
@@ -926,13 +946,15 @@ The syntax is also currently less convoluted in PINQ, but this can be improved i
 
 However, DPDT is more secure than PINQ.
 Firstly, as our differential privacy guarantees are enforced on type level, users don't have to run a program to see if it violates privacy constraints.
-In PINQ these privacy guarantees are inforced dynamically.
+In PINQ these privacy guarantees are enforced dynamically.
 
-Secondly, because $C\#$ allows side effects, PINQ is exposed to side-channel attacks.
+Secondly, because $C\#$ allows side effects, PINQ is exposed to various side-channel attacks.
 An example of such an attack could be where an expression evaluated on the database as part of a query sends off the raw data to an expernal server.
-Because idris is a purely functional language, such attacks are easily avoided.
+Because idris is a purely functional language, a large category of such attacks are easily avoided.
 In Idris functions with side effects must be declared as effectful
-So to avoid these kinds of attacks we simply don't define the expressions in DPDT as effectful.
+So to avoid attacks that use side effects we simply don't define the expressions in DPDT as effectful.
+However, some side-channel attacks are still possible in DPDT, i.e. timing attacks.
+end{lstlisting}
 
 \bibliographystyle{abbrv}
 \bibliography{main}
