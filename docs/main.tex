@@ -657,7 +657,7 @@ Below are the steps performed by the basic k-means clustering algorithm.
 	\item k initial cluster centers are chosen
 	\item All points are assigned a cluster based on the closest cluster center 
 	\item Each cluster center is updated to the mean of the points assigned it
-	\item Repeat step 1 and 2 \texttt{X} number of times
+	\item Repeat step 2 and 3 \texttt{X} number of times
 \end{enumerate}
 
 Step 2 requires checking the distance from each point to all the current cluster centers.
@@ -675,10 +675,20 @@ This algorithm is difficult to represent in a dependent type system. % TODO: Oh,
 
 For all practical purposes, LINQ is type safe.
 It has powerful lambda expressions that use the data source schema to reference fields with type safety.
+
+\begin{lstlisting}[caption = LINQ where query, captionpos=b]
+var osloCustomers = customers.Where(cust => cust.City == "Oslo"); 
+\end{lstlisting}
+
 PINQ only validates privacy constraints dynamically, which means that users can write valid PINQ programs that violate privacy constraints.
 
 With Idris' flexible type system, we were able to make our language completely type safe, as described in the Power of Pi section.
 As we perform privacy calculations on the type level, users of our language are unable to write valid programs that violates privacy constraints.
+
+\begin{lstlisting}[caption = LANGUAGE NAME where query, captionpos=b]
+osloCustomers : PINQuery Table Customer 1
+osloCustomers = where' customers $ Customer^"City" == Lit "Oslo"
+\end{lstlisting}
 
 As mentioned in the previous subsection, PINQ allows users access to powerful LINQ lambda expressions.
 This freedom comes at the cost of security.
@@ -694,7 +704,7 @@ It is simply impossible to create side-effecting functions without specifically 
 \subsubsection{External backends}
 
 We have implemented a simple SQLite backend for our language. 
-Currently, this backend compiles queries to a single SQLite queries.
+Currently, this backend compiles queries to single SQLite queries.
 As the name implies, SQLite is one of the more lightweight derivatives of SQL.
 It is not a full-fledged programming language, and the lack of a looping construct is an example of that.
 As such, with our current design, the SQLite backend flexibility is limited to functionality which can be represented in a single SQLite query.
@@ -704,6 +714,9 @@ Even though this might be a feasible solution, it does not scale, and will resul
 Another solution is to make a distinction between queries and programs, and dynamically query the database, instead of just compiling a single SQL-query.
 If we allow dynamic querying, users can use the power of Idris to write their programs, with multiple queries to a database within a program.
 This way, we can get more of the flexibility that PINQ has got from LINQ. 
+
+\subsubsection{Improved syntax}
+
 
 % TODO 1 : should we have a discussion section? I think we can cover it in Evaluation+Conclusion
 
