@@ -416,6 +416,7 @@ If we wanted to compute the average age of the college students from before, we 
 Then, if we get a response of $0$, we can translate that back to $20$.
 
 % TODO 4 : talk about more aggregations? Or at least mention them
+% TODO 4 : find another way to close this chapter out solidly
 
 \section{Dependent Types in Idris}\label{sec:dependent_types_in_idris}
 
@@ -431,18 +432,20 @@ Concepts used later in the paper that need to be defined here:
 \section{Function Sensitivity in Idris}\label{sec:function_sensitivity}
 
 % TODO 1 : fix this section based on diff.priv. subsection
-In this section, we demonstrate how we use dependent types to model function sensitivity in Idris.
+This section demonstrate how we use dependent types to model function sensitivity in Idris.
 
+Modelling function sensitivity with dependent types is fairly straight-forward.
+In fact, using Idris it is quite simple.
 Recall that function sensitivity is a metric describing how much a function can amplify the distances between pairs of objects.
 
-  $$ \forall x,y.\; d(f(x),f(y)) \le c \times d(x,y) $$
+$$ \forall x,y.\; d(f(x),f(y)) \le c \times d(x,y) $$
 
-Modelling function sensitivity in Idris is quite simple.
 We want to reflect the sensitivity of the function in its type, so we will need to index the type on some numeric value.
-To keep this example simple, we will use \texttt{Float} to represent it, but our implementation uses an implementation of \texttt{Rational}s, which should be more stable numerically than IEEE floating point numbers.
+To keep this example simple, we will use \texttt{Float} to represent sensitivity, but our implementation uses an implementation of \texttt{Rational}s, which should be more stable numerically than IEEE floating point numbers.
 
 We define a type constructor indexed by the sensitivity and parameterized by its input and output types.
-It has just one data constructor for wrapping native functions.
+It has just one data constructor which is used for wrapping native Idris functions.
+A \texttt{SensitiveFunction s a b} is a function with sensitivity \texttt{s} mapping from \texttt{a} to \texttt{b}.
 
 \begin{lstlisting}
 data SensitiveFunction : Float -> Type -> Type -> Type where
@@ -461,10 +464,11 @@ namespace Examples
 \end{lstlisting}
 
 Notice the \texttt{cheat} example above.
-It is possible to define so-called ``sensitive functions'' which intentionally misrepresent themselves.
+It is possible to define sensitive functions which intentionally misrepresent their sensitivities.
 Our focus here is not on the verification of a function's sensitivity, but rather on the interaction between sensitivity and the type system under operations such as function composition or application.
-Unrestricted application is as simple as unwrapping the function and applying it.
-Composition returns a new data constructor indexed on the appropriate sensitivity.
+Unrestricted application is as simple as unwrapping the function and applying it to an argument.
+Function composition returns a new type indexed by the combined sensitivies of the underlying functions.
+This is done simply by wrapping the composed functions in a new data constructor and letting the types work out the rest.
 
 \begin{lstlisting}
 apply : SensitiveFunction s a b -> a -> b
@@ -473,7 +477,25 @@ apply (MkSensitiveFunction f) x = f x
 (.) : SensitiveFunction s b c -> SensitiveFunction s' a b -> SensitiveFunction (s*s') a c
 (.) (MkSensitiveFunction g) (MkSensitiveFunction f) = MkSensitiveFunction (g . f)
 \end{lstlisting}
-% TODO: Fix text running off page
+
+Now we are able to compose sensitive functions and Idris' type-checker will understand the resulting sensitivities.
+See Listing~\ref{lst:composition_examples} for examples of how the type-checker verifies sensitivities.
+
+\begin{lstlisting}[caption={Examples of Sensitive Function Composition},label={lst:composition_examples}]
+doSomeMath : SensitiveFunction 2 Float Float
+doSomeMath = add10 . doubleThenAdd10
+
+--doesNotCompile : SensitiveFunction 4 Float Float
+--doesNotCompile = add10 . doubleThenAdd10
+
+doSomeMath2 : SensitiveFunction ?sens Float Float
+doSomeMath2 = add10 . doubleThenAdd10
+\end{lstlisting}
+
+One unfortunate consequence of having such a powerful type-system is that all top-level names must have an associated type declaration.
+This means that despite the fact that the type-system is capable of computing the costs, we must still explicitly provide the function sensitivity in the type declaration (as in the \texttt{doSomeMath} signature above).
+Because the computation is decidable, users will be able to ask Idris for help through its interactive proof search feature.
+Asking Idris to find a proof of the hole \texttt{?sens} will yield \texttt{fromInteger 2}.
 
 \section{Typing the Relational Algebra}\label{sec:typing_the_relational_algebra}
 
