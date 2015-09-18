@@ -175,7 +175,7 @@ We can make assertions about an entire program if we understand the sensitivitie
 Sensitivity is a key part in making our type system work.
 
 Function sensitivity captures the idea of how relatively ``far'' a function can magnify the distances between pairs of objects.
-We say that a function is $c$-sensitive if, for all pairs of inputs, the distance between the outputs is not $c$ times greater than the original distance between the inputs.
+We say that a function is $c$-sensitive if, for all pairs of inputs, the distance between the outputs does not exceed $c$ times the original distance between the inputs.
 
 \begin{defn}\label{def:csens}
   A function, $f : \mathbb A \rightarrow \mathbb A$, is $c$-sensitive if
@@ -792,6 +792,52 @@ If we allow dynamic querying, users can use the power of Idris to write their pr
 This way, we can get more of the flexibility that PINQ has got from LINQ. 
 
 \subsubsection{Improved syntax}
+
+In order for a programming language to be usable, it should be reasonbly easy to read and write programs in it.
+The current implementation of our languge does not score too high on usability measures.
+The syntax of complex queries becomes rather awkward because the current way of building up queries is by nested function applications.
+
+\begin{lstlisting}
+where' : PINQuery b s c -> Expr s Bool -> PINQuery b s c
+select : PINQuery b s c -> (f:String -> Maybe  String) -> PINQuery b (projectedSchema f s) c
+
+select (where'' (union q q') e) f
+\end{lstlisting}
+
+The above listing shows how a combined select, where and union application looks in DPDT.
+Notice that combining more transformations will decrease the readability of the query.
+
+Idris provides some measures for making embedded DSLs easier to read and write.
+One of these measures is syntax rules.
+Syntax rules allow developers to define custom ways of executing functions beyond the standard $f x \: y$ application of the function $f$ on the arguments $x$ and $y$.
+Below are two examples of syntax rules and the same $select \circ where \circ union$ query written using the $select \circ where$ syntax rule.
+
+\begin{lstlisting}
+||| Definition
+syntax select [f] from [q] = select q f
+syntax select [f] from [q] where [e] = select (where q e) f
+
+||| Application
+select f from (union q q') where e
+\end{lstlisting}
+
+The above examples utilize keywords and non-terminals to construct the syntax rules.
+The keywords in the examples are $select$, $from$ and $where$, while the non-terminals are [f], [q] and [e].
+
+We assume the use of syntax rules could improve the usability of DPDT, but we are not sure how much work it is to implement it in a flexible way. 
+As you can see in the example above, we are including the \texttt{select [f] from [q]} as part of the $where$ syntax rule.
+This is the typical SQL syntax, and is therefore a syntax to stride for, as it is familiar to users and well understood.
+If we add more operations into the mix with this syntax rule design, we end up with combinations of the operations that are additional to $select$.
+Below is an example of syntax rule definitions if we add support for $groupBy$ with this design.
+
+\begin{lstlisting}
+||| Definition
+syntax select [f] from [q]                         = ...
+syntax select [f] from [q] where [e]               = ...
+syntax select [f] from [q] group by [e]            = ...
+syntax select [f] from [q] where [e] group by [e'] = ...
+\end{lstlisting}
+
 
 
 % TODO 1 : should we have a discussion section? I think we can cover it in Evaluation+Conclusion
