@@ -420,6 +420,7 @@ Then, if we get a response of $0$, we can translate that back to $20$.
 \section{Dependent Types in Idris}\label{sec:dependent_types_in_idris}
 
 Concepts used later in the paper that need to be defined here:
+
 \begin{itemize}
 \item Idris data constructors cannot share names with type constructors
 \item Very small segment about sections (e.g. \texttt{(*10)})
@@ -430,18 +431,18 @@ Concepts used later in the paper that need to be defined here:
 \section{Function Sensitivity in Idris}\label{sec:function_sensitivity}
 
 % TODO 1 : fix this section based on diff.priv. subsection
-In this section, we describe function sensitivity and then demonstrate how we use dependent types to model it in Idris.
+In this section, we demonstrate how we use dependent types to model function sensitivity in Idris.
 
-	$$ \forall x,y. d(f(x),f(y)) \le c \times d(x,y) $$
+Recall that function sensitivity is a metric describing how much a function can amplify the distances between pairs of objects.
 
+  $$ \forall x,y.\; d(f(x),f(y)) \le c \times d(x,y) $$
 
-\subsection{Function sensitivity in Idris}
+Modelling function sensitivity in Idris is quite simple.
+We want to reflect the sensitivity of the function in its type, so we will need to index the type on some numeric value.
+To keep this example simple, we will use \texttt{Float} to represent it, but our implementation uses an implementation of \texttt{Rational}s, which should be more stable numerically than IEEE floating point numbers.
 
-Modelling function sensitivity in Idris is simple.
-Obviously we will need to index the type by sensitivity.
-To keep this example simple, we will use \texttt{Float} to represent it, but our implementation uses an implementation of \texttt{Rational}s, which should be numerically more stable than IEEE floating point numbers.
-
-We define a type constructor indexed by the sensitivity, input and output types, with just one data constructor for wrapping native functions.
+We define a type constructor indexed by the sensitivity and parameterized by its input and output types.
+It has just one data constructor for wrapping native functions.
 
 \begin{lstlisting}
 data SensitiveFunction : Float -> Type -> Type -> Type where
