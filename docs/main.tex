@@ -323,6 +323,8 @@ PINQ is a privacy layer built over top of the .NET query DSL LINQ.
 % TODO 3 : expand on what LINQ is to make PINQ's contribution more clear?
 It provides carefully implemented primitives and the ability to build arbitrarily complex, differentially private algorithms from them.
 There are two main components to PINQ: transformations and aggregations.
+Each PINQ server will keep track of its own privacy budget and reject queries whose costs exceed the remaining budget.
+Once a data source's budget is entirely consumed, it will be impossible to query it again through the PINQ interface.
 
 \subsubsection{Transformations}
 
@@ -355,7 +357,8 @@ As shown earlier, the only safe way to return data from a sensitive database is 
 PINQ provides a few carefully implemented aggregation operations and disallows everything else.
 Each aggregation is proven to be $\epsilon$-differentially private.
 $\epsilon$ is an argument provided by the user to specify how much of the privacy budget should be consumed to run the aggregation.
-The more budget used, the more accurate the result may be.
+The ultimate cost of a query is the product of the transformation stability and $\epsilon$.
+The more costly a query is, the more accurate the result may be.
 
 The simplest of PINQ's mechanisms is \texttt{noisyCount}, which just returns the number of rows described by the given query plus some noise.
 \texttt{noisyCount} is a 1-sensitive function.
@@ -413,14 +416,6 @@ If we wanted to compute the average age of the college students from before, we 
 Then, if we get a response of $0$, we can translate that back to $20$.
 
 % TODO 4 : talk about more aggregations? Or at least mention them
-
-
-
-\subsubsection{Budget}
-
-For every data source in PINQ a global budget is user-defined.
-Whenever a successful aggregation has been performed, its sensitivity is subtracted from the budget.
-If the privacy cost of the aggregation exceeds the remaining budget, the aggregation request gets denied.
 
 \section{Dependent Types in Idris}\label{sec:dependent_types_in_idris}
 
