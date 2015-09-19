@@ -20,7 +20,7 @@
         % going by alphabetical order here....
 }
 \title{Differential Privacy with Dependent Types}
-\undertitel{Catchy subtitle here!}
+\undertitel{or: How I Learned to Stop Worrying and Love Dependent Types}
 % TODO 2 : make a catchy subtitle
 \vejleder{Ken Friis Larsen}
 \dato{November 11, 2015}
@@ -29,14 +29,20 @@
 \begin{document}
 \maketitle
 
-\lstset{language=idris,frame=single,numbers=left,breaklines=true,postbreak=\raisebox{0ex}[0ex][0ex]{\ensuremath{\color{red}\hookrightarrow\space}}}
+\lstset{language=idris,
+basicstyle=\footnotesize,
+frame=single,
+numbers=left,
+breaklines=true,
+postbreak=\raisebox{0ex}[0ex][0ex]{\ensuremath{\color{red}\hookrightarrow\space}}
+}
 
 \begin{abstract}
 This is the paper's abstract \ldots
 \end{abstract}
 
-% TODO 2 : merge Background section from old_main.tex into paper
-% TODO 3 : add captions and labels to all code snippets
+% TODO 1 : write an abstract
+% TODO 2 : add captions and labels to all code snippets
 
 \section{Introduction}\label{sec:introduction}
 
@@ -724,20 +730,14 @@ data PINPartitioning : (Schema -> Type) -> Schema -> Type -> Stability -> Type w
     MkPINPartitioning : Partitioning t s k -> PINPartitioning t s k c
 \end{lstlisting}
 
-% TODO 1 : discuss transformation stability vs. function sensitivity
-
 A \texttt{PINQuery t s c} describes a \texttt{c}-differentially private query with schema \texttt{s} (and backend table representation \texttt{(t s)}).
 There is only one data constructor which serves simply to wrap a \texttt{Query}, which was defined in Section~\ref{sec:typing_the_relational_algebra}.
 This allows us to define a \texttt{Query} and assign it an arbitrary stability.
 
 Next, we provide the standard operators from the relational algebra.
-This time, however, we do not build up abstract syntax trees with ADTs.
-That approach proved to be unnecessarily complex with regards to satisfying the type-checker.
-% TODO 2 : probably expand on this point
 Instead, we unwrap the \texttt{Query} and then rewrap it in the same data constructor, but using a different type constructor.
 This is because the schema and stability could potentially change.
 We control the API that is exported, so we carefully implement the relational algebra operators with the correct stability costs.
-% TODO 3 : make the PINQuery ADT abstract
 By unwrapping and rewrapping the \texttt{Query} trees from Section~\ref{sec:typing_the_relational_algebra} in our new type, we are now able to build query trees that carry privacy metrics in the type.
 
 \begin{lstlisting}
@@ -758,7 +758,7 @@ groupBy e (MkPINQuery q) = MkPINGrouping (GroupBy e q)
 \end{lstlisting}
 
 \texttt{where'} is a 1-sensitive function and it's type declaration reflects that.
-% TODO 2 : give proof
+% TODO 2 : reference proof of filter from earlier
 The \texttt{c} parameter remains unchanged through the rewrapping.
 
 \texttt{union}, however, costs the sum of the costs of the operands.
