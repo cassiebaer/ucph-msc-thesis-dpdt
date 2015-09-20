@@ -529,7 +529,11 @@ It has just one data constructor which is used for wrapping native Idris functio
 A \texttt{SensitiveFunction s a b} is a function with sensitivity \texttt{s} mapping from \texttt{a} to \texttt{b}.
 
 \begin{lstlisting}
-data SensitiveFunction : Float -> Type -> Type -> Type where
+||| Represents a sensitive function
+||| @ c The sensitivity of the function
+||| @ a The input type of the function
+||| @ b The output type of the function
+data SensitiveFunction : (c:Float) -> (a:Type) -> (b:Type) -> Type where
     MkSensitiveFunction : (a -> b) -> SensitiveFunction s a b
 
 namespace Examples
@@ -552,10 +556,16 @@ Function composition returns a new type indexed by the combined sensitivies of t
 This is done simply by wrapping the composed functions in a new data constructor and letting the types work out the rest.
 
 \begin{lstlisting}
-apply : SensitiveFunction s a b -> a -> b
+||| Applies a sensitive function to an input
+||| @ f The sensitive function be apply
+||| @ x The input
+apply : (f:SensitiveFunction s a b) -> (x:a) -> b
 apply (MkSensitiveFunction f) x = f x
 
-(.) : SensitiveFunction s b c -> SensitiveFunction s' a b -> SensitiveFunction (s*s') a c
+||| Composes two sensitive functions
+||| @ g The outer function
+||| @ f The inner function
+(.) : (g:SensitiveFunction s b c) -> (f:SensitiveFunction s' a b) -> SensitiveFunction (s*s') a c
 (.) (MkSensitiveFunction g) (MkSensitiveFunction f) = MkSensitiveFunction (g . f)
 \end{lstlisting}
 
@@ -645,9 +655,11 @@ Following David Christiansen's lead, we opt to use \texttt{(:::)} instead of the
 We believe this enhances readability of long \texttt{Schema}s, which are just lists of \texttt{Attribute}s.
 
 \begin{lstlisting}
+||| Represents an attribute
 data Attribute : Type where
   (:::) : String -> Type -> Attribute
 
+||| Represents a schema
 Schema : Type
 Schema = List Attribute
 
@@ -685,20 +697,28 @@ The value returned by this node will be returned, therefore the return type of t
 The type-checker is capable of verifying the types throughout the entire tree, so only well-typed expressions are allowed by the type-system.
 
 \begin{lstlisting}
-data Expr : Schema -> Type -> Type where
-    (^)    : (s:Schema) -> (nm:String) -> { auto p : (map cast s) `ContainsKey` nm } -> Expr s (lookupType s p)
-    (+)    : Num t => Expr s t -> Expr s t -> Expr s t
-    (==)   : Eq t  => Expr s t -> Expr s t -> Expr s Bool
-    Lit    : t -> Expr s t
-    PureFn : (a -> b) -> Expr s a -> Expr s b
+||| Represents an abstract expression indexed by its schema
+||| @ s The schema available to the expression
+||| @ a The return type of the expression
+data Expr : (s:Schema) -> (a:Type) -> Type where
+  ||| Represents a literal value
+  Lit    : t -> Expr s t
+  ||| Look up a value in the schema
+  (^)    : (s:Schema) -> (nm:String) -> { auto p : (map cast s) `ContainsKey` nm } -> Expr s (lookupType s p)
+  ||| Represents addition
+  (+)    : Num t => Expr s t -> Expr s t -> Expr s t
+  ||| Represents equality check
+  (==)   : Eq t  => Expr s t -> Expr s t -> Expr s Bool
+  ||| Lifts a pure Idris function into the expression language
+  PureFn : (a -> b) -> Expr s a -> Expr s b
 
 namespace Examples
 
-    fountain_of_youth : Expr people Int
-    fountain_of_youth = people^"Age" - 10
+  fountain_of_youth : Expr people Int
+  fountain_of_youth = people^"Age" - 10
 
-    -- doesNotCompile : Expr people Int
-    -- doesNotCompile = people^"DNE"
+  -- doesNotCompile : Expr people Int
+  -- doesNotCompile = people^"DNE"
 \end{lstlisting}
 
 In fact, the type-system is even aware when we try to reference columns that don't exist.
@@ -720,25 +740,41 @@ One of the benefits of this is that any dataset which can be modelled using the 
 
 \begin{lstlisting}
 mutual -- required for mutual definitions
-  data Query : (Schema -> Type) -> Schema -> Type where
+
+  ||| Represents an abstract query
+  ||| @ t A function yielding a base table representation given a schema
+  ||| @ s The schema of the query
+  data Query : (t:Schema -> Type) -> (s:Schema) -> Type where
     Table   :       t s -> Query t s
     Union   : Query t s -> Query t s -> Query t s
     Diff    : Query t s -> Query t s -> Query t s
     Product : Query t s -> Query t s' -> { auto p : Disjoint s s' } -> Query t (s ++ s')
     Projection : (f:String -> Maybe String) -> Query t s -> Query t (projectedSchema f s)
     Select  : Expr s Bool -> Query t s -> Query t s
-  data Grouping : (Schema -> Type) -> Schema -> Type -> Type where
+
+  ||| Represents an abstract grouping
+  ||| @ t A function yielding a base table representation given a schema
+  ||| @ s The schema of the query
+  ||| @ k The type of the grouping key
+  data Grouping : (t:Schema -> Type) -> (s:Schema) -> (k:Type) -> Type where
     GroupBy : Eq k => Expr s k -> Query t s -> Grouping t s k
-  data Partitioning : (Schema -> Type) -> Schema -> Type -> Type where
+
+  ||| Represents an abstract partitioning
+  ||| @ t A function yielding a base table representation given a schema
+  ||| @ s The schema of the query
+  ||| @ k The type of the partitioning key
+  data Partitioning : (t:Schema -> Type) -> (s:Schema) -> (k:Type) -> Type where
     Partition : Eq k => List k -> Expr s k -> Query t s -> Partitioning t s k
 
--- Tables in our Idris backend are: List (Row s)
-IdrisBackend : Schema -> Type
-IdrisBackend s = List (Row s)
+namespace Examples
 
--- Tables in our SQLite backend are just represented by their names
-SQLiteBackend : Schema -> Type
-SQLiteBackend _ = String
+  -- Tables in our Idris backend are: List (Row s)
+  IdrisBackend : Schema -> Type
+  IdrisBackend s = List (Row s)
+
+  -- Tables in our SQLite backend are represented by their names
+  SQLiteBackend : Schema -> Type
+  SQLiteBackend _ = String
 \end{lstlisting}
 
 Recall that the set operators require additional constraints that less powerful type systems have a difficult time capturing.
@@ -765,25 +801,30 @@ Listing~\ref{lst:idris_backend} shows this.
 It also shows snippets from expression and query evaluation functions written for Idris and SQLite backends, respectively.
 
 \begin{lstlisting}[caption={Backend Implementation Snippets},label={lst:idris_backend}]
--- Idris backend
-data Row : Schema -> Type where
+||| Represents a row of data in memory
+||| @ s The row's schema
+data Row : (s:Schema) -> Type where
   Nil  : Row []
   (::) : Eq t => t -> Row s -> Row (name:::t::s)
 
 namespace IdrisBackend
+  ||| Evaluates an abstract expression in the Idris backend
   evalE : Expr s t -> Row s -> t
   evalE (x + y) r = eval x r + eval y r
     [..]
 
+  ||| Evaluates an abstract query in the Idris backend
   evalQ : (q:Query Table s) -> Table s
   evalQ (Product x y) = [ x' ++ y' | x' <- eval x, y' <- eval y ]
     [..]
 
 namespace SQLiteBackend
+  ||| Compiles an abstract expression to a SQLite string
   evalE : Expr s t -> String
   evalE (x + y) = "(" ++ eval x ++ ") + ("  ++ eval y ++ ")"
     [..]
 
+  ||| Compiles an abstract query to a SQLite string
   evalQ : Query SQLiteTable s -> String
   evalQ (Product x y)    = "(" ++ eval x ++ ") , (" ++ eval y ++ ")"
     [..]
@@ -798,11 +839,27 @@ We create new types to capture the necessities.
 We will focus on \texttt{PINQuery} because the other two have similar implementations, but are case-specific.
 
 \begin{lstlisting}
-data PINQuery : (Schema -> Type) -> Schema -> Stability -> Type where
+||| Represents an abstract, stability-aware query
+||| @ t A function yielding a base table representation given a schema
+||| @ s The schema of the query
+||| @ c The stability of the query
+data PINQuery : (t:Schema -> Type) -> (s:Schema) -> (c:Stability) -> Type where
     MkPINQuery : Query t s -> PINQuery t s c
-data PINGrouping : (Schema -> Type) -> Schema -> Type -> Stability -> Type where
+
+||| Represents an abstract, stability-aware grouping
+||| @ t A function yielding a base table representation given a schema
+||| @ s The schema of the query
+||| @ k The type of the grouping key
+||| @ c The stability of the query
+data PINGrouping : (t:Schema -> Type) -> (s:Schema) -> (k:Type) -> (c:Stability) -> Type where
     MkPINGrouping : Grouping t s k -> PINGrouping t s k c
-data PINPartitioning : (Schema -> Type) -> Schema -> Type -> Stability -> Type where
+
+||| Represents an abstract, stability-aware partitioning
+||| @ t A function yielding a base table representation given a schema
+||| @ s The schema of the query
+||| @ k The type of the partitioning key
+||| @ c The stability of the query
+data PINPartitioning : (t:Schema -> Type) -> (s:Schema) -> (k:Type) -> (c:Stability) -> Type where
     MkPINPartitioning : Partitioning t s k -> PINPartitioning t s k c
 \end{lstlisting}
 
@@ -817,18 +874,23 @@ We control the API that is exported, so we carefully implement the relational al
 By unwrapping and rewrapping the \texttt{Query} trees from Section~\ref{sec:typing_the_relational_algebra} in our new type, we are now able to build query trees that carry privacy metrics in the type.
 
 \begin{lstlisting}
+||| Represents stability-aware selection
 where' : PINQuery b s c -> Expr s Bool -> PINQuery b s c
 where' (MkPINQuery q) e = MkPINQuery (Select e q)
 
+||| Represents stability-aware projection
 select : PINQuery b s c -> (f:String -> Maybe  String) -> PINQuery b (projectedSchema f s) c
 select (MkPINQuery q) f = MkPINQuery (Projection f q)
 
+||| Represents stability-aware union
 union : PINQuery b s c -> PINQuery b s c' -> PINQuery b s (c + c')
 union (MkPINQuery q) (MkPINQuery q') = MkPINQuery (Union q q')
 
+||| Represents stability-aware intersection
 intersect : PINQuery b s c -> PINQuery b s c' -> PINQuery b s (c + c')
 intersect (MkPINQuery q) (MkPINQuery q') = MkPINQuery (Diff q q')
 
+||| Represents stability-aware grouping
 groupBy : Eq k => Expr s k -> PINQuery b s c -> PINGrouping b s k (c * 2)
 groupBy e (MkPINQuery q) = MkPINGrouping (GroupBy e q)
 \end{lstlisting}
@@ -856,17 +918,23 @@ Fortunately, Idris does not actually require a \texttt{Monad} instance to overlo
 We just need to provide the functions \texttt{(>>=)} and \texttt{return}.
 
 \begin{lstlisting}
-data Private : Sensitivity -> Type -> Type
+||| Represents a differentially private computation
+||| @ c The privacy cost of the computation
+||| @ a The return type of the computation
+data Private : (c:Sensitivity) -> (a:Type) -> Type
     MkPrivate : (CrapGen -> (a,CrapGen)) -> Private budget a
 
+||| Lifts a value into a private computation
 return : a -> Private 0 a
 return x = MkPrivate $ \s => (x,s)
 
+||| Sequences two private computations
 (>>=) : Private s a -> (a -> Private s' b) -> Private (s + s') b
 (>>=) (MkPrivate sf) f = MkPrivate $ \st => let (x,st1)       = sf st
                                                 MkPrivate sf' = f x
                                              in sf' st1
 
+||| Evaluates a private computation
 evalPrivate : Private s a -> CrapGen -> a
 evalPrivate (MkPrivate f) g = fst (f g)
 
@@ -893,7 +961,11 @@ The user provides a \texttt{PINQuery} (which has an associated stability cost) a
 The added noise is scaled according to the user provided epsilon while the privacy cost of the entire computation is computed in the types.
 
 \begin{lstlisting}
-noisyCount : (PINQuery Table s c) -> (e:Epsilon) -> Private (c*e) Double
+||| Differentially private mechanism for counting the
+||| number of rows described by a query for the Idris backend
+||| @ q The query
+||| @ e User provided epsilon, accuracy parameter
+noisyCount : (q:PINQuery IdrisTable s c) -> (e:Epsilon) -> Private (c*e) Double
 noisyCount (MkPINQuery q) eps = MkPrivate $ \g => 
   let (rx,g') = rndDouble g
       noise   = samplePure 0 (1 / toFloat eps) rx
