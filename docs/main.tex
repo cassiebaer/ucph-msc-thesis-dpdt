@@ -37,6 +37,7 @@ breaklines=true,
 postbreak=\raisebox{0ex}[0ex][0ex]{\ensuremath{\color{red}\hookrightarrow\space}}
 }
 
+\graphicspath{{assets/}}
 \begin{abstract}
 This is the paper's abstract \ldots
 \end{abstract}
@@ -209,6 +210,13 @@ Now consider the case of $f_{\times 2+10}(x) = 2x + 10$.
 Distances between input and output objects can be now be doubled (but no more), so it is a 2-sensitive function.
 Intuitively, when dealing with linear functions on $\mathbb R$ and the absolute value norm, the largest linear coefficient will dictate the c-sensitivity.
 Higher order polynomials are necessarily $\infty$-sensitive.
+
+\begin{figure}
+    \centering
+    \def\svgwidth{\columnwidth}
+    \input{assets/RealDistances.pdf_tex}
+    \caption{Real distances and sensitivities}
+\end{figure}
 
 Simple functions on $\mathbb R$ and one dimensional distance functions are not terribly interesting.
 However, function sensitivity can be applied much more generally and to much more interesting domains, such as databases containing sensitive information (e.g. Alice's tax records or health information).
