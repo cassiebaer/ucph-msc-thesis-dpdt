@@ -434,7 +434,54 @@ Idris is a general purpose pure functional programming language with dependent t
 Dependent types allow types to be predicated on values.
 With this feature, larger portions of a program can be descibed in types, and can thus be verified by the compiler.
 
-The classic type used to describe
+This section will serve as a introduction to dependent types in Idris, but will not describe the language in whole. Familiarity with a functional programming language is a pre-requisite.
+
+\subsection{Dependent types}
+
+A simple example of a good fit for a dependent type is a list with a fixed length, namely a vector.
+Here the vector type is \textit{indexed} by a natural number representing the length. 
+In other words, a vector type is dependent on a length. 
+In addition, like a list, the vector type is \textit{parameterized} by the item type.
+A type that is indexed by a value is called a type family.
+
+\begin{lstlisting}
+|||Vector type signature in Idris
+data Vect : (length:Nat) -> (itemType:Type) -> Type
+\end{lstlisting}
+
+Using the vector as an example, we can create some functions on vectors in which the types reflect the functionality. As illustrated in the example above, types are first class language constructs in Idris. A type has the type \textit{Type} and can be passed around a program and computed as any other type.
+
+\begin{lstlisting}
+append : Vect n a -> Vect m a -> Vect (n + m) a
+
+reverse : Vect n a -> Vect n a
+
+take : (n : Nat) -> Vect (n + m) a -> Vect n a
+\end{lstlisting}
+
+Notice how the signature of append in itself makes it fairly clear what the function does.
+Not only is it useful to users to see descriptive signatures like these, but it proves very helpful during implementation.
+The Idris compiler will complain if the returned data type does not match the defined return type.
+This excludes a lot of possible implementation errors, which in turn reduce the amount of unit tests needed to validate the functionality.
+
+\subsubsection{Construction}
+
+\begin{lstlisting}
+data Nat = Z | S Nat 
+\end{lstlisting}
+
+Data types are constructed using a syntax similar to that of Haskell\footnote{https://www.haskell.org/}.
+The data type above represents natural numbers recursively.
+There are two constructors, $Z$ and $S$ $Nat$.
+$Z$ constructs a zero and $S$ $n$ constructs the successor of $n$.
+
+\begin{lstlisting}
+data Vect : Nat -> Type -> Type where
+   Nil  : Vect Z a
+   (::) : a -> Vect k a -> Vect (S k) a
+\end{lstlisting}
+
+Type families like Vect have to provide a value for a index during construction, so the constructor syntax is a bit more complex than the one of Nat.
 
 Concepts used later in the paper that need to be defined here:
 
