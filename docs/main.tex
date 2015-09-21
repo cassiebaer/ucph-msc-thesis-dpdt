@@ -414,7 +414,7 @@ Then we can add noise scaled according to $2/\epsilon$.
 What if $trueAverage(D) + Lap(2/\epsilon)$ falls outside of the specified range?
 
 PINQ solves this by looping over new noise values until the constraint is satisfied.
-We make improve on this behavior by noting that the Laplace cumulative distribution function (CDF), which is used to sample from the Laplace distribution, is invertible.
+We improve on this behavior by noting that the Laplace cumulative distribution function (CDF), which is used to sample from the Laplace distribution, is invertible.
 We usually use a uniform random variable sampled from the interval $[0,1)$ to draw from the Laplace distribution.
 Our implementation computes the subinterval for the uniform random variable that guarantees the constraint will be met.
 
@@ -975,14 +975,103 @@ noisyCount (MkPINQuery q) eps = MkPrivate $ \g =>
 
 \section{Evaluation}\label{sec:evaluation}
 
-In this section we will present our results.
-More specifically, we will compare DPDT to our inspirational library, PINQ.
+In this section, we will evaluate how well dependent types allow differential privacy metrics to be tracked and verified in the type system.
+We begin our evaluation of DPDT with simple queries before moving on to more complex algorithms.
+% TODO 3 : does this section actually do that?
+
+\subsection{Differentially private queries}
+
+We begin by verifying the behavior of DPDT with simple queries.
+There are enough moving parts in a differentially private mechanism to warrant this.
+Listing~\ref{lst:example_data_people} constructs a small database in our Idris backend.
+
+\begin{lstlisting}[caption={Example Data},label={lst:example_data_people}]
+import Database.PowerOfPi.Idris
+
+Person : Schema
+Person = [ "Name" ::: String , "Age" ::: Double ]
+
+people : PINQuery IdrisTable Person 1
+people = MkPINQuery $ Table [ [ "Alice"  , 40 ]
+                            , [ "Casper" , 26 ]
+                            , [ "Knut"   , 26 ]
+                            , [ "Tor"    , 26 ]
+                            , [ "Gismo"  ,  2 ]
+                            ]
+\end{lstlisting}
+
+Let us consider some very primitive queries and their responses.
+First, we will try to determine whether Alice's records are included in the database.
+This simple example demonstrates several components of our implementation: the expression language, a transformation, and a differentially private mechanism: \texttt{noisyCount}.
+
+\begin{lstlisting}
+countAlices : Private 1 Double
+countAlices = do let isAlice = Person^"Name" == Lit "Alice"
+                 let alices  = people `where'` isAlice
+                 noisyCount alices 1
+
+testCountAlices : IO Double
+testCountAlices = evalPrivateIO alices
+\end{lstlisting}
+
+Note that we have chosen to use $\epsilon = 1$ when invoking \texttt{noisyCount} and \texttt{where'} has a stability cost of 1.
+Therefore, the cost of the entire computation is 1.
+
+Every time we run \texttt{testCountAlices}, we will get a different response because of the Laplacian noise being added to the result.
+Given the \texttt{people} table from Listing~\ref{lst:example_data_people}, we can describe from the outset what we might expect the distribution of this query to look like.
+Obviously, the mean should approach the true result as we increase the number of samples: 1.
+The Laplace PDF is densest at its center and quickly tapers off according to the diversity parameter, $b$.
+Therefore, we expect the majority of results to lie within $1 \pm 2.5b$, where $b=1/\epsilon$ is the diversity parameter.
+Table~\ref{tab:testCountAlices_results} contains a statistical summary of running \texttt{testCountAlices} 1000 times.
+% TODO 2 : add a figure of Laplace PDF and refer to it from here
+
+\begin{table}[h!]
+  \caption{Expected and actual results of testCountAlices}
+  \label{tab:testCountAlices_results}
+  \centering
+
+  \begin{tabular}{|l|rr|}
+  \hline
+
+  \hline
+  \textbf{} & \textbf{Expected} & \textbf{Actual} \\
+  \hline
+    N          &             -  &   1000 \\
+    5\% perc.  & $\approx -1.5$ & -1.346 \\
+    95\% perc. & $\approx +3.5$ &  3.406 \\
+    Min        &             -  &  -4.78 \\
+    Max        &             -  &  6.527 \\
+    Mean       &             1  & 1.0033 \\
+  \hline
+
+  \hline
+  \end{tabular}
+\end{table}
+
+{\color{red}
+  N.B. These numbers were actually calculated using real random numbers from RANDOM.ORG.
+  The Idris PRNG is a simple linear recurrence generator which unfortunately skews the Laplace distribution to the left by $0.2b$.
+  We will implement a better PRNG ASAP!
+  % TODO 1 : implement a better PRNG
+}
+
+Of course, we shouldn't be allowed to run that query 1,000 times!
+The privacy cost of generating that table would have been 1,000.
+In fact, it is more likely that an analyst might be able to run the query two or three times.
+Listing % TODO
+
+\begin{lstlisting}
+nestedAggrs : Private 3 Double
+nestedAggrs = do x <- noisyCount people 1
+                 y <- noisyCount people 2
+                 return ((x+y*2)/3)
+\end{lstlisting}
 
 \subsection{API and flexibility}
 
 In order for a query language to be useful, it should be flexible, such that it can be used to express a range of algorithms.
-Differential privacy guarantees limits the flexibility in comparison to query languages without privacy concerns.
-Therefore, we have concidered flexibility to be an important success criteria for us.
+Differential privacy guarantees limit the flexibility in comparison to query languages without privacy concerns.
+Therefore, we have considered flexibility to be an important success criteria for us.
 
 PINQ is fairly flexible considering its privacy guarantees.
 It is achieved by implementing simple primitives that are guaranteed to be differentially private, which can be mixed and matched together.
