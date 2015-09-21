@@ -1014,16 +1014,21 @@ testCountAlices : IO Double
 testCountAlices = evalPrivateIO alices
 \end{lstlisting}
 
+\texttt{isAlice} is an \texttt{Expr Person Bool} for finding those rows which contain ``Alice'' in the name column.
+\texttt{alices} is a \texttt{PINQuery IdrisTable Person 1}, because \texttt{where'} has a stability of 1.
+It abstractly represents the table of participants named ``Alice''.
+Finally, when we invoke the \texttt{noisyCount} mechanism, the Idris backend evaluates the query, computes the desired result and adds noise to it before returning it.
+
 Note that we have chosen to use $\epsilon = 1$ when invoking \texttt{noisyCount} and \texttt{where'} has a stability cost of 1.
 Therefore, the cost of the entire computation is 1.
 
 Every time we run \texttt{testCountAlices}, we will get a different response because of the Laplacian noise being added to the result.
-Given the \texttt{people} table from Listing~\ref{lst:example_data_people}, we can describe from the outset what we might expect the distribution of this query to look like.
-Obviously, the mean should approach the true result as we increase the number of samples: 1.
+Given the \texttt{people} table from Listing~\ref{lst:example_data_people}, we can describe from the outset what we expect the distribution of this query to look like (assuming an infinite budget).
+The mean should approach one as we increase the number of samples (because there is one Alice).
 The Laplace PDF is densest at its center and quickly tapers off according to the diversity parameter, $b$.
 Therefore, we expect the majority of results to lie within $1 \pm 2.5b$, where $b=1/\epsilon$ is the diversity parameter.
 Table~\ref{tab:testCountAlices_results} contains a statistical summary of running \texttt{testCountAlices} 1000 times.
-% TODO 2 : add a figure of Laplace PDF and refer to it from here
+% TODO 5 : add a figure of Laplace PDF and refer to it from here
 
 \begin{table}[h!]
   \caption{Expected and actual results of \texttt{testCountAlices}}
