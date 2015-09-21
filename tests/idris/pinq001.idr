@@ -38,10 +38,15 @@ namespace Aggregations
   testCountAlices : Double
   testCountAlices = evalPrivate countAlices 128912839283
 
-  nestedAggrs : Private 3 Double
-  nestedAggrs = do x <- noisyCount people 1
-                   y <- noisyCount people 2
-                   return ((x+y*2)/3)
+  tripleCountAlice : Private 3 Double
+  tripleCountAlice = do let alices = people `where'` (Person^"Name" == Lit "Alice")
+                        x <- noisyCount alices 1
+                        y <- noisyCount alices 1
+                        z <- noisyCount alices 1
+                        return ((x+y+z)/3)
+
+  testTripleCountAlice : IO ()
+  testTripleCountAlice = putSummary $ map (evalPrivate tripleCountAlice) (map snd $ unfoldCrapGenN 10000 1234567890)
 
   testNoisyCount : Double
   testNoisyCount = evalPrivate (do x <- noisyCount people 1
@@ -58,5 +63,5 @@ testLaplaceN : Nat -> IO ()
 testLaplaceN _ = putSummary (map (samplePure 0 1) trueRandoms)
 
 main : IO ()
-main = testLaplaceN 10000
+main = testTripleCountAlice
 

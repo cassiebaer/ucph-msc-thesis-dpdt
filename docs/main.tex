@@ -1026,7 +1026,7 @@ Table~\ref{tab:testCountAlices_results} contains a statistical summary of runnin
 % TODO 2 : add a figure of Laplace PDF and refer to it from here
 
 \begin{table}[h!]
-  \caption{Expected and actual results of testCountAlices}
+  \caption{Expected and actual results of \texttt{testCountAlices}}
   \label{tab:testCountAlices_results}
   \centering
 
@@ -1051,21 +1051,39 @@ Table~\ref{tab:testCountAlices_results} contains a statistical summary of runnin
 {\color{red}
   N.B. These numbers were actually calculated using real random numbers from RANDOM.ORG.
   The Idris PRNG is a simple linear recurrence generator which unfortunately skews the Laplace distribution to the left by $0.2b$.
-  We will implement a better PRNG ASAP!
+  We will implement Mersenne-Twister ASAP!
   % TODO 1 : implement a better PRNG
 }
 
-Of course, we shouldn't be allowed to run that query 1,000 times!
-The privacy cost of generating that table would have been 1,000.
-In fact, it is more likely that an analyst might be able to run the query two or three times.
-Listing % TODO
+Of course, we shouldn't be allowed to run that query 1,000 times (unless our privacy budget were that big) to learn the true mean.
+In fact, it is more likely that an analyst will have enough budget to run the query just a few times.
+Listing~\ref{lst:nested_aggrs} contains an example of how a malicious analyst might try to average a few queries and example outputs.
 
-\begin{lstlisting}
-nestedAggrs : Private 3 Double
-nestedAggrs = do x <- noisyCount people 1
-                 y <- noisyCount people 2
-                 return ((x+y*2)/3)
+\begin{lstlisting}[caption={Example of nested aggregations},label={lst:nested_aggrs}]
+alices : PINQuery IdrisTable Person 1
+alices = people `where'` (Person^"Name" == Lit "Alice")
+
+tripleCountAlice : Private 3 Double
+tripleCountAlice = do x <- noisyCount alices 1
+                      y <- noisyCount alices 1
+                      z <- noisyCount alices 1
+                      return ((x+y+z)/3)
+
+tripleCountAlice' : Private 3 Double
+tripleCountAlice' = noisyCount alices 3
+
+-- Sample outputs
+
+> evalPrivateIO tripleCountAlice
+0.37815165965182446 : Double
+
+> evalPrivateIO tripleCountAlice
+1.1722612701665798 : Double
 \end{lstlisting}
+
+The cost of the computation increases each time the analyst tries to extract information from the database, regardless of how it is used.
+In fact, \texttt{tripleCountAlice} and \texttt{tripleCountAlice'} are functionally equivalent.
+The analyst is unable to learn anything the privacy budget does not allow.
 
 \subsection{API and flexibility}
 
