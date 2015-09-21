@@ -436,8 +436,6 @@ With this feature, larger portions of a program can be descibed in types, and ca
 
 This section will serve as a introduction to dependent types in Idris, but will not describe the language in whole. Familiarity with a functional programming language is a pre-requisite.
 
-\subsection{Dependent types}
-
 A simple example of a good fit for a dependent type is a list with a fixed length, namely a vector.
 Here the vector type is \textit{indexed} by a natural number representing the length. 
 In other words, a vector type is dependent on a length. 
@@ -464,7 +462,7 @@ Not only is it useful to users to see descriptive signatures like these, but it 
 The Idris compiler will complain if the returned data type does not match the defined return type.
 This excludes a lot of possible implementation errors, which in turn reduce the amount of unit tests needed to validate the functionality.
 
-\subsubsection{Construction}
+\subsection{Construction}
 
 \begin{lstlisting}
 data Nat = Z | S Nat 
@@ -482,6 +480,25 @@ data Vect : Nat -> Type -> Type where
 \end{lstlisting}
 
 Type families like Vect have to provide a value for a index during construction, so the constructor syntax is a bit more complex than the one of Nat.
+
+\subsection{Operator sections}
+
+In addition to named functions, Idris has support for anonymous functions.
+Anonymous functions, also called lambda abstractions, can be used to provide the implementation of a function on the fly, without having to make a named one.
+
+\begin{lstlisting}
+||| Anonymous id fn
+\x => x
+
+||| Anonymous integer add fn
+\x, y => x + y
+
+\end{lstlisting}
+
+Idris also provides constructs for writing anonymous functions more compactly, namely operator sections.
+$(*2)$ is a operator section that simply multiplies a numeric value by 2.
+It expands to \lstinline{\x => x * 2}, and can be passed into functions and applied to a numeric argument.
+
 
 Concepts used later in the paper that need to be defined here:
 
