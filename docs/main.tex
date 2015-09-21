@@ -231,11 +231,9 @@ We are primarily concerned with whether a particular individual's records are in
   We denote the case when two databases, $D_1$ and $D_2$, differ by exactly 1 row (i.e. $d_{\mathbb D}(D_1,D_2)=1$) with the special notation: $D_1 \sim D_2$.
 \end{defn}
 
-% TODO 1 : add example of sensitivity of a database endomorphism
-
 Despite the change of scenery, function sensitivity behaves as outlined above.
 Consider a database endomorphism, $filter_p : \mathbb D \rightarrow \mathbb D$, which filters rows according to some pre-specified predicate, $p$.
-$filter_p$ is a 1-sensitive function.
+$filter_p$ is a 1-sensitive function because adding Alice's in the database adds at most one row to the result for all possible values of $p$.
 
 For all pairs of databases, $D_1$ and $D_2$, the distance between them is $d_{in} = d_{\mathbb D}(D_1,D_2)$.
 The distance $d_{out} = d_{\mathbb D}(filter_p(D_1),filter_p(D_2))$ cannot exceed $d_{in}$.
