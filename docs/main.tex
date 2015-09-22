@@ -434,7 +434,9 @@ Idris is a general purpose pure functional programming language with dependent t
 Dependent types allow types to be predicated on values.
 With this feature, larger portions of a program can be descibed in types, and can thus be verified by the compiler.
 
-This section will serve as a introduction to dependent types in Idris, but will not describe the language in whole. Familiarity with a functional programming language is a pre-requisite.
+This section will serve as a introduction to dependent types in Idris, but will not describe the language in whole.
+Familiarity with a functional programming language is a pre-requisite.
+First we will have a look at how basic dependent types work in Idris, then we will introduce some features used later in this report.
 
 A simple example of a good fit for a dependent type is a list with a fixed length, namely a vector.
 Here the vector type is \textit{indexed} by a natural number representing the length. 
@@ -498,6 +500,73 @@ Anonymous functions, also called lambda abstractions, can be used to provide the
 Idris also provides constructs for writing anonymous functions more compactly, namely operator sections.
 $(*2)$ is a operator section that simply multiplies a numeric value by 2.
 It expands to \lstinline{\x => x * 2}, and can be passed into functions and applied to a numeric argument.
+
+\subsection{Monad and do-notation}
+
+In functional programming, a Monad is a structure that abstracts away some computation.
+It defines how to chain Monad instances together, such that users don't have to be concerned with the abstracted computations.
+
+An example of a Monad instance is the state monad. 
+Pure functional languages don't have global state or mutable variables.
+In order to represent state in a pure language an immutable state construct can be passed explicitly into functions that need state.
+We then update the state by constructing a new state based on the old state.
+
+% TODO 3: Add more complex example for motivation
+\begin{lstlisting}
+addToState : Int -> Int -> Int
+addToState x state = x + state
+\end{lstlisting}
+
+Passing the state explicitly works fine for a simple example as above, but leads to a lot of boilerplate code if the repeated computations are complex.
+The state monad abstracts away the state operations, so users can access the state if needed with less boilerplate.
+
+In Idris, Monad is a typeclass, which is an abstract class.
+An example of an instance of the Monad typeclass is the state monad.
+
+Idris provides a do-notation for sequentially interacting with monad instances in a clean manner.
+
+\begin{lstlisting}
+addToState : Int -> State Int Int
+addToState x = do
+   	state <- get
+        return (x + state)
+\end{lstlisting}
+
+The do-notation allows us to get the state out of the monad context, perform computations on it, and return the updated state.
+In Idris a data type can get access to do-notation by implementing the chaining function \lstinline{>>=} and the \lstinline{return} function.
+
+\subsection{Implicit arguments and automatic proof search}
+
+Even though Idris' type checker is rather powerful, there is still correct types that can not be validated by the type checker alone.
+The \lstinline{head} function on a list is an example of such a type.
+\lstinline{head} returns the first element of the list.
+By providing a static proof that the list is not empty, the implementation below is correct.
+
+\begin{lstlisting}
+head : (xs : List a) -> (isCons xs = True) -> a
+head (x :: xs) _ = x
+\end{lstlisting}
+
+Idris also allows function arguments to be implicit, meaning that it is not necessary to pass the argument in during function application.
+This is a good fit for proofs, like \lstinline{isCons} for \lstinline{head}.
+
+\begin{lstlisting}
+head : (xs : List a) -> {auto p : isCons xs = True} -> a
+head (x :: xs) = x
+\end{lstlisting}
+
+Implicit arguments are written in curly braces, and can be derived in different ways, one being the automatic proof search.
+Automatic proof search is invoked by adding the \lstinline{auto} annotation to an implicit argument, and makes Idris search for a matching type.
+If it can't find a matching type, the proof has to be passed in explicitly, or the program will not compile.
+
+Too access an implicit argument within a function, the parameter name is surrounded by curly braces as illustrated by $p$ below.
+
+\begin{lstlisting}
+head : (xs : List a) -> {auto p : isCons xs = True} -> a
+head (x :: xs) {p} = x
+\end{lstlisting}
+
+
 
 
 Concepts used later in the paper that need to be defined here:
