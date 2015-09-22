@@ -23,3 +23,11 @@ rndDouble g = let upper = 4000000000
                   (ri,g') = rndInt 0 upper g
                in (fromInteger ri / fromInteger upper, g')
 
+||| Unfolds a CrapGen infinitely
+unfoldCrapGen : CrapGen -> Stream (Float,CrapGen)
+unfoldCrapGen g = let (u,g') = rndDouble g
+                 in (u,g') :: unfoldCrapGen g'
+
+||| Unfolds a CrapGen `n` times
+unfoldCrapGenN : (n:Nat) -> CrapGen -> List (Float,CrapGen)
+unfoldCrapGenN n = Stream.take n . unfoldCrapGen

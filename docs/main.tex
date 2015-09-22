@@ -414,7 +414,7 @@ Then we can add noise scaled according to $2/\epsilon$.
 What if $trueAverage(D) + Lap(2/\epsilon)$ falls outside of the specified range?
 
 PINQ solves this by looping over new noise values until the constraint is satisfied.
-We make improve on this behavior by noting that the Laplace cumulative distribution function (CDF), which is used to sample from the Laplace distribution, is invertible.
+We improve on this behavior by noting that the Laplace cumulative distribution function (CDF), which is used to sample from the Laplace distribution, is invertible.
 We usually use a uniform random variable sampled from the interval $[0,1)$ to draw from the Laplace distribution.
 Our implementation computes the subinterval for the uniform random variable that guarantees the constraint will be met.
 
@@ -529,7 +529,11 @@ It has just one data constructor which is used for wrapping native Idris functio
 A \texttt{SensitiveFunction s a b} is a function with sensitivity \texttt{s} mapping from \texttt{a} to \texttt{b}.
 
 \begin{lstlisting}
-data SensitiveFunction : Float -> Type -> Type -> Type where
+||| Represents a sensitive function
+||| @ c The sensitivity of the function
+||| @ a The input type of the function
+||| @ b The output type of the function
+data SensitiveFunction : (c:Float) -> (a:Type) -> (b:Type) -> Type where
     MkSensitiveFunction : (a -> b) -> SensitiveFunction s a b
 
 namespace Examples
@@ -552,10 +556,16 @@ Function composition returns a new type indexed by the combined sensitivies of t
 This is done simply by wrapping the composed functions in a new data constructor and letting the types work out the rest.
 
 \begin{lstlisting}
-apply : SensitiveFunction s a b -> a -> b
+||| Applies a sensitive function to an input
+||| @ f The sensitive function be apply
+||| @ x The input
+apply : (f:SensitiveFunction s a b) -> (x:a) -> b
 apply (MkSensitiveFunction f) x = f x
 
-(.) : SensitiveFunction s b c -> SensitiveFunction s' a b -> SensitiveFunction (s*s') a c
+||| Composes two sensitive functions
+||| @ g The outer function
+||| @ f The inner function
+(.) : (g:SensitiveFunction s b c) -> (f:SensitiveFunction s' a b) -> SensitiveFunction (s*s') a c
 (.) (MkSensitiveFunction g) (MkSensitiveFunction f) = MkSensitiveFunction (g . f)
 \end{lstlisting}
 
@@ -645,9 +655,11 @@ Following David Christiansen's lead, we opt to use \texttt{(:::)} instead of the
 We believe this enhances readability of long \texttt{Schema}s, which are just lists of \texttt{Attribute}s.
 
 \begin{lstlisting}
+||| Represents an attribute
 data Attribute : Type where
   (:::) : String -> Type -> Attribute
 
+||| Represents a schema
 Schema : Type
 Schema = List Attribute
 
@@ -685,20 +697,28 @@ The value returned by this node will be returned, therefore the return type of t
 The type-checker is capable of verifying the types throughout the entire tree, so only well-typed expressions are allowed by the type-system.
 
 \begin{lstlisting}
-data Expr : Schema -> Type -> Type where
-    (^)    : (s:Schema) -> (nm:String) -> { auto p : (map cast s) `ContainsKey` nm } -> Expr s (lookupType s p)
-    (+)    : Num t => Expr s t -> Expr s t -> Expr s t
-    (==)   : Eq t  => Expr s t -> Expr s t -> Expr s Bool
-    Lit    : t -> Expr s t
-    PureFn : (a -> b) -> Expr s a -> Expr s b
+||| Represents an abstract expression indexed by its schema
+||| @ s The schema available to the expression
+||| @ a The return type of the expression
+data Expr : (s:Schema) -> (a:Type) -> Type where
+  ||| Represents a literal value
+  Lit    : t -> Expr s t
+  ||| Look up a value in the schema
+  (^)    : (s:Schema) -> (nm:String) -> { auto p : (map cast s) `ContainsKey` nm } -> Expr s (lookupType s p)
+  ||| Represents addition
+  (+)    : Num t => Expr s t -> Expr s t -> Expr s t
+  ||| Represents equality check
+  (==)   : Eq t  => Expr s t -> Expr s t -> Expr s Bool
+  ||| Lifts a pure Idris function into the expression language
+  PureFn : (a -> b) -> Expr s a -> Expr s b
 
 namespace Examples
 
-    fountain_of_youth : Expr people Int
-    fountain_of_youth = people^"Age" - 10
+  fountain_of_youth : Expr people Int
+  fountain_of_youth = people^"Age" - 10
 
-    -- doesNotCompile : Expr people Int
-    -- doesNotCompile = people^"DNE"
+  -- doesNotCompile : Expr people Int
+  -- doesNotCompile = people^"DNE"
 \end{lstlisting}
 
 In fact, the type-system is even aware when we try to reference columns that don't exist.
@@ -720,25 +740,41 @@ One of the benefits of this is that any dataset which can be modelled using the 
 
 \begin{lstlisting}
 mutual -- required for mutual definitions
-  data Query : (Schema -> Type) -> Schema -> Type where
+
+  ||| Represents an abstract query
+  ||| @ t A function yielding a base table representation given a schema
+  ||| @ s The schema of the query
+  data Query : (t:Schema -> Type) -> (s:Schema) -> Type where
     Table   :       t s -> Query t s
     Union   : Query t s -> Query t s -> Query t s
     Diff    : Query t s -> Query t s -> Query t s
     Product : Query t s -> Query t s' -> { auto p : Disjoint s s' } -> Query t (s ++ s')
     Projection : (f:String -> Maybe String) -> Query t s -> Query t (projectedSchema f s)
     Select  : Expr s Bool -> Query t s -> Query t s
-  data Grouping : (Schema -> Type) -> Schema -> Type -> Type where
+
+  ||| Represents an abstract grouping
+  ||| @ t A function yielding a base table representation given a schema
+  ||| @ s The schema of the query
+  ||| @ k The type of the grouping key
+  data Grouping : (t:Schema -> Type) -> (s:Schema) -> (k:Type) -> Type where
     GroupBy : Eq k => Expr s k -> Query t s -> Grouping t s k
-  data Partitioning : (Schema -> Type) -> Schema -> Type -> Type where
+
+  ||| Represents an abstract partitioning
+  ||| @ t A function yielding a base table representation given a schema
+  ||| @ s The schema of the query
+  ||| @ k The type of the partitioning key
+  data Partitioning : (t:Schema -> Type) -> (s:Schema) -> (k:Type) -> Type where
     Partition : Eq k => List k -> Expr s k -> Query t s -> Partitioning t s k
 
--- Tables in our Idris backend are: List (Row s)
-IdrisBackend : Schema -> Type
-IdrisBackend s = List (Row s)
+namespace Examples
 
--- Tables in our SQLite backend are just represented by their names
-SQLiteBackend : Schema -> Type
-SQLiteBackend _ = String
+  -- Tables in our Idris backend are: List (Row s)
+  IdrisBackend : Schema -> Type
+  IdrisBackend s = List (Row s)
+
+  -- Tables in our SQLite backend are represented by their names
+  SQLiteBackend : Schema -> Type
+  SQLiteBackend _ = String
 \end{lstlisting}
 
 Recall that the set operators require additional constraints that less powerful type systems have a difficult time capturing.
@@ -765,25 +801,30 @@ Listing~\ref{lst:idris_backend} shows this.
 It also shows snippets from expression and query evaluation functions written for Idris and SQLite backends, respectively.
 
 \begin{lstlisting}[caption={Backend Implementation Snippets},label={lst:idris_backend}]
--- Idris backend
-data Row : Schema -> Type where
+||| Represents a row of data in memory
+||| @ s The row's schema
+data Row : (s:Schema) -> Type where
   Nil  : Row []
   (::) : Eq t => t -> Row s -> Row (name:::t::s)
 
 namespace IdrisBackend
+  ||| Evaluates an abstract expression in the Idris backend
   evalE : Expr s t -> Row s -> t
   evalE (x + y) r = eval x r + eval y r
     [..]
 
+  ||| Evaluates an abstract query in the Idris backend
   evalQ : (q:Query Table s) -> Table s
   evalQ (Product x y) = [ x' ++ y' | x' <- eval x, y' <- eval y ]
     [..]
 
 namespace SQLiteBackend
+  ||| Compiles an abstract expression to a SQLite string
   evalE : Expr s t -> String
   evalE (x + y) = "(" ++ eval x ++ ") + ("  ++ eval y ++ ")"
     [..]
 
+  ||| Compiles an abstract query to a SQLite string
   evalQ : Query SQLiteTable s -> String
   evalQ (Product x y)    = "(" ++ eval x ++ ") , (" ++ eval y ++ ")"
     [..]
@@ -798,11 +839,27 @@ We create new types to capture the necessities.
 We will focus on \texttt{PINQuery} because the other two have similar implementations, but are case-specific.
 
 \begin{lstlisting}
-data PINQuery : (Schema -> Type) -> Schema -> Stability -> Type where
+||| Represents an abstract, stability-aware query
+||| @ t A function yielding a base table representation given a schema
+||| @ s The schema of the query
+||| @ c The stability of the query
+data PINQuery : (t:Schema -> Type) -> (s:Schema) -> (c:Stability) -> Type where
     MkPINQuery : Query t s -> PINQuery t s c
-data PINGrouping : (Schema -> Type) -> Schema -> Type -> Stability -> Type where
+
+||| Represents an abstract, stability-aware grouping
+||| @ t A function yielding a base table representation given a schema
+||| @ s The schema of the query
+||| @ k The type of the grouping key
+||| @ c The stability of the query
+data PINGrouping : (t:Schema -> Type) -> (s:Schema) -> (k:Type) -> (c:Stability) -> Type where
     MkPINGrouping : Grouping t s k -> PINGrouping t s k c
-data PINPartitioning : (Schema -> Type) -> Schema -> Type -> Stability -> Type where
+
+||| Represents an abstract, stability-aware partitioning
+||| @ t A function yielding a base table representation given a schema
+||| @ s The schema of the query
+||| @ k The type of the partitioning key
+||| @ c The stability of the query
+data PINPartitioning : (t:Schema -> Type) -> (s:Schema) -> (k:Type) -> (c:Stability) -> Type where
     MkPINPartitioning : Partitioning t s k -> PINPartitioning t s k c
 \end{lstlisting}
 
@@ -817,18 +874,23 @@ We control the API that is exported, so we carefully implement the relational al
 By unwrapping and rewrapping the \texttt{Query} trees from Section~\ref{sec:typing_the_relational_algebra} in our new type, we are now able to build query trees that carry privacy metrics in the type.
 
 \begin{lstlisting}
+||| Represents stability-aware selection
 where' : PINQuery b s c -> Expr s Bool -> PINQuery b s c
 where' (MkPINQuery q) e = MkPINQuery (Select e q)
 
+||| Represents stability-aware projection
 select : PINQuery b s c -> (f:String -> Maybe  String) -> PINQuery b (projectedSchema f s) c
 select (MkPINQuery q) f = MkPINQuery (Projection f q)
 
+||| Represents stability-aware union
 union : PINQuery b s c -> PINQuery b s c' -> PINQuery b s (c + c')
 union (MkPINQuery q) (MkPINQuery q') = MkPINQuery (Union q q')
 
+||| Represents stability-aware intersection
 intersect : PINQuery b s c -> PINQuery b s c' -> PINQuery b s (c + c')
 intersect (MkPINQuery q) (MkPINQuery q') = MkPINQuery (Diff q q')
 
+||| Represents stability-aware grouping
 groupBy : Eq k => Expr s k -> PINQuery b s c -> PINGrouping b s k (c * 2)
 groupBy e (MkPINQuery q) = MkPINGrouping (GroupBy e q)
 \end{lstlisting}
@@ -856,17 +918,23 @@ Fortunately, Idris does not actually require a \texttt{Monad} instance to overlo
 We just need to provide the functions \texttt{(>>=)} and \texttt{return}.
 
 \begin{lstlisting}
-data Private : Sensitivity -> Type -> Type
+||| Represents a differentially private computation
+||| @ c The privacy cost of the computation
+||| @ a The return type of the computation
+data Private : (c:Sensitivity) -> (a:Type) -> Type
     MkPrivate : (CrapGen -> (a,CrapGen)) -> Private budget a
 
+||| Lifts a value into a private computation
 return : a -> Private 0 a
 return x = MkPrivate $ \s => (x,s)
 
+||| Sequences two private computations
 (>>=) : Private s a -> (a -> Private s' b) -> Private (s + s') b
 (>>=) (MkPrivate sf) f = MkPrivate $ \st => let (x,st1)       = sf st
                                                 MkPrivate sf' = f x
                                              in sf' st1
 
+||| Evaluates a private computation
 evalPrivate : Private s a -> CrapGen -> a
 evalPrivate (MkPrivate f) g = fst (f g)
 
@@ -893,7 +961,11 @@ The user provides a \texttt{PINQuery} (which has an associated stability cost) a
 The added noise is scaled according to the user provided epsilon while the privacy cost of the entire computation is computed in the types.
 
 \begin{lstlisting}
-noisyCount : (PINQuery Table s c) -> (e:Epsilon) -> Private (c*e) Double
+||| Differentially private mechanism for counting the
+||| number of rows described by a query for the Idris backend
+||| @ q The query
+||| @ e User provided epsilon, accuracy parameter
+noisyCount : (q:PINQuery IdrisTable s c) -> (e:Epsilon) -> Private (c*e) Double
 noisyCount (MkPINQuery q) eps = MkPrivate $ \g => 
   let (rx,g') = rndDouble g
       noise   = samplePure 0 (1 / toFloat eps) rx
@@ -903,49 +975,186 @@ noisyCount (MkPINQuery q) eps = MkPrivate $ \g =>
 
 \section{Evaluation}\label{sec:evaluation}
 
-In this section we will present our results.
-More specifically, we will compare DPDT to our inspirational library, PINQ.
+In this section, we will evaluate how well dependent types allow differential privacy metrics to be tracked and verified in the type system.
+We begin our evaluation of DPDT with simple queries before moving on to more complex algorithms.
+% TODO 3 : does this section actually do that?
 
-\subsection{API and flexibility}
+\subsection{Differentially private queries}
 
-In order for a query language to be useful, it should be flexible, such that it can be used to express a range of algorithms.
-Differential privacy guarantees limits the flexibility in comparison to query languages without privacy concerns.
-Therefore, we have concidered flexibility to be an important success criteria for us.
+We begin by verifying the behavior of DPDT with simple queries.
+There are enough moving parts in a differentially private mechanism to warrant this.
+Listing~\ref{lst:example_data_people} constructs a small database in our Idris backend.
 
-PINQ is fairly flexible considering its privacy guarantees.
-It is achieved by implementing simple primitives that are guaranteed to be differentially private, which can be mixed and matched together.
-PINQ also gets a lot of flexibility from the fact that it is built on top of LINQ, which grants users access to its powerful expression language.
-This has its downside when it comes to safety though, which will be discussed later.
-A variety of machine learning algorithms are implemented with success in PINQ: perceptron, k-means clusteirng, SVM and logical regression.
-Other uses include network analysis and classic statistical work.
+\begin{lstlisting}[caption={Example Data},label={lst:example_data_people}]
+import Database.PowerOfPi.Idris
 
-DPDT has roughly the same API as PINQ, but currently lack some of the flexibility PINQ provides.
-For our Idris backend, the expression operation \texttt{PureFn} provides flexible expressions only limited by Idris' capabilities,
-\texttt{PureFn} lifts an arbitrary Idris function to our expression language.
-Unfortunately we are unable to compile an arbitrary Idris function to SQLite, so this functionality is not supported by our SQLite backend.
-With the Idris backend we are able to write most algorithms that can be written in PINQ.
-However, there are algorithms that can be written in DPDT using the Idris backend, but not using the SQLite backend.
-An example of such an algorithm is \textit{k-means clustering}, which we have implemented in DPDT for the Idris backend.
-K-means clustering is an algorithm for grouping n-dimentional points into $k$ distinct clusters.
-Below are the steps performed by the basic version of the algorithm.
+Person : Schema
+Person = [ "Name" ::: String , "Age" ::: Double ]
 
-\begin{enumerate}
-	\item $k$ initial cluster centers are chosen
-	\item All points are assigned a cluster based on the closest cluster center 
-	\item Each cluster center is updated to the mean of the points assigned it
-	\item Repeat step 2 and 3 $x$ times (the greater the $x$, the greater the precision)
-\end{enumerate}
+people : PINQuery IdrisTable Person 1
+people = MkPINQuery $ Table [ [ "Alice"  , 40 ]
+                            , [ "Casper" , 26 ]
+                            , [ "Knut"   , 26 ]
+                            , [ "Tor"    , 26 ]
+                            , [ "Gismo"  ,  2 ]
+                            ]
+\end{lstlisting}
 
-Step 2 requires checking the distance from each point to all the current cluster centers.
-Because SQLite does not provide any looping construct, it is not trivial to implement it as a SQLite query.
-We describe possible solutions in Future work to grant more flexibility to external database backends.
+Let us consider some very primitive queries and their responses.
+First, we will try to determine whether Alice's records are included in the database.
+This simple example demonstrates several components of our implementation: the expression language, a transformation, and a differentially private mechanism: \texttt{noisyCount}.
 
-Some algorithms are also inherently more difficult to represent in a dependently typed language than in languages with more limited type systems, such as C\#.
-An example is a k-means clustering algorithm with dynamic termination.
-The standard k-means algorithms runs for $x$ iterations.
+\begin{lstlisting}
+countAlices : Private 1 Double
+countAlices = do let isAlice = Person^"Name" == Lit "Alice"
+                 let alices  = people `where'` isAlice
+                 noisyCount alices 1
 
-Another version is one where the algorithm terminates based on some condition, e.g. that half of the remaining budget is used every iteration until some defined convergence point.
-This algorithm is difficult to represent in a dependent type system. % TODO: Oh, but why?
+testCountAlices : IO Double
+testCountAlices = evalPrivateIO alices
+\end{lstlisting}
+
+\texttt{isAlice} is an \texttt{Expr Person Bool} for finding those rows which contain ``Alice'' in the name column.
+\texttt{alices} is a \texttt{PINQuery IdrisTable Person 1}, because \texttt{where'} has a stability of 1.
+It abstractly represents the table of participants named ``Alice''.
+Finally, when we invoke the \texttt{noisyCount} mechanism, the Idris backend evaluates the query, computes the desired result and adds noise to it before returning it.
+
+Note that we have chosen to use $\epsilon = 1$ when invoking \texttt{noisyCount} and \texttt{where'} has a stability cost of 1.
+Therefore, the cost of the entire computation is 1.
+
+Every time we run \texttt{testCountAlices}, we will get a different response because of the Laplacian noise being added to the result.
+Given the \texttt{people} table from Listing~\ref{lst:example_data_people}, we can describe from the outset what we expect the distribution of this query to look like (assuming an infinite budget).
+The mean should approach one as we increase the number of samples (because there is one Alice).
+The Laplace PDF is densest at its center and quickly tapers off according to the diversity parameter, $b$.
+Therefore, we expect the majority of results to lie within $1 \pm 2.5b$, where $b=1/\epsilon$ is the diversity parameter.
+Table~\ref{tab:testCountAlices_results} contains a statistical summary of running \texttt{testCountAlices} 1000 times.
+% TODO 5 : add a figure of Laplace PDF and refer to it from here
+
+\begin{table}[h!]
+  \caption{Expected and actual results of \texttt{testCountAlices}}
+  \label{tab:testCountAlices_results}
+  \centering
+
+  \begin{tabular}{|l|rr|}
+  \hline
+
+  \hline
+  \textbf{} & \textbf{Expected} & \textbf{Actual} \\
+  \hline
+    N          &             -  &   1000 \\
+    5\% perc.  & $\approx -1.5$ & -1.346 \\
+    95\% perc. & $\approx +3.5$ &  3.406 \\
+    Min        &             -  &  -4.78 \\
+    Max        &             -  &  6.527 \\
+    Mean       &             1  & 1.0033 \\
+  \hline
+
+  \hline
+  \end{tabular}
+\end{table}
+
+{\color{red}
+  N.B. These numbers were actually calculated using real random numbers from RANDOM.ORG.
+  The Idris PRNG is a simple linear recurrence generator which unfortunately skews the Laplace distribution to the left by $0.2b$.
+  We will implement Mersenne-Twister ASAP!
+  % TODO 1 : implement a better PRNG
+}
+
+Of course, we shouldn't be allowed to run that query 1,000 times (unless our privacy budget were that big) to learn the true mean.
+In fact, it is more likely that an analyst will have enough budget to run the query just a few times.
+Listing~\ref{lst:nested_aggrs} contains an example of how a malicious analyst might try to average a few queries and example outputs.
+
+\begin{lstlisting}[caption={Example of nested aggregations},label={lst:nested_aggrs}]
+alices : PINQuery IdrisTable Person 1
+alices = people `where'` (Person^"Name" == Lit "Alice")
+
+tripleCountAlice : Private 3 Double
+tripleCountAlice = do x <- noisyCount alices 1
+                      y <- noisyCount alices 1
+                      z <- noisyCount alices 1
+                      return ((x+y+z)/3)
+
+tripleCountAlice' : Private 3 Double
+tripleCountAlice' = noisyCount alices 3
+
+-- Sample outputs
+
+> evalPrivateIO tripleCountAlice
+0.37815165965182446 : Double
+
+> evalPrivateIO tripleCountAlice
+1.1722612701665798 : Double
+\end{lstlisting}
+
+The cost of the computation increases each time the analyst tries to extract information from the database, regardless of how it is used.
+In fact, \texttt{tripleCountAlice} and \texttt{tripleCountAlice'} are functionally equivalent.
+The analyst is unable to learn anything the privacy budget does not allow.
+
+% TODO 2 : discuss other backends
+
+\subsection{Standing on the shoulders of giants}
+% TODO 1 : think of a better title
+
+% TODO 5 : bring in turing completeness?
+
+One of LINQ's key features is that it is embedded within the .NET languages.
+This means that developers have access to much more than the LINQ DSL when writing applications; they are able to use all of the features of the host language.
+This is a very powerful feature that allows users to seamlessly blend data access and flow control in one environment.
+
+DPDT exists as an embedded language within Idris.
+There are important differences between an imperative language like C\# and a pure functional language like Idris.
+In particular, C\# makes no effort to contain side effects.
+Idris, on the other hand, provides \textit{referential transparency}; i.e. an expression can be replaced by its value without affecting the semantics of the program at all.
+
+This may seem unimportant, but side effecting functions can compromise differential privacy in spectacular ways.
+Consider the result of the following expression.
+
+\begin{lstlisting}
+patients.Select(p => if p.Name == "Alice" {
+                        beep();
+                     };
+                     return p;
+);
+\end{lstlisting}
+
+The result is a no-op: the data remains unchanged.
+However, if the analyst hears a beep during the evaluation of this query, he knows that Alice is included in the \texttt{patients} database.
+In fact, beep is just one example of a side-channel.
+Other possible examples include timing attacks (e.g. \texttt{Thread.sleep}), writing to global memory or external file (e.g. \texttt{echo yes > /foundAlice}), or even sending an email.
+
+% TODO 5 : write a paragraph about the various approachs to solving these attacks
+
+Idris' type system does not allow functions to contain side effects unless they are explicitly marked as such.
+This alone prevents many of the side-channel attacks that are possible in other systems.
+% TODO 3 : citation
+The types simply do not allow malicious users to write Alice's private records to a file.
+
+DPDT is an embedded query DSL.
+Alone, DPDT allows it to leverage Idris' powerful type system to statically verify the differential privacy constraints of a query.
+Combining DPDT with Idris, however, gives it access to all of the features of a Turing complete language.
+
+It is no longer restricted to simple queries.
+We can write differentially private algorithms a la PINQ that preclude even more side channel attacks.
+We implemented an example of differentially private k-means clustering in DPDT.
+
+However, using dependent types to verify differential privacy metrics does prevent some types of algorithms from being expressible in DPDT.
+Our implementation of k-means runs for a predetermined number of iterations.
+Computing the total cost of running it is as easy as multiplying the cost of an iteration with the total number of iterations.
+
+However, k-means can also be developed with a criteria function for dynamic termination.
+How do we compute the total cost of an algorithm when we don't know how many iterations it will run through before terminating (if it even does)?
+It isn't possible.
+In fact, this is just the Halting problem in another disguise.
+DPDT's type system will prevent all dynamically terminating algorithms from being expressed.
+
+This is a serious limitation that PINQ also struggles with.
+However, PINQ is able to represent dynamic k-means by relying on the fact that geometric series with $-1 < r < 1$ converge.
+If each iteration uses exactly half of the remaining budget ($r=1/2$), then the cost of the entire algorithm, regardless of how many iterations are necessary, cannot exceed the budget.
+
+$$\sum_{x=2}^{\infty} 1/x = \frac{1}{2} + \frac{1}{4} + \frac{1}{8} + .. = 1$$
+
+In fact, PINQ is able to represent an impressive variety of algorithms in a differentially private manner.
+It may be possible for us to extend the \texttt{Sensitivity} type and convince the Idris type-checker that algorithms resembling a geometric series with $-1 < r < 1$ converge, but we have not yet explored this option.
 
 \subsection{Type safety and security}
 
