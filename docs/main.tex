@@ -535,6 +535,37 @@ addToState x = do
 The do-notation allows us to get the state out of the monad context, perform computations on it, and return the updated state.
 In Idris a data type can get access to do-notation by implementing the chaining function \lstinline{>>=} and the \lstinline{return} function.
 
+\subsection{Implicit arguments and automatic proof search}
+
+Even though Idris' type checker is rather powerful, there is still correct types that can not be validated by the type checker alone.
+The \lstinline{head} function on a list is an example of such a type.
+\lstinline{head} returns the first element of the list.
+By providing a static proof that the list is not empty, the implementation below is correct.
+
+\begin{lstlisting}
+head : (xs : List a) -> (isCons xs = True) -> a
+head (x :: xs) _ = x
+\end{lstlisting}
+
+Idris also allows function arguments to be implicit, meaning that it is not necessary to pass the argument in during function application.
+This is a good fit for proofs, like \lstinline{isCons} for \lstinline{head}.
+
+\begin{lstlisting}
+head : (xs : List a) -> {auto p : isCons xs = True} -> a
+head (x :: xs) = x
+\end{lstlisting}
+
+Implicit arguments are written in curly braces, and can be derived in different ways, one being the automatic proof search.
+Automatic proof search is invoked by adding the \lstinline{auto} annotation to an implicit argument, and makes Idris search for a matching type.
+If it can't find a matching type, the proof has to be passed in explicitly, or the program will not compile.
+
+Too access an implicit argument within a function, the parameter name is surrounded by curly braces as illustrated by $p$ below.
+
+\begin{lstlisting}
+head : (xs : List a) -> {auto p : isCons xs = True} -> a
+head (x :: xs) {p} = x
+\end{lstlisting}
+
 
 
 
