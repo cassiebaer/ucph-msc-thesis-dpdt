@@ -1192,6 +1192,7 @@ patients.Select(p => if p.Name == "Alice" {
                      return p;
 );
 \end{lstlisting}
+% TODO 1 : check this code to see if it is even close to PINQ syntax
 
 The result is a no-op: the data remains unchanged.
 However, if the analyst hears a beep during the evaluation of this query, he knows that Alice is included in the \texttt{patients} database.
@@ -1232,52 +1233,41 @@ $$\sum_{x=2}^{\infty} 1/x = \frac{1}{2} + \frac{1}{4} + \frac{1}{8} + .. = 1$$
 In fact, PINQ is able to represent an impressive variety of algorithms in a differentially private manner.
 It may be possible for us to extend the \texttt{Sensitivity} type and convince the Idris type-checker that algorithms resembling a geometric series with $-1 < r < 1$ converge, but we have not yet explored this option.
 
-\subsection{Type safety and security}
+% \subsection{Type safety and security}
+\subsection{Differential privacy and dependent types}
 
-PINQ's foundation, LINQ, is for all practical purposes type safe.
-It has powerful lambda expressions that use the data source schema to reference fields with type safety.
+Nicolas Oury and Wouter Swierstra have already shown that dependent types are natural fit for fully typing the relational algebra\cite{OurySwierstra08PowerOfPi}.
+Chapter~\ref{sec:typing_the_relational_algebra} provided a brief overview of their method.
+The goal of this thesis is to demonstrate that dependent types are also capable of typing differential privacy metrics with ease and we believe this is certainly the case.
+Chapter~\ref{sec:function_sensitivity} showed just how easily metrics such as function sensitivity can be tracked using dependent types.
+Chapter~\ref{sec:our_implementation} combined the two into a completely type-safe, PINQ-like EDSL for Idris.
 
-\begin{lstlisting}[caption = Where query in LINQ, captionpos=b]
-var osloCustomers = customers.Where(cust => cust.City == "Oslo"); 
-\end{lstlisting}
+% pinq vs dpdt
+% dpdt vs 
 
-However, PINQ only validates privacy constraints dynamically.
-The consequence is that users can write valid PINQ programs that violate privacy constraints, and have to execute the programs in order to find out if they do.
+LINQ provides type-safety for most of the relational algebra.
+PINQ expands this safety to include privacy metrics, but it does so dynamically.
+Unfortunately, this also means that any verification of privacy constraints occurs dynamically.
+This actually allows PINQ to express some forms of algorithms which aren't possible in DPDT.
+Any algorithm relying on dynamic conditions for termination will be difficult to statically verify: how can the type-checker know the cost of an algorithm when it could run for any number of iterations?
+However, it is possible for users of PINQ to write type-correct programs which can never be run due to privacy budget constraints.
 
-With Idris' flexible type system, we were able to make queries and expressions in DPDT completely type safe, as described in the Section \ref{sec:typing_the_relational_algebra}.
-As we also perform privacy calculations on the type level, users of our language are unable to write valid programs that violate privacy constraints, with an exception discussed later in this section.
+DPDT provides type-safety for all of the relational algebra and differential privacy constraints.
+Two powerful consequences of this are that type-correct programs written in DPDT are guaranteed to be differentially private and will terminate with a result.
+Unfortunately, these guarantees preclude certain types of algorithms from being written with it.
 
-\begin{lstlisting}[caption = Where query in DPDT, captionpos=b]
-osloCustomers : PINQuery Table Customer 1
-osloCustomers = where' customers $ Customer^"City" == Lit "Oslo"
-\end{lstlisting}
+In fact, DPDT's type-safety even protects against many side-channel attacks which might be possible in a side-effecting language like PINQ.
+PINQ does try to ``scrub'' any expressions before they are evaluated, but mechanically determining which expressions consistute a side-channel attack is not feasible.
+However, timing attacks represent one side-channel which no type system is likely to close.
+Certainly, Idris' purity will prevent calls to \texttt{Thread.sleep}, but what about an expression computing the $n^{th}$ Fibonacci number for some large $n$?
+% TODO 1 : include citation to the paper which set time outs on a per row basis
 
-As mentioned in the previous subsection, PINQ allows users access to powerful LINQ lambda expressions.
-This freedom comes at the cost of security.
-Because the expressions has the whole .NET runtime at its disposal, side-channel attacks are possible.
-An example could be an expression that sends the raw, sensitive data off to a remote database.
-A rewrite function intended to remove such unsafe code from expressions is planned, but not implemented in the current version of PINQ.
+Dependent type systems have benefitted from decades of research and come a long way from their purely academic origins.
+Languages like Agda\footnote{http://wiki.portal.chalmers.se/agda/pmwiki.php}, and more recently, Idris, provide the power of dependent types in a practical setting, allowing critical concepts, such as differential privacy constraints, to be recorded and mechanically verified at compile time.
 
-Side-channel attacks are less of a problem in our language due to the pure nature of Idris.
-This property of Idris allows us to easily avoid the category of attacks that utilize side effects for malicious means.
-It is simply impossible to create side-effecting functions without specifically defining an effectful function, which can not be called by another function unless also that function is effectful.
-
-However, some side-channel attacks are possible in DPDT.
-Timing attacks are probably the most effective of them.
-The code snippet below illustrates how an expression could take advantage of this vulnerability.
-
-\begin{lstlisting}
-if name == "Casper" performHeavyComputation 
-else no-op
-\end{lstlisting}
-
-The attacker could in this case determine if Casper is in the database based on the response time of the query.
-
-\subsection{Related work}\label{sec:related_work}
-
-\subsubsection{DFUZZ}
-% TODO 2 Write something
-
+We believe that in spite of the limitations outlined above, dependent types are very capable of representing differential privacy metrics.
+DPDT is an EDSL prototype demonstrating exactly this point.
+Some of the limitations described above can probably be lifted with more work (e.g. recursive descent geometric series costs), but some are impossible (e.g. dynamic termination with equal cost iterations).
 
 \subsection{Future work}\label{sec:future_work}
 
@@ -1340,14 +1330,6 @@ syntax select [f] from [q] where [e]               = ...
 syntax select [f] from [q] group by [e]            = ...
 syntax select [f] from [q] where [e] group by [e'] = ...
 \end{lstlisting}
-
-
-
-% TODO 1 : should we have a discussion section? I think we can cover it in Evaluation+Conclusion
-
-% \section{Discussion}\label{sec:discussion}
-
-% In this section, we evaluate our language and discuss various things about it.
 
 \section{Conclusion}\label{sec:conclusion}
 
