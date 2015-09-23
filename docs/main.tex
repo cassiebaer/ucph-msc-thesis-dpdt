@@ -1,4 +1,4 @@
-% Template ripped from:
+% Original template ripped from:
 % http://www.cs.technion.ac.il/~yogi/Courses/CS-Scientific-Writing/examples/simple/simple.htm
 
 
@@ -7,9 +7,11 @@
 \documentclass[12pt]{article}
 
 \usepackage{graphicx}
+\usepackage{lmodern}
 \usepackage{listings}
 \usepackage{idrislang}
 \usepackage{amsfonts,amsthm,amsmath}
+% \usepackage[margin=1.5in]{geometry}
 \usepackage[en,nat,farve,titelside]{ku-forside}
 
 \newtheorem{defn}{Definition}[section]
@@ -30,7 +32,7 @@
 \maketitle
 
 \lstset{language=idris,
-basicstyle=\footnotesize,
+basicstyle=\ttfamily\footnotesize,
 frame=single,
 numbers=left,
 breaklines=true,
@@ -1018,7 +1020,7 @@ It just allows developers an alternative method for writing monadic code.
 
 We want to take advantage of this, but the type signatures required to satisfy a monad instance preclude our ability to reflect sensitivities in the types.
 Fortunately, Idris does not actually require a \texttt{Monad} instance to overload \texttt{do}-notation.
-We just need to provide the functions \texttt{(>>=)} and \texttt{return}.
+We just need to provide the functions \texttt{$(>>=)$} and \texttt{return}.
 
 \begin{lstlisting}[caption={Representing differentially private mechanisms},label={lst:mechanisms}]
 ||| Represents a differentially private computation
