@@ -1192,6 +1192,7 @@ patients.Select(p => if p.Name == "Alice" {
                      return p;
 );
 \end{lstlisting}
+% TODO 1 : check this code to see if it is even close to PINQ syntax
 
 The result is a no-op: the data remains unchanged.
 However, if the analyst hears a beep during the evaluation of this query, he knows that Alice is included in the \texttt{patients} database.
@@ -1232,128 +1233,105 @@ $$\sum_{x=2}^{\infty} 1/x = \frac{1}{2} + \frac{1}{4} + \frac{1}{8} + .. = 1$$
 In fact, PINQ is able to represent an impressive variety of algorithms in a differentially private manner.
 It may be possible for us to extend the \texttt{Sensitivity} type and convince the Idris type-checker that algorithms resembling a geometric series with $-1 < r < 1$ converge, but we have not yet explored this option.
 
-\subsection{Type safety and security}
+% \subsection{Type safety and security}
+\subsection{Differential privacy and dependent types}
 
-PINQ's foundation, LINQ, is for all practical purposes type safe.
-It has powerful lambda expressions that use the data source schema to reference fields with type safety.
+Nicolas Oury and Wouter Swierstra have already shown that dependent types are natural fit for fully typing the relational algebra\cite{OurySwierstra08PowerOfPi}.
+Chapter~\ref{sec:typing_the_relational_algebra} provided a brief overview of their method.
+The goal of this thesis is to demonstrate that dependent types are also capable of typing differential privacy metrics with ease and we certainly believe this to be the case.
+Chapter~\ref{sec:function_sensitivity} showed just how easily metrics such as function sensitivity can be tracked using dependent types and Chapter~\ref{sec:our_implementation} put it all together into a completely type-safe, PINQ-like EDSL for Idris.
 
-\begin{lstlisting}[caption = Where query in LINQ, captionpos=b]
-var osloCustomers = customers.Where(cust => cust.City == "Oslo"); 
-\end{lstlisting}
+% pinq vs dpdt
+% dpdt vs 
 
-However, PINQ only validates privacy constraints dynamically.
-The consequence is that users can write valid PINQ programs that violate privacy constraints, and have to execute the programs in order to find out if they do.
+LINQ provides type-safety for most of the relational algebra.
+PINQ expands this safety to include privacy metrics, but it does so dynamically.
+Unfortunately, this also means that any verification of privacy constraints occurs dynamically.
+This actually allows PINQ to express some forms of algorithms which aren't possible in DPDT.
+Any algorithm relying on dynamic conditions for termination will be difficult to statically verify: how can the type-checker know the cost of an algorithm when it could run for any number of iterations?
+However, it is possible for users of PINQ to write type-correct programs which can never be run due to privacy budget constraints.
 
-With Idris' flexible type system, we were able to make queries and expressions in DPDT completely type safe, as described in the Section \ref{sec:typing_the_relational_algebra}.
-As we also perform privacy calculations on the type level, users of our language are unable to write valid programs that violate privacy constraints, with an exception discussed later in this section.
+DPDT provides type-safety for all of the relational algebra and differential privacy constraints.
+Two powerful consequences of this are that type-correct programs written in DPDT are guaranteed to be differentially private and will terminate with a result.
+Unfortunately, these guarantees preclude certain types of algorithms from being written with it.
 
-\begin{lstlisting}[caption = Where query in DPDT, captionpos=b]
-osloCustomers : PINQuery Table Customer 1
-osloCustomers = where' customers $ Customer^"City" == Lit "Oslo"
-\end{lstlisting}
+In fact, DPDT's type-safety even protects against many side-channel attacks which might be possible in a side-effecting language like PINQ.
+PINQ does try to ``scrub'' any expressions before they are evaluated, but mechanically determining which expressions consistute a side-channel attack is not feasible.
+However, timing attacks represent one side-channel which no type system is likely to close.
+Certainly, Idris' purity will prevent calls to \texttt{Thread.sleep}, but what about an expression computing the $n^{th}$ Fibonacci number for some large $n$?
+% TODO 1 : include citation to the paper which set time outs on a per row basis
 
-As mentioned in the previous subsection, PINQ allows users access to powerful LINQ lambda expressions.
-This freedom comes at the cost of security.
-Because the expressions has the whole .NET runtime at its disposal, side-channel attacks are possible.
-An example could be an expression that sends the raw, sensitive data off to a remote database.
-A rewrite function intended to remove such unsafe code from expressions is planned, but not implemented in the current version of PINQ.
+Dependent type systems have benefitted from decades of research and come a long way from their purely academic origins.
+Languages like Agda\footnote{http://wiki.portal.chalmers.se/agda/pmwiki.php}, and more recently, Idris, provide the power of dependent types in a practical setting, allowing critical concepts, such as differential privacy constraints, to be recorded and mechanically verified at compile time.
 
-Side-channel attacks are less of a problem in our language due to the pure nature of Idris.
-This property of Idris allows us to easily avoid the category of attacks that utilize side effects for malicious means.
-It is simply impossible to create side-effecting functions without specifically defining an effectful function, which can not be called by another function unless also that function is effectful.
-
-However, some side-channel attacks are possible in DPDT.
-Timing attacks are probably the most effective of them.
-The code snippet below illustrates how an expression could take advantage of this vulnerability.
-
-\begin{lstlisting}
-if name == "Casper" performHeavyComputation 
-else no-op
-\end{lstlisting}
-
-The attacker could in this case determine if Casper is in the database based on the response time of the query.
-
-\subsection{Related work}\label{sec:related_work}
-
-\subsubsection{DFUZZ}
-% TODO 2 Write something
-
+We believe that in spite of the limitations outlined above, dependent types are very capable of representing differential privacy metrics.
+DPDT is an EDSL prototype demonstrating exactly this point.
+Some of the limitations described above can probably be lifted with more work (e.g. recursive descent geometric series costs), but some are impossible (e.g. dynamic termination with equal cost iterations).
 
 \subsection{Future work}\label{sec:future_work}
 
-\subsubsection{External backends}
+At the time of this writing, DPDT exists only as a prototype.
+There are many potential paths for future work, but we attempt to list some promising ones here.
 
-While PINQ has support for all data source types supported by LINQ (e.g., SQL servers, XML), DPDT's current support for external backends is limited.
-We have implemented a simple SQLite backend that compiles queries to single SQLite queries.
-As the name implies, SQLite is one of the more lightweight derivatives of SQL.
-It is not a full-fledged programming language, and the lack of a looping construct is an example of its limitations.
-As such, with our current design, the SQLite backend flexibility is limited to functionality which can be represented in a single SQLite query.
-We have for instance concidered using nested if statements as a substitute for looping constructs in SQLite.
-Even though this might be a feasible solution, it does not scale, and will result in spaghetti output.
+Some algorithms can be implemented in PINQ but not DPDT.
+We believe that some classes of algorithms simply cannot be represented by a static type-system (if we are to compute their total costs), but we aren't convinced that this is true of all of them.
+In particular, our \texttt{Sensitivity} type can probably be extended to allow for recursive algorithms where the iterative costs resemble a geometric series with $-1 < r < 1$.
 
-Another solution is to make a distinction between queries and programs, and dynamically query the database, instead of just compiling a single SQL-query.
-If we allow dynamic querying, users can use the power of Idris to write their programs, with multiple queries to a database within a program.
-This way, we can get more of the flexibility that PINQ has got from LINQ. 
+Exploring the limits to what kinds of backends can be supported and providing implementations for those that can would be a great step.
+PINQ supports any LINQ-supported backend out of the box.
+DPDT has no underlying LINQ-like framework under active development, so backends must be added one by one.
+What features does DPDT require to support a particular backend?
+Could we interface DPDT with LINQ providers?
 
-\subsubsection{Improved syntax}
+Of course, backends aren't limited to local memory access.
+A server component, not unlike many network-facing LINQ providers, would help DPDT better mirror PINQ's capabilities.
+By establishing a trusted runtime system on the server hosting the data, we can expose the powers of \texttt{PureFn} to data analysts remotely.
+Our current prototype still leaves a lot to be desired in terms of actual usability.
 
-In order for a programming language to be usable, it should be reasonbly easy to read and write programs in it.
-The current implementation of DPDT does not score too well on usability measures.
-The syntax of complex queries becomes rather awkward because the current way of building up queries is by nested function applications.
+%%%%%%%
 
-\begin{lstlisting}
-where' : PINQuery b s c -> Expr s Bool -> PINQuery b s c
-select : PINQuery b s c -> (f:String -> Maybe  String) -> PINQuery b (projectedSchema f s) c
+Idris provides several experimental language features which may provide DPDT with better integration into its host language.
+Two examples that come to mind are Idris' \texttt{Effects} library and \textit{type providers}.
 
-select (where' (union q q') e) f
-\end{lstlisting}
+Effects are an alternative to monadic actions for describing side-effects.
+Reimplementing the \texttt{Private} monad from Chapter~\ref{sec:our_implementation} using effects might be beneficial.
+There may be other opportunities for implementing components as effects.
 
-The above listing shows how a combined select, where and union application looks in DPDT.
-Notice that combining more transformations will decrease the readability of the query.
+Type providers allow the Idris type-system to define and predicate types on input from the outside world.
+A classic example is grabbing schemas directly from the database itself, but this could easily be extended to also grab that data source's remaining privacy budget.
+DPDT's implementation could also be adjusted such that \texttt{PureFn} is disabled for backends which do not support it.
+The current implementation will (embarassingly) quit with a runtime error.
 
-One of Idris' many neat language features is the ability to describe syntax desugaring rules using regular expressions which the parser can then make use of.
-Syntax rules allow developers to define custom ways of executing functions beyond the standard $f x \: y$ application of the function $f$ on the arguments $x$ and $y$.
-Below are two examples of syntax rules and the same $select \circ where \circ union$ query written using the $select \circ where$ syntax rule.
+%%%%%%%
 
-\begin{lstlisting}
-||| Definition
+Finally, improving DPDT's syntax would be of benefit to all future users.
+In its current form, it is not particularly well suited to users who aren't familiar with Idris' syntax.
+However, Idris tries to make embedding domain specific languages easier by providing various extensions allowing users to modify its parser and other moving parts.
+One of these is the ability to describe syntax extensions with regular expressions which the parser can then make use of.
+Custom syntax rules allow embedded language develoeprs to extend the parser with EDSL-specific syntax constructs.
+
+Idris syntax extensions consist of two components: reserved keywords and non-terminals.
+Keywords help anchor the parser around the non-terminals, which are captured and usable on the right hand side of a custom syntax declaration.
+Listing~\ref{lst:syntax_extensions} contains two examples of syntax rules.
+
+\begin{lstlisting}[caption={Extending Idris' syntax},label={lst:syntax_extensions}]
+-- Definition
 syntax select [f] from [q] = select q f
 syntax select [f] from [q] where [e] = select (where q e) f
 
-||| Application
-select f from (union q q') where e
+-- Application
+select f from (q `union` q') where e
 \end{lstlisting}
 
-The above examples utilize keywords and non-terminals to construct the syntax rules.
-The keywords in the examples are $select$, $from$ and $where$, while the non-terminals are [f], [q] and [e].
-
-We assume the use of syntax rules could improve the usability of DPDT, but we are not sure how much work it is to implement it in a flexible way. 
-As you can see in the example above, we are including the \texttt{select [f] from [q]} as part of the $where$ syntax rule.
-This is the typical SQL syntax, and is therefore a syntax to stride for, as it is familiar to users and well understood.
-If we add more operations into the mix with this syntax rule design, we end up with combinations of the operations that are additional to $select$.
-Below is an example of syntax rule definitions if we add support for $groupBy$ with this design.
-
-\begin{lstlisting}
-||| Definition
-syntax select [f] from [q]                         = ...
-syntax select [f] from [q] where [e]               = ...
-syntax select [f] from [q] group by [e]            = ...
-syntax select [f] from [q] where [e] group by [e'] = ...
-\end{lstlisting}
-
-
-
-% TODO 1 : should we have a discussion section? I think we can cover it in Evaluation+Conclusion
-
-% \section{Discussion}\label{sec:discussion}
-
-% In this section, we evaluate our language and discuss various things about it.
+In fact, it may be possible to recreate a SQL-like syntax using Idris parser extensions exclusively.
+They should, however, be used with caution.
+Poorly implemented syntax rules can cause the parser to diverge.
 
 \section{Conclusion}\label{sec:conclusion}
 
-We have demonstrated that a differentially private query languge can be represented in a dependently typed type system, where the privacy guarantees are enforced statically in types.
+We have demonstrated that a differentially private query languge can be represented in a dependent type system, where the privacy guarantees are enforced statically in types.
 A prototype named DPDT is implemented in Idris, providing basic transformation and aggregation operations.
-DPDT guarantees differential privacy statically, which means that any valid program written in it is differtially private.
+DPDT guarantees differential privacy statically, which means that any valid program written in it is differentially private.
 
 In comparison to our inspiration PINQ, DPDT currently lacks a bit of flexibility and usability.
 PINQ can use all the data source types supported by LINQ for .NET, while DPDT has limited support for external databases.
