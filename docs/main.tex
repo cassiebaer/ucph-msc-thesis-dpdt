@@ -702,8 +702,7 @@ namespace Examples
 \section{Typing the Relational Algebra}\label{sec:typing_the_relational_algebra}
 
 In this section, we review the relational algebra and show how it can be modelled in a dependently typed language.
-Our approach is based on \cite{OurySwierstra08PowerOfPi}.
-% TODO 3 : make this sentence citation read better
+Our approach is based on an example from \cite{OurySwierstra08PowerOfPi} presenting a database schema representation in another dependently typed language, Agda\footnote{https://github.com/agda/agda}.
 
 The relational algebra describes semantics for modelling and querying data in relational databases (e.g. MySQL\footnote{https://www.mysql.com/}).
 E.F. Codd described relational databases and their associated algebra back in the 1970's\cite{codd70}.
@@ -761,8 +760,7 @@ We then define a toy expression language before moving on to the query language.
 
 First, we need to be able to represent table attributes (columns).
 An \texttt{Attribute} is just the pairing of a name (\texttt{String}) to a data type.
-Following David Christiansen's lead, we opt to use \texttt{(:::)} instead of the more traditional \texttt{(,)} for constructing our pairs.
-% TODO 1 : add reference to D.C.'s implementation of SQLite type providers
+Following David Christiansen's lead, we opt to use \texttt{(:::)} instead of the more traditional \texttt{(,)} for constructing our pairs\cite{ChristiansenTypeProviders}.
 We believe this enhances readability of long \texttt{Schema}s, which are just lists of \texttt{Attribute}s.
 
 \begin{lstlisting}[caption={Representing attributes and schemas},label={lst:attrs_and_schemas}]
