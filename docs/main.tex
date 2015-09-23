@@ -23,7 +23,6 @@
 }
 \title{Differential Privacy with Dependent Types}
 \undertitel{or: How I Learned to Stop Worrying and Love Dependent Types}
-% TODO 2 : make a catchy subtitle
 \vejleder{Ken Friis Larsen}
 \dato{November 11, 2015}
 
@@ -45,14 +44,14 @@ This is the paper's abstract \ldots
 \end{abstract}
 
 % TODO 1 : write an abstract
-% TODO 2 : add captions and labels to all code snippets
 
 \section{Introduction}\label{sec:introduction}
 
+% TODO 1 : work related work into the intro and diff.priv. sections
+
 With each passing day, more and more of our personal information is being collected, cataloged and analyzed by an ever increasing number of interested parties.
 Their interests range from selective marketing of products and services to collecting business performance metrics and even to malicious and potentially illegal surveillance.
-We don't curate and control the data they are collecting;
-in many ways, the data we produce actually gives a better picture of who we are than any data we might try to curate and control.
+We don't curate and control the data they are collecting and the data we produce often gives a better picture of who we are than any data we might try to curate and control.
 Therefore, as the producers of this data, we should be concerned with how it is being used.
 
 Our medical records consist of very personal information which we reasonably expect to remain private.
@@ -106,7 +105,7 @@ Thus, all type-correct programs must respect expected privacy constraints.
 \subsection{Contributions}
 
 This paper describes an implementation of an embedded prototype language, \texttt{DPDT}, for describing differentially private computations.
-Dependent type systems have come a long way since Martin-L\"of's original intuitionistic type theory.
+Dependent type systems have come a long way since Martin-L\"of's original intuitionistic type theory\cite{mlitt}.
 We show that dependent types are a natural fit for describing and verifying differential privacy constraints.
 
 We implemented a fully-typed abstract language for describing the relational algebra; and we developed a simple in-memory Idris database backend for it.
@@ -132,7 +131,7 @@ We begin by motivating the necessity for differential privacy before moving on t
 
 % TODO 1 : first part of this section and Intro overlap a lot!
 
-In today's Big Data world, more and more of our data is being stored on servers belonging to others.
+In today's ``Big Data'' world, more and more of our data is being stored on servers belonging to others.
 Even though it may feel like it, we are not the consumers of free online services: we are the product.
 But regardless of whether we freely volunteered it, were legally compelled to share it, or just bought something online, we have a reasonable expectation to privacy of our data.
 
@@ -148,13 +147,15 @@ However, it has quickly become evident that it is not possible to release a data
 Differential privacy aims to maximize database utility while minimizing the risk for all individuals contained within.
 Traditionally, privacy research has focused on preventing a malicious attacker from learning anything about a particular individual (e.g. our dear friend Alice).
 However, this has proved to be nearly impossible in the presence of auxiliary information.
-In a paper from 2008, Ganta et al. show that \textit{k-anonymity} and other proposed partition-based anonymization approaches are vulnerable to composition attacks\cite{ganta2008composition}.
-A composition attack is performed on an anonymized data set by matching it with auxiliary data, such as data from the web, public records, or domain knowledge.
-An attacker can with this technique extract more information about individuals in the anonymized set.
+Ganta et al. showed that \textit{k-anonymity} and other proposed partition-based anonymization approaches are vulnerable to composition attacks\cite{ganta2008composition}.
+A composition attack is performed on an ``anonymized'' data set by matching it with auxiliary data, such as data from the web, public records, or domain knowledge.
+With this technique, an attacker can learn deduce private information about the individuals in the anonymized set.
 
+Compositions attacks are not only interesting to academics, either.
+AOL\footnote{http://arstechnica.com/business/2006/09/7835/}, Twitter\footnote{http://arstechnica.com/tech-policy/2009/03/pulling-back-the-curtain-on-anonymous-twitterers/}, Netflix\footnote{http://arstechnica.com/tech-policy/2009/09/your-secrets-live-online-in-databases-of-ruin/}, and the GIC insurance database\footnote{http://web.mit.edu/sem083/www/assignments/reidentification.html} have all suffered publicly in the wakes of linkage attacks.
 % TODO 2 : talk about the parallel to cryptography guarantees
 
-Rather than trying to prove the impossibility of a privacy breach, differential privacy guarantees that a users participation in a database can only increase their risk of a privacy breach by a negligible amount.
+Rather than trying to prove the impossibility of a privacy breach, differential privacy guarantees that a users participation in a database can only increase their risk of a privacy breach by some negligible amount.
 This is true regardless of how much auxiliary information a would-be attacker knows or might learn in the future.
 
 Analysts are able to run differentially private algorithms against private data knowing that no individuals' privacy can be compromised.
@@ -162,14 +163,14 @@ Suddenly, many of the Big Data databases which would otherwise be off limits can
 Each individuals participation in the database has a negligible effect on their risk of a privacy breach, so honest participation follows as a direct consequence.
 
 In fact, a classic example of differentially private thinking is randomized response.
-Randomized response is a technique originally proposed in 1965 for encouraging survey respondents to answer potentially embarassing questions honestly.
+Randomized response is a technique originally proposed in 1965 for encouraging survey respondents to answer potentially embarassing questions honestly\cite{warner1965randomized}.
 By introducing an element of randomness, participants are given plausible deniability regardless of how they respond.
 
 After reading the question, participants are instructed to flip a coin.
 If the coin yields ``tails,'' the participant responds ``No''.
 If the coin reads ``heads,'' he/she answers truthfully.
 The net result is that $1/2$ of the responses are ``No'' by default, while the other half should be a representative sampling of the population.
-Thus, if researchers using randomized response find that 10\% of participants admit to an illegal activity, the true percentage is actually around 20\%.
+Thus, if researchers using randomized response find that 10\% of participants admit to an illegal activity, the true percentage is actually around 20\% and all database participants are given plausible deniability.
 
 The rest of this section will focus on specific ideas from the differential privacy literature as it relates to our implementation of DPDT.
 In particular, we will discuss function sensitivity, which is a relative measure of how much a function can magnify the distances between collections of objects; and indistinguishability, which is the key idea which quantifies what it means for a computation to be differentially private.
@@ -226,11 +227,14 @@ However, function sensitivity can be applied much more generally and to much mor
 We will use $\mathbb D$ to describe the domain of all possible databases.
 Hence, a function $f : \mathbb D \rightarrow \mathbb D$ is an endomorphism for databases.
 The distance between two databases is their symmetric difference; i.e. $d_{\mathbb D}(D_1,D_2) = | D_1 \oplus D_2 |$.
+
 There is a special case that turns up often in the differential privacy literature.
-We are primarily concerned with whether a particular individual's records are included in the database or not.
+We are primarily concerned with whether a particular individual's records are included in the database or not, so we often focus on adjacent databases.
+We say that two databases are adjacent if they differ by exactly one row.
 
 \begin{defn}
   We denote the case when two databases, $D_1$ and $D_2$, differ by exactly 1 row (i.e. $d_{\mathbb D}(D_1,D_2)=1$) with the special notation: $D_1 \sim D_2$.
+  We say that $D_1$ and $D_2$ are adjacent.
 \end{defn}
 
 Despite the change of scenery, function sensitivity behaves as outlined above.
@@ -307,7 +311,8 @@ This may seem limiting, but in practice is not so.
 Certainly, entire classes of queries and algorithms are precluded by this necessity, but the vast majority of statistical research is performed using aggregations over tables, not querying for the information pertaining to particular individuals.
 
 An additional constraint emerges from the previous one: the data type returned by the aggregation must be a semigroup; i.e. it must have an associative binary operator for folding new values into the aggregate.
-However, aggregations alone are not capable of protecting privacy.
+This is the case because the order in which rows are considered should have no bearing on the resulting value; otherwise, an attacker may be able to learn something about the ordering of individuals.
+Aggregations alone, however, are not capable of protecting privacy.
 
 Consider a database consisting of all patients who have ever been treated at the \textit{ABC ABortion Clinic}.
 Alice is one of those patients.
@@ -344,9 +349,14 @@ Noise sampled from the Laplace distribution scaled according to $b=c/\epsilon$ i
 
 \subsection{PINQ}\label{sec:pinq}
 
+<<<<<<< HEAD
 This section provides an overview of PINQ, the framework we modelled our language after.
 PINQ is a privacy layer built over top of the .NET integrated query language, LINQ.
 % TODO 3 : expand on what LINQ is to make PINQ's contribution more clear?
+=======
+This section provides a brief overview of PINQ, the framework that originally inspired DPDT.
+PINQ is a privacy layer built over top of the .NET integrated query language, LINQ.
+>>>>>>> Make edits according to Chelsea's feedback
 It provides carefully implemented primitives and the ability to build arbitrarily complex, differentially private algorithms from them.
 There are two main components to PINQ: transformations and aggregations.
 Each PINQ server will keep track of its own privacy budget and reject queries whose costs exceed the remaining budget.
@@ -365,7 +375,7 @@ However, they have all been carefully reimplemented to keep track of their funct
 Each transformation is aware of its own sensitivity and the sensitivies of the subqueries beneath it.
 The word ``stability'' is commonly used when discussing sensitivity in the context of database transformations.
 We have already seen a proof that a filtering function (selection) is 1-sensitive.
-Similar proofs exist for all of the other transformations provided by PINQ.
+Similar proofs exist for all of the other transformations provided by PINQ\cite{conf/sigmod/McSherry09}.
 
 % TODO 1 : figure out what to do with the rest of this subsection
 
@@ -702,7 +712,8 @@ namespace Examples
 \section{Typing the Relational Algebra}\label{sec:typing_the_relational_algebra}
 
 In this section, we review the relational algebra and show how it can be modelled in a dependently typed language.
-Our approach is based on an example from \cite{OurySwierstra08PowerOfPi} presenting a database schema representation in another dependently typed language, Agda\footnote{https://github.com/agda/agda}.
+Our approach is based on Chapter 4 from \textit{The Power of Pi}\cite{OurySwierstra08PowerOfPi}, an excellent resource for practical examples of what dependent types are capable of.
+% TODO 3 : make this sentence citation read better
 
 The relational algebra describes semantics for modelling and querying data in relational databases (e.g. MySQL\footnote{https://www.mysql.com/}).
 E.F. Codd described relational databases and their associated algebra back in the 1970's\cite{codd70}.
@@ -943,7 +954,7 @@ namespace SQLiteBackend
 
 In this section, we describe how we bring together the material of the previous chapters and outline our entire implementation.
 
-Our goal is to leverage Idris's type-checker to statically verify differential privacy constraints.
+Our goal is to leverage Idris' type-checker to statically verify differential privacy constraints.
 We create new types to capture the necessities.
 We will focus on \texttt{PINQuery} because the other two have similar implementations, but are case-specific.
 
@@ -1019,8 +1030,7 @@ Additionally, the control flow of a program may be predicated on the value retur
 Sequential queries are additive in cost.
 Sequencing computations in functional programming is traditionally accomplished using the infamous \texttt{Monad}.
 In many languages, Idris included, types implementing \texttt{Monad} instances have access to special syntactic sugar, commonly known as \texttt{do}-notation.
-It is important to note that \texttt{do}-notation is not magic!
-It just allows developers an alternative method for writing monadic code.
+\texttt{do}-notation is not magic: it just allows developers to use an alternative syntax for writing monadic code.
 
 We want to take advantage of this, but the type signatures required to satisfy a monad instance preclude our ability to reflect sensitivities in the types.
 Fortunately, Idris does not actually require a \texttt{Monad} instance to overload \texttt{do}-notation.
@@ -1356,28 +1366,36 @@ select f from (q `union` q') where e
 
 In fact, it may be possible to recreate a SQL-like syntax using Idris parser extensions exclusively.
 They should, however, be used with caution.
-Poorly implemented syntax rules can cause the parser to diverge.
+Poorly implemented syntax rules can cause the parser to diverge and SQL-like syntax is not necessarily the best syntax.
 
 \section{Conclusion}\label{sec:conclusion}
 
-We have demonstrated that a differentially private query languge can be represented in a dependent type system, where the privacy guarantees are enforced statically in types.
-A prototype named DPDT is implemented in Idris, providing basic transformation and aggregation operations.
-DPDT guarantees differential privacy statically, which means that any valid program written in it is differentially private.
+Dependent types are very capable of representing differential privacy metrics and constraints.
+The ability to verify differential privacy by construction is a very desirable property.
+PINQ has demonstrated one method for achieving this.
+However, PINQ relies on dynamic checks for private computations.
+DPDT aims to provide the same differential privacy guarantees as PINQ by allowing users to compose complex algorithms from secure primitives, but with improved type-safety.
+By lifting the privacy concerns into the type-system, DPDT is able to statically verify a differentially private program at compile-time.
+Any program written in DPDT is guaranteed to be differentially private, because the compiler will reject any which aren't.
 
-In comparison to our inspiration PINQ, DPDT currently lacks a bit of flexibility and usability.
-PINQ can use all the data source types supported by LINQ for .NET, while DPDT has limited support for external databases.
-The syntax is also currently less convoluted in PINQ, but this can be improved in DPDT in the future by the use of Idris' syntax rules.
+PINQ can accomodate some types of algorithms which aren't possible in DPDT.
+This is an unfortunate consequence of requiring that it can statically verify all differential privacy costs at compile time.
+We have shown that dependent types can easily handle differentially private queries (as opposed to algorithms).
+Independent queries can be run in any order and may as well be considered a single query costing the sum of the subqueries' costs.
+The same is true of a sequence of dependent queries if we know its exact length.
+However, DPDT can't know how many iterations a dynamically-terminating algorithm will require, so it won't be able to type that kind of algorithm.
+Some improvements to DPDT's understanding of costs might be possible, but some classes of algorithms will not be possible without relaxing the requirements.
 
-However, DPDT is safer than PINQ.
-Firstly, as our differential privacy guarantees are enforced on type level, users don't have to run a program to see if it violates privacy constraints.
-In PINQ these privacy guarantees are enforced dynamically.
+Despite these limitations, DPDT's type-system does offer some benefits over that of PINQ's.
+In particular, because it is a pure language, almost all side-channel attacks that might be possible in PINQ are prevented by default.
+Unfortunately, both PINQ and DPDT are susceptible to a particular form of timing attack: careful use of expensive computations.
+Preventing this kind of attack requires a smart server implementation a la that described in XX.
+% TODO 1 : add citation to the paper that stopped timing attacks. was it DFuzz?
 
-Secondly, because $C\#$ allows side effects, PINQ is exposed to various side-channel attacks.
-An example of such an attack could be where an expression evaluated on the database as part of a query sends off the raw data to an expernal server.
-Because idris is a purely functional language, a large category of such attacks are easily avoided.
-In Idris functions with side effects must be declared as effectful
-So to avoid attacks that use side effects we simply don't define the expressions in DPDT as effectful.
-However, some side-channel attacks are still possible in DPDT, e.g. timing attacks.
+Dependent types can fully represent the relational algebra and its contraints which have stumped lesser type-systems\cite{OurySwierstra08PowerOfPi}.
+We have shown that dependent types can also represent differential privacy metrics and their contraints---with some limitations on the types of algorithms that can be expressed.
+There are no limits on constructing independent, differentially-private queries.
+But dynamically terminating algorithms cannot easily be expressed because privacy constraints cannot be verified at compile-time.
 
 \bibliographystyle{abbrv}
 \bibliography{main}
