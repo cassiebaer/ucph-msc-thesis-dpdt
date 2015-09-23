@@ -112,7 +112,7 @@ We implemented a fully-typed abstract language for describing the relational alg
 Our main contribution is the layering of differential privacy metrics into the types over top of the fully-typed relational algebra.
 PINQ's differential privacy metrics are checked dynamically at runtime, whereas our privacy layer leverages the power of dependent types to verify that privacy constraints are not violated \textit{at compile time}.
 
-% TODO 1 : add more contributions if there are any
+% TODO 1 : add more contributions if there are any. noisyAverage improvement?
 
 \paragraph{Outline}
 
@@ -145,8 +145,11 @@ However, it has quickly become evident that it is not possible to release a data
 
 Differential privacy aims to maximize database utility while minimizing the risk for all individuals contained within.
 Traditionally, privacy research has focused on preventing a malicious attacker from learning anything about a particular individual (e.g. our dear friend Alice).
-However, this has proved to be nearly impossible in the presence of auxiliary information. ((WHY))
-% TODO 2 : why?
+However, this has proved to be nearly impossible in the presence of auxiliary information.
+In a paper from 2008, Ganta et al. show that \textit{k-anonymity} and other proposed partition-based anonymization approaches are vulnerable to composition attacks\cite{ganta2008composition}.
+A composition attack is performed on an anonymized data set by matching it with auxiliary data, such as data from the web, public records, or domain knowledge.
+An attacker can with this technique extract more information about individuals in the anonymized set.
+
 % TODO 2 : talk about the parallel to cryptography guarantees
 
 Rather than trying to prove the impossibility of a privacy breach, differential privacy guarantees that a users participation in a database can only increase their risk of a privacy breach by a negligible amount.
@@ -166,14 +169,12 @@ If the coin reads ``heads,'' he/she answers truthfully.
 The net result is that $1/2$ of the responses are ``No'' by default, while the other half should be a representative sampling of the population.
 Thus, if researchers using randomized response find that 10\% of participants admit to an illegal activity, the true percentage is actually around 20\%.
 
-% TODO 1 : outline the metrics to come
-
 The rest of this section will focus on specific ideas from the differential privacy literature as it relates to our implementation of DPDT.
 In particular, we will discuss function sensitivity, which is a relative measure of how much a function can magnify the distances between collections of objects; and indistinguishability, which is the key idea which quantifies what it means for a computation to be differentially private.
 Finally, we describe PINQ, the framework that allows users to build differentially private computations by construction.
 
 \subsection{Function Sensitivity}
-% TODO 1 : this section overlaps with chapter on function sensitivity
+% TODO 1 : this section overlaps with chapter on function sensitivity (Which chapter?)
 
 Function sensitivity is an important concept from the differential privacy literature.
 We can make assertions about an entire program if we understand the sensitivities of the functions with which it is composed.
@@ -330,7 +331,17 @@ The aggregation function from earlier will no longer be enough to determine whet
     \caption{Indistinguishability}
 \end{figure}
 
-Generally, the Laplace distribution is used because XX.
+There are potentially many randomized mechanisms that can be used to accomplish indistinguishability between neighbouring databases.
+Two well known randomized mechanisms used in differential privacy literature are Laplace- and Gaussian distributions.
+A Laplacian noise distribution with a mean of zero and a scale parameter of $fn-sensitivity/\epsilon$ guarantees $\epsilon$-differential privacy.
+A Gaussian noise distribution can provide a slightly more relaxed differential privacy guarantee, namely ($\epsilon$, $\delta$)-differential privacy, where delta is an additive on the privacy bound. % TODO: Provide cite
+\begin{defn}\label{def:diffpriv_delta}
+A randomized mechanism, $\mathcal{M}(D) : \mathbb D \rightarrow A$, is ($\epsilon$, $\delta$)-differentially-private if, for all databases $D_1 \sim D_2$, and all $S \in A$,
+  $$Pr[\mathcal M(D_1)\in S] \le e^\epsilon \times Pr[\mathcal M(D_2)\in S] + \delta  $$
+\end{defn}
+
+We will however ignore Definition \ref{def:diffpriv_delta} in this report, as we will be using Laplace noise to achieve $\epsilon$-differential privacy in our language.
+
 % TODO 1 : why do we prefer Laplace? it scales well with e and is symmetric. what else?
 
 \subsection{PINQ}\label{sec:pinq}
