@@ -51,8 +51,7 @@ This is the paper's abstract \ldots
 
 With each passing day, more and more of our personal information is being collected, cataloged and analyzed by an ever increasing number of interested parties.
 Their interests range from selective marketing of products and services to collecting business performance metrics and even to malicious and potentially illegal surveillance.
-We don't curate and control the data they are collecting;
-in many ways, the data we produce actually gives a better picture of who we are than any data we might try to curate and control.
+We don't curate and control the data they are collecting and the data we produce often gives a better picture of who we are than any data we might try to curate and control.
 Therefore, as the producers of this data, we should be concerned with how it is being used.
 
 Our medical records consist of very personal information which we reasonably expect to remain private.
@@ -106,7 +105,7 @@ Thus, all type-correct programs must respect expected privacy constraints.
 \subsection{Contributions}
 
 This paper describes an implementation of an embedded prototype language, \texttt{DPDT}, for describing differentially private computations.
-Dependent type systems have come a long way since Martin-L\"of's original intuitionistic type theory.
+Dependent type systems have come a long way since Martin-L\"of's original intuitionistic type theory\cite{mlitt}.
 We show that dependent types are a natural fit for describing and verifying differential privacy constraints.
 
 We implemented a fully-typed abstract language for describing the relational algebra; and we developed a simple in-memory Idris database backend for it.
@@ -132,7 +131,7 @@ We begin by motivating the necessity for differential privacy before moving on t
 
 % TODO 1 : first part of this section and Intro overlap a lot!
 
-In today's Big Data world, more and more of our data is being stored on servers belonging to others.
+In today's ``Big Data'' world, more and more of our data is being stored on servers belonging to others.
 Even though it may feel like it, we are not the consumers of free online services: we are the product.
 But regardless of whether we freely volunteered it, were legally compelled to share it, or just bought something online, we have a reasonable expectation to privacy of our data.
 
@@ -148,13 +147,15 @@ However, it has quickly become evident that it is not possible to release a data
 Differential privacy aims to maximize database utility while minimizing the risk for all individuals contained within.
 Traditionally, privacy research has focused on preventing a malicious attacker from learning anything about a particular individual (e.g. our dear friend Alice).
 However, this has proved to be nearly impossible in the presence of auxiliary information.
-In a paper from 2008, Ganta et al. show that \textit{k-anonymity} and other proposed partition-based anonymization approaches are vulnerable to composition attacks\cite{ganta2008composition}.
-A composition attack is performed on an anonymized data set by matching it with auxiliary data, such as data from the web, public records, or domain knowledge.
-An attacker can with this technique extract more information about individuals in the anonymized set.
+Ganta et al. showed that \textit{k-anonymity} and other proposed partition-based anonymization approaches are vulnerable to composition attacks\cite{ganta2008composition}.
+A composition attack is performed on an ``anonymized'' data set by matching it with auxiliary data, such as data from the web, public records, or domain knowledge.
+With this technique, an attacker can learn deduce private information about the individuals in the anonymized set.
 
+Compositions attacks are not only interesting to academics, either.
+AOL\footnote{http://arstechnica.com/business/2006/09/7835/}, Twitter\footnote{http://arstechnica.com/tech-policy/2009/03/pulling-back-the-curtain-on-anonymous-twitterers/}, Netflix\footnote{http://arstechnica.com/tech-policy/2009/09/your-secrets-live-online-in-databases-of-ruin/}, and the GIC insurance database\footnote{http://web.mit.edu/sem083/www/assignments/reidentification.html} have all suffered publicly in the wakes of linkage attacks.
 % TODO 2 : talk about the parallel to cryptography guarantees
 
-Rather than trying to prove the impossibility of a privacy breach, differential privacy guarantees that a users participation in a database can only increase their risk of a privacy breach by a negligible amount.
+Rather than trying to prove the impossibility of a privacy breach, differential privacy guarantees that a users participation in a database can only increase their risk of a privacy breach by some negligible amount.
 This is true regardless of how much auxiliary information a would-be attacker knows or might learn in the future.
 
 Analysts are able to run differentially private algorithms against private data knowing that no individuals' privacy can be compromised.
