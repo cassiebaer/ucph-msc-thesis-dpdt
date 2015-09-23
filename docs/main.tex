@@ -1356,28 +1356,36 @@ select f from (q `union` q') where e
 
 In fact, it may be possible to recreate a SQL-like syntax using Idris parser extensions exclusively.
 They should, however, be used with caution.
-Poorly implemented syntax rules can cause the parser to diverge.
+Poorly implemented syntax rules can cause the parser to diverge and SQL-like syntax is not necessarily the best syntax.
 
 \section{Conclusion}\label{sec:conclusion}
 
-We have demonstrated that a differentially private query languge can be represented in a dependent type system, where the privacy guarantees are enforced statically in types.
-A prototype named DPDT is implemented in Idris, providing basic transformation and aggregation operations.
-DPDT guarantees differential privacy statically, which means that any valid program written in it is differentially private.
+Dependent types are very capable of representing differential privacy metrics and constraints.
+The ability to verify differential privacy by construction is a very desirable property.
+PINQ has demonstrated one method for achieving this.
+However, PINQ relies on dynamic checks for private computations.
+DPDT aims to provide the same differential privacy guarantees as PINQ by allowing users to compose complex algorithms from secure primitives, but with improved type-safety.
+By lifting the privacy concerns into the type-system, DPDT is able to statically verify a differentially private program at compile-time.
+Any program written in DPDT is guaranteed to be differentially private, because the compiler will reject any which aren't.
 
-In comparison to our inspiration PINQ, DPDT currently lacks a bit of flexibility and usability.
-PINQ can use all the data source types supported by LINQ for .NET, while DPDT has limited support for external databases.
-The syntax is also currently less convoluted in PINQ, but this can be improved in DPDT in the future by the use of Idris' syntax rules.
+PINQ can accomodate some types of algorithms which aren't possible in DPDT.
+This is an unfortunate consequence of requiring that it can statically verify all differential privacy costs at compile time.
+We have shown that dependent types can easily handle differentially private queries (as opposed to algorithms).
+Independent queries can be run in any order and may as well be considered a single query costing the sum of the subqueries' costs.
+The same is true of a sequence of dependent queries if we know its exact length.
+However, DPDT can't know how many iterations a dynamically-terminating algorithm will require, so it won't be able to type that kind of algorithm.
+Some improvements to DPDT's understanding of costs might be possible, but some classes of algorithms will not be possible without relaxing the requirements.
 
-However, DPDT is safer than PINQ.
-Firstly, as our differential privacy guarantees are enforced on type level, users don't have to run a program to see if it violates privacy constraints.
-In PINQ these privacy guarantees are enforced dynamically.
+Despite these limitations, DPDT's type-system does offer some benefits over that of PINQ's.
+In particular, because it is a pure language, almost all side-channel attacks that might be possible in PINQ are prevented by default.
+Unfortunately, both PINQ and DPDT are susceptible to a particular form of timing attack: careful use of expensive computations.
+Preventing this kind of attack requires a smart server implementation a la that described in XX.
+% TODO 1 : add citation to the paper that stopped timing attacks. was it DFuzz?
 
-Secondly, because $C\#$ allows side effects, PINQ is exposed to various side-channel attacks.
-An example of such an attack could be where an expression evaluated on the database as part of a query sends off the raw data to an expernal server.
-Because idris is a purely functional language, a large category of such attacks are easily avoided.
-In Idris functions with side effects must be declared as effectful
-So to avoid attacks that use side effects we simply don't define the expressions in DPDT as effectful.
-However, some side-channel attacks are still possible in DPDT, e.g. timing attacks.
+Dependent types can fully represent the relational algebra and its contraints which have stumped lesser type-systems\cite{OurySwierstra08PowerOfPi}.
+We have shown that dependent types can also represent differential privacy metrics and their contraints---with some limitations on the types of algorithms that can be expressed.
+There are no limits on constructing independent, differentially-private queries.
+But dynamically terminating algorithms cannot easily be expressed because privacy constraints cannot be verified at compile-time.
 
 \bibliographystyle{abbrv}
 \bibliography{main}
