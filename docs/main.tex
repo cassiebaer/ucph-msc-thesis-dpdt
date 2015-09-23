@@ -345,7 +345,8 @@ Noise sampled from the Laplace distribution scaled according to $b=c/\epsilon$ i
 \subsection{PINQ}\label{sec:pinq}
 
 This section provides an overview of PINQ, the framework we modelled our language after.
-PINQ is a privacy layer built over top of the .NET query DSL LINQ.
+PINQ is a privacy layer built over top of the .NET integrated query language, LINQ.
+% TODO 3 : expand on what LINQ is to make PINQ's contribution more clear?
 It provides carefully implemented primitives and the ability to build arbitrarily complex, differentially private algorithms from them.
 There are two main components to PINQ: transformations and aggregations.
 Each PINQ server will keep track of its own privacy budget and reject queries whose costs exceed the remaining budget.
@@ -433,7 +434,12 @@ We improve on this behavior by noting that the Laplace cumulative distribution f
 We usually use a uniform random variable sampled from the interval $[0,1)$ to draw from the Laplace distribution.
 Our implementation computes the subinterval for the uniform random variable that guarantees the constraint will be met.
 
-% TODO 2 : make a figure of the invertible CDF?
+\begin{figure}
+    \centering
+    \def\svgwidth{\columnwidth}
+    \input{assets/LaplaceCDF.pdf_tex}
+    \caption{Constrained sampling from the Laplace distribution in \lstinline{noisyAverage}}
+\end{figure}
 
 Of course, the decision to clamp values to the interval $[-1,+1]$ will require analysts to pre-process their data.
 This will require users to explicitly express their assumptions regarding the range of possible values that $r$ could return.
