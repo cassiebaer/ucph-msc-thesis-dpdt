@@ -295,8 +295,6 @@ We say that such a query is $\epsilon$-differentially-private if the inclusion o
 \end{defn}
 % TODO 1 : check whether S \in R should be \in or \subseteq
 
-% TODO 1 : discuss how to use noise
-% TODO 1 : discuss aggregations
 There are a few restrictions on mechanisms in the context of sensitive databases.
 Obviously, there are limits to the types of data that queries are allowed to return.
 We can't allow entire tables (computed or otherwise) to be returned, because they will potentially contain the sensitive rows we are trying to protect!
@@ -346,7 +344,6 @@ Noise sampled from the Laplace distribution scaled according to $b=c/\epsilon$ i
 
 This section provides an overview of PINQ, the framework we modelled our language after.
 PINQ is a privacy layer built over top of the .NET query DSL LINQ.
-% TODO 3 : expand on what LINQ is to make PINQ's contribution more clear?
 It provides carefully implemented primitives and the ability to build arbitrarily complex, differentially private algorithms from them.
 There are two main components to PINQ: transformations and aggregations.
 Each PINQ server will keep track of its own privacy budget and reject queries whose costs exceed the remaining budget.
@@ -460,14 +457,14 @@ In other words, a vector type is dependent on a length.
 In addition, like a list, the vector type is \textit{parameterized} by the item type.
 A type that is indexed by a value is called a type family.
 
-\begin{lstlisting}
+\begin{lstlisting}[caption={Vector Example},label={lst:vector_example}]
 |||Vector type signature in Idris
 data Vect : (length:Nat) -> (itemType:Type) -> Type
 \end{lstlisting}
 
 Using the vector as an example, we can create some functions on vectors in which the types reflect the functionality. As illustrated in the example above, types are first class language constructs in Idris. A type has the type \textit{Type} and can be passed around a program and computed as any other type.
 
-\begin{lstlisting}
+\begin{lstlisting}[caption={Vector Operations Example},label={lst:vector_ops_example}]
 append : Vect n a -> Vect m a -> Vect (n + m) a
 
 reverse : Vect n a -> Vect n a
@@ -482,7 +479,7 @@ This excludes a lot of possible implementation errors, which in turn reduce the 
 
 \subsection{Construction}
 
-\begin{lstlisting}
+\begin{lstlisting}[caption={Natural Numbers Example},label={lst:nats_example}]
 data Nat = Z | S Nat 
 \end{lstlisting}
 
@@ -491,7 +488,7 @@ The data type above represents natural numbers recursively.
 There are two constructors, $Z$ and $S$ $Nat$.
 $Z$ constructs a zero and $S$ $n$ constructs the successor of $n$.
 
-\begin{lstlisting}
+\begin{lstlisting}[caption={Vector Example},label={lst:vect_example_def}]
 data Vect : Nat -> Type -> Type where
    Nil  : Vect Z a
    (::) : a -> Vect k a -> Vect (S k) a
@@ -504,13 +501,12 @@ Type families like Vect have to provide a value for a index during construction,
 In addition to named functions, Idris has support for anonymous functions.
 Anonymous functions, also called lambda abstractions, can be used to provide the implementation of a function on the fly, without having to make a named one.
 
-\begin{lstlisting}
-||| Anonymous id fn
+\begin{lstlisting}[caption={Anonymous functions Example},label={lst:anon_fns}]
+-- Anonymous id fn
 \x => x
 
-||| Anonymous integer add fn
+-- Anonymous integer add fn
 \x, y => x + y
-
 \end{lstlisting}
 
 Idris also provides constructs for writing anonymous functions more compactly, namely operator sections.
@@ -609,11 +605,11 @@ $$ \forall x,y.\; d(f(x),f(y)) \le c \times d(x,y) $$
 We want to reflect the sensitivity of the function in its type, so we will need to index the type on some numeric value.
 To keep this example simple, we will use \texttt{Float} to represent sensitivity, but our implementation uses an implementation of \texttt{Rational}s, which should be more stable numerically than IEEE floating point numbers.
 
-We define a type constructor indexed by the sensitivity and parameterized by its input and output types.
+Listing~\ref{lst:rep_sens_fns} defines a type constructor indexed by the sensitivity and parameterized by its input and output types.
 It has just one data constructor which is used for wrapping native Idris functions.
 A \texttt{SensitiveFunction s a b} is a function with sensitivity \texttt{s} mapping from \texttt{a} to \texttt{b}.
 
-\begin{lstlisting}
+\begin{lstlisting}[caption={Representing sensitive functions},label={lst:rep_sens_fns}]
 ||| Represents a sensitive function
 ||| @ c The sensitivity of the function
 ||| @ a The input type of the function
@@ -639,10 +635,11 @@ Our focus here is not on the verification of a function's sensitivity, but rathe
 Unrestricted application is as simple as unwrapping the function and applying it to an argument.
 Function composition returns a new type indexed by the combined sensitivies of the underlying functions.
 This is done simply by wrapping the composed functions in a new data constructor and letting the types work out the rest.
+See Listing~\ref{lst:sens_fns_ops}.
 
-\begin{lstlisting}
+\begin{lstlisting}[caption={Sensitive function operations},label={lst:sens_fns_ops}]
 ||| Applies a sensitive function to an input
-||| @ f The sensitive function be apply
+||| @ f The sensitive function to be applied
 ||| @ x The input
 apply : (f:SensitiveFunction s a b) -> (x:a) -> b
 apply (MkSensitiveFunction f) x = f x
@@ -671,7 +668,28 @@ doSomeMath2 = add10 . doubleThenAdd10
 One unfortunate consequence of having such a powerful type-system is that all top-level names must have an associated type declaration.
 This means that despite the fact that the type-system is capable of computing the costs, we must still explicitly provide the function sensitivity in the type declaration (as in the \texttt{doSomeMath} signature above).
 Because the computation is decidable, users will be able to ask Idris for help through its interactive proof search feature.
-Asking Idris to find a proof of the hole \texttt{?sens} will yield \texttt{fromInteger 2}.
+Asking Idris to find a proof of the hole \texttt{?sens} yields \texttt{fromInteger 2}.
+
+Listing~\ref{lst:sens_app} demonstrates an alternative application function for sensitive functions.
+This one checks whether a function's sensitivity exceeds the provided value.
+However, this check occurs \textit{at compile time}, not dynamically.
+
+\begin{lstlisting}[caption={Sensitivity-aware function application},label={lst:sens_app}]
+||| Applies a sensitive function to an input, if its sensitivity does not exceed z
+||| @ z The max sensitivity allowed
+||| @ f The sensitive function to be applied
+||| @ x The input
+applyIfLT : (z:Float) -> (f:SensitiveFunction s a b) -> (x:a) -> { auto p : So (s < z) } -> b
+applyIfLT _ f x = f x
+
+namespace Examples
+
+    compiles : Float
+    compiles = applyIfLT 2 add10 0
+
+    -- doesNotCompile : Float
+    -- doesNotCompile = applyIfLT 2 (doubleThenAdd10 . doubleThenAdd10) 0
+\end{lstlisting}
 
 \section{Typing the Relational Algebra}\label{sec:typing_the_relational_algebra}
 
@@ -739,7 +757,7 @@ Following David Christiansen's lead, we opt to use \texttt{(:::)} instead of the
 % TODO 1 : add reference to D.C.'s implementation of SQLite type providers
 We believe this enhances readability of long \texttt{Schema}s, which are just lists of \texttt{Attribute}s.
 
-\begin{lstlisting}
+\begin{lstlisting}[caption={Representing attributes and schemas},label={lst:attrs_and_schemas}]
 ||| Represents an attribute
 data Attribute : Type where
   (:::) : String -> Type -> Attribute
@@ -781,7 +799,7 @@ The root of the tree represents the last ``operation'' to be evaluated.
 The value returned by this node will be returned, therefore the return type of the root of the tree is the return type of the entire tree.
 The type-checker is capable of verifying the types throughout the entire tree, so only well-typed expressions are allowed by the type-system.
 
-\begin{lstlisting}
+\begin{lstlisting}[caption={Representing expressions},label={lst:expressions}]
 ||| Represents an abstract expression indexed by its schema
 ||| @ s The schema available to the expression
 ||| @ a The return type of the expression
@@ -803,7 +821,7 @@ namespace Examples
   fountain_of_youth = people^"Age" - 10
 
   -- doesNotCompile : Expr people Int
-  -- doesNotCompile = people^"DNE"
+  -- doesNotCompile = people^"Does Not Exist"
 \end{lstlisting}
 
 In fact, the type-system is even aware when we try to reference columns that don't exist.
@@ -823,7 +841,7 @@ In particular, the representation of tables is very backend specific.
 For example, an in-memory Idris backend might store pointers directly to the tables in memory, whereas a SQL backend might just store the name of the table as a string.
 One of the benefits of this is that any dataset which can be modelled using the relational algebra is usable.
 
-\begin{lstlisting}
+\begin{lstlisting}[caption={Representing queries},label={lst:queries}]
 mutual -- required for mutual definitions
 
   ||| Represents an abstract query
@@ -885,7 +903,7 @@ Our Idris backend uses a basic \texttt{cons}-list structure indexed over \texttt
 Listing~\ref{lst:idris_backend} shows this.
 It also shows snippets from expression and query evaluation functions written for Idris and SQLite backends, respectively.
 
-\begin{lstlisting}[caption={Backend Implementation Snippets},label={lst:idris_backend}]
+\begin{lstlisting}[caption={Implementing backends (snippets)},label={lst:idris_backend}]
 ||| Represents a row of data in memory
 ||| @ s The row's schema
 data Row : (s:Schema) -> Type where
@@ -923,7 +941,7 @@ Our goal is to leverage Idris's type-checker to statically verify differential p
 We create new types to capture the necessities.
 We will focus on \texttt{PINQuery} because the other two have similar implementations, but are case-specific.
 
-\begin{lstlisting}
+\begin{lstlisting}[caption={Representing privacy-aware queries},label={lst:pinqueries}]
 ||| Represents an abstract, stability-aware query
 ||| @ t A function yielding a base table representation given a schema
 ||| @ s The schema of the query
@@ -958,7 +976,7 @@ This is because the schema and stability could potentially change.
 We control the API that is exported, so we carefully implement the relational algebra operators with the correct stability costs.
 By unwrapping and rewrapping the \texttt{Query} trees from Section~\ref{sec:typing_the_relational_algebra} in our new type, we are now able to build query trees that carry privacy metrics in the type.
 
-\begin{lstlisting}
+\begin{lstlisting}[caption={Representing privacy-aware transformations},label={lst:transformations}]
 ||| Represents stability-aware selection
 where' : PINQuery b s c -> Expr s Bool -> PINQuery b s c
 where' (MkPINQuery q) e = MkPINQuery (Select e q)
@@ -1002,7 +1020,7 @@ We want to take advantage of this, but the type signatures required to satisfy a
 Fortunately, Idris does not actually require a \texttt{Monad} instance to overload \texttt{do}-notation.
 We just need to provide the functions \texttt{(>>=)} and \texttt{return}.
 
-\begin{lstlisting}
+\begin{lstlisting}[caption={Representing differentially private mechanisms},label={lst:mechanisms}]
 ||| Represents a differentially private computation
 ||| @ c The privacy cost of the computation
 ||| @ a The return type of the computation
@@ -1045,7 +1063,7 @@ We must add Laplace noise according to the sensitivity of the \texttt{PINQuery} 
 The user provides a \texttt{PINQuery} (which has an associated stability cost) and an arbitrary epsilon reflecting how accurate they want the result to be.
 The added noise is scaled according to the user provided epsilon while the privacy cost of the entire computation is computed in the types.
 
-\begin{lstlisting}
+\begin{lstlisting}[caption={Representing aggregations},label={lst:aggregations}]
 ||| Differentially private mechanism for counting the
 ||| number of rows described by a query for the Idris backend
 ||| @ q The query
@@ -1070,7 +1088,7 @@ We begin by verifying the behavior of DPDT with simple queries.
 There are enough moving parts in a differentially private mechanism to warrant this.
 Listing~\ref{lst:example_data_people} constructs a small database in our Idris backend.
 
-\begin{lstlisting}[caption={Example Data},label={lst:example_data_people}]
+\begin{lstlisting}[caption={Validation Data},label={lst:example_data_people}]
 import Database.PowerOfPi.Idris
 
 Person : Schema
@@ -1089,7 +1107,7 @@ Let us consider some very primitive queries and their responses.
 First, we will try to determine whether Alice's records are included in the database.
 This simple example demonstrates several components of our implementation: the expression language, a transformation, and a differentially private mechanism: \texttt{noisyCount}.
 
-\begin{lstlisting}
+\begin{lstlisting}[caption={Counting Alices},label={lst:counting_alices}]
 countAlices : Private 1 Double
 countAlices = do let isAlice = Person^"Name" == Lit "Alice"
                  let alices  = people `where'` isAlice
@@ -1149,7 +1167,7 @@ Of course, we shouldn't be allowed to run that query 1,000 times (unless our pri
 In fact, it is more likely that an analyst will have enough budget to run the query just a few times.
 Listing~\ref{lst:nested_aggrs} contains an example of how a malicious analyst might try to average a few queries and example outputs.
 
-\begin{lstlisting}[caption={Example of nested aggregations},label={lst:nested_aggrs}]
+\begin{lstlisting}[caption={Counting Alices (revisited)},label={lst:nested_aggrs}]
 alices : PINQuery IdrisTable Person 1
 alices = people `where'` (Person^"Name" == Lit "Alice")
 
@@ -1194,7 +1212,7 @@ Idris, on the other hand, provides \textit{referential transparency}; i.e. an ex
 This may seem unimportant, but side effecting functions can compromise differential privacy in spectacular ways.
 Consider the result of the following expression.
 
-\begin{lstlisting}
+\begin{lstlisting}[caption={Example side-channel attack}]
 patients.Select(p => if p.Name == "Alice" {
                         beep();
                      };
@@ -1207,8 +1225,6 @@ The result is a no-op: the data remains unchanged.
 However, if the analyst hears a beep during the evaluation of this query, he knows that Alice is included in the \texttt{patients} database.
 In fact, beep is just one example of a side-channel.
 Other possible examples include timing attacks (e.g. \texttt{Thread.sleep}), writing to global memory or external file (e.g. \texttt{echo yes > /foundAlice}), or even sending an email.
-
-% TODO 5 : write a paragraph about the various approachs to solving these attacks
 
 Idris' type system does not allow functions to contain side effects unless they are explicitly marked as such.
 This alone prevents many of the side-channel attacks that are possible in other systems.
