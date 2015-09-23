@@ -345,7 +345,8 @@ Noise sampled from the Laplace distribution scaled according to $b=c/\epsilon$ i
 \subsection{PINQ}\label{sec:pinq}
 
 This section provides an overview of PINQ, the framework we modelled our language after.
-PINQ is a privacy layer built over top of the .NET query DSL LINQ.
+PINQ is a privacy layer built over top of the .NET integrated query language, LINQ.
+% TODO 3 : expand on what LINQ is to make PINQ's contribution more clear?
 It provides carefully implemented primitives and the ability to build arbitrarily complex, differentially private algorithms from them.
 There are two main components to PINQ: transformations and aggregations.
 Each PINQ server will keep track of its own privacy budget and reject queries whose costs exceed the remaining budget.
@@ -433,7 +434,12 @@ We improve on this behavior by noting that the Laplace cumulative distribution f
 We usually use a uniform random variable sampled from the interval $[0,1)$ to draw from the Laplace distribution.
 Our implementation computes the subinterval for the uniform random variable that guarantees the constraint will be met.
 
-% TODO 2 : make a figure of the invertible CDF?
+\begin{figure}
+    \centering
+    \def\svgwidth{\columnwidth}
+    \input{assets/LaplaceCDF.pdf_tex}
+    \caption{Constrained sampling from the Laplace distribution in \lstinline{noisyAverage}}
+\end{figure}
 
 Of course, the decision to clamp values to the interval $[-1,+1]$ will require analysts to pre-process their data.
 This will require users to explicitly express their assumptions regarding the range of possible values that $r$ could return.
@@ -696,8 +702,7 @@ namespace Examples
 \section{Typing the Relational Algebra}\label{sec:typing_the_relational_algebra}
 
 In this section, we review the relational algebra and show how it can be modelled in a dependently typed language.
-Our approach is based on \cite{OurySwierstra08PowerOfPi}.
-% TODO 3 : make this sentence citation read better
+Our approach is based on an example from \cite{OurySwierstra08PowerOfPi} presenting a database schema representation in another dependently typed language, Agda\footnote{https://github.com/agda/agda}.
 
 The relational algebra describes semantics for modelling and querying data in relational databases (e.g. MySQL\footnote{https://www.mysql.com/}).
 E.F. Codd described relational databases and their associated algebra back in the 1970's\cite{codd70}.
@@ -755,8 +760,7 @@ We then define a toy expression language before moving on to the query language.
 
 First, we need to be able to represent table attributes (columns).
 An \texttt{Attribute} is just the pairing of a name (\texttt{String}) to a data type.
-Following David Christiansen's lead, we opt to use \texttt{(:::)} instead of the more traditional \texttt{(,)} for constructing our pairs.
-% TODO 1 : add reference to D.C.'s implementation of SQLite type providers
+Following David Christiansen's lead, we opt to use \texttt{(:::)} instead of the more traditional \texttt{(,)} for constructing our pairs\cite{ChristiansenTypeProviders}.
 We believe this enhances readability of long \texttt{Schema}s, which are just lists of \texttt{Attribute}s.
 
 \begin{lstlisting}[caption={Representing attributes and schemas},label={lst:attrs_and_schemas}]
