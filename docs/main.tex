@@ -174,7 +174,6 @@ In particular, we will discuss function sensitivity, which is a relative measure
 Finally, we describe PINQ, the framework that allows users to build differentially private computations by construction.
 
 \subsection{Function Sensitivity}
-% TODO 1 : this section overlaps with chapter on function sensitivity (Which chapter?)
 
 Function sensitivity is an important concept from the differential privacy literature.
 We can make assertions about an entire program if we understand the sensitivities of the functions with which it is composed.
@@ -331,18 +330,17 @@ The aggregation function from earlier will no longer be enough to determine whet
     \caption{Indistinguishability}
 \end{figure}
 
-There are potentially many randomized mechanisms that can be used to accomplish indistinguishability between neighbouring databases.
-Two well known randomized mechanisms used in differential privacy literature are Laplace- and Gaussian distributions.
-A Laplacian noise distribution with a mean of zero and a scale parameter of $fn-sensitivity/\epsilon$ guarantees $\epsilon$-differential privacy.
-A Gaussian noise distribution can provide a slightly more relaxed differential privacy guarantee, namely ($\epsilon$, $\delta$)-differential privacy, where delta is an additive on the privacy bound. % TODO: Provide cite
-\begin{defn}\label{def:diffpriv_delta}
-A randomized mechanism, $\mathcal{M}(D) : \mathbb D \rightarrow A$, is ($\epsilon$, $\delta$)-differentially-private if, for all databases $D_1 \sim D_2$, and all $S \in A$,
-  $$Pr[\mathcal M(D_1)\in S] \le e^\epsilon \times Pr[\mathcal M(D_2)\in S] + \delta  $$
+The differential privacy community has largely settled on using the Laplace distribution for generating noise.
+There are a number of reasons for this, but the main ones concern symmetry and ease of scaling.
+The Laplace distribution resembles a symmetric exponential distribution
+Its diversity parameter, or ``width'', scales very easily with $\epsilon$.
+In fact, making any $c$-sensitive function differentially private can be accomplished easily.
+
+\begin{defn}
+Any $c$-sensitive function can be made $\epsilon$-differentially private by adding a value sampled from the Laplace distribution centered on zero with diversity parameter $b=\frac{c}{\epsilon}$.
 \end{defn}
 
-We will however ignore Definition \ref{def:diffpriv_delta} in this report, as we will be using Laplace noise to achieve $\epsilon$-differential privacy in our language.
-
-% TODO 1 : why do we prefer Laplace? it scales well with e and is symmetric. what else?
+Noise sampled from the Laplace distribution scaled according to $b=c/\epsilon$ is sufficient to mask private information while still providing accurate results.
 
 \subsection{PINQ}\label{sec:pinq}
 
