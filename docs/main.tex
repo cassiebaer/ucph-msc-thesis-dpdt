@@ -1273,6 +1273,10 @@ Some of the limitations described above can probably be lifted with more work (e
 At the time of this writing, DPDT exists only as a prototype.
 There are many potential paths for future work, but we attempt to list some promising ones here.
 
+Some algorithms can be implemented in PINQ but not DPDT.
+We believe that some classes of algorithms simply cannot be represented by a static type-system (if we are to compute their total costs), but we aren't convinced that this is true of all of them.
+In particular, our \texttt{Sensitivity} type can probably be extended to allow for recursive algorithms where the iterative costs resemble a geometric series with $-1 < r < 1$.
+
 Exploring the limits to what kinds of backends can be supported and providing implementations for those that can would be a great step.
 PINQ supports any LINQ-supported backend out of the box.
 DPDT has no underlying LINQ-like framework under active development, so backends must be added one by one.
@@ -1325,9 +1329,9 @@ Poorly implemented syntax rules can cause the parser to diverge.
 
 \section{Conclusion}\label{sec:conclusion}
 
-We have demonstrated that a differentially private query languge can be represented in a dependently typed type system, where the privacy guarantees are enforced statically in types.
+We have demonstrated that a differentially private query languge can be represented in a dependent type system, where the privacy guarantees are enforced statically in types.
 A prototype named DPDT is implemented in Idris, providing basic transformation and aggregation operations.
-DPDT guarantees differential privacy statically, which means that any valid program written in it is differtially private.
+DPDT guarantees differential privacy statically, which means that any valid program written in it is differentially private.
 
 In comparison to our inspiration PINQ, DPDT currently lacks a bit of flexibility and usability.
 PINQ can use all the data source types supported by LINQ for .NET, while DPDT has limited support for external databases.
