@@ -1238,9 +1238,8 @@ It may be possible for us to extend the \texttt{Sensitivity} type and convince t
 
 Nicolas Oury and Wouter Swierstra have already shown that dependent types are natural fit for fully typing the relational algebra\cite{OurySwierstra08PowerOfPi}.
 Chapter~\ref{sec:typing_the_relational_algebra} provided a brief overview of their method.
-The goal of this thesis is to demonstrate that dependent types are also capable of typing differential privacy metrics with ease and we believe this is certainly the case.
-Chapter~\ref{sec:function_sensitivity} showed just how easily metrics such as function sensitivity can be tracked using dependent types.
-Chapter~\ref{sec:our_implementation} combined the two into a completely type-safe, PINQ-like EDSL for Idris.
+The goal of this thesis is to demonstrate that dependent types are also capable of typing differential privacy metrics with ease and we certainly believe this to be the case.
+Chapter~\ref{sec:function_sensitivity} showed just how easily metrics such as function sensitivity can be tracked using dependent types and Chapter~\ref{sec:our_implementation} put it all together into a completely type-safe, PINQ-like EDSL for Idris.
 
 % pinq vs dpdt
 % dpdt vs 
@@ -1271,65 +1270,58 @@ Some of the limitations described above can probably be lifted with more work (e
 
 \subsection{Future work}\label{sec:future_work}
 
-\subsubsection{External backends}
+At the time of this writing, DPDT exists only as a prototype.
+There are many potential paths for future work, but we attempt to list some promising ones here.
 
-While PINQ has support for all data source types supported by LINQ (e.g., SQL servers, XML), DPDT's current support for external backends is limited.
-We have implemented a simple SQLite backend that compiles queries to single SQLite queries.
-As the name implies, SQLite is one of the more lightweight derivatives of SQL.
-It is not a full-fledged programming language, and the lack of a looping construct is an example of its limitations.
-As such, with our current design, the SQLite backend flexibility is limited to functionality which can be represented in a single SQLite query.
-We have for instance concidered using nested if statements as a substitute for looping constructs in SQLite.
-Even though this might be a feasible solution, it does not scale, and will result in spaghetti output.
+Exploring the limits to what kinds of backends can be supported and providing implementations for those that can would be a great step.
+PINQ supports any LINQ-supported backend out of the box.
+DPDT has no underlying LINQ-like framework under active development, so backends must be added one by one.
+What features does DPDT require to support a particular backend?
+Could we interface DPDT with LINQ providers?
 
-Another solution is to make a distinction between queries and programs, and dynamically query the database, instead of just compiling a single SQL-query.
-If we allow dynamic querying, users can use the power of Idris to write their programs, with multiple queries to a database within a program.
-This way, we can get more of the flexibility that PINQ has got from LINQ. 
+Of course, backends aren't limited to local memory access.
+A server component, not unlike many network-facing LINQ providers, would help DPDT better mirror PINQ's capabilities.
+By establishing a trusted runtime system on the server hosting the data, we can expose the powers of \texttt{PureFn} to data analysts remotely.
+Our current prototype still leaves a lot to be desired in terms of actual usability.
 
-\subsubsection{Improved syntax}
+%%%%%%%
 
-In order for a programming language to be usable, it should be reasonbly easy to read and write programs in it.
-The current implementation of DPDT does not score too well on usability measures.
-The syntax of complex queries becomes rather awkward because the current way of building up queries is by nested function applications.
+Idris provides several experimental language features which may provide DPDT with better integration into its host language.
+Two examples that come to mind are Idris' \texttt{Effects} library and \textit{type providers}.
 
-\begin{lstlisting}
-where' : PINQuery b s c -> Expr s Bool -> PINQuery b s c
-select : PINQuery b s c -> (f:String -> Maybe  String) -> PINQuery b (projectedSchema f s) c
+Effects are an alternative to monadic actions for describing side-effects.
+Reimplementing the \texttt{Private} monad from Chapter~\ref{sec:our_implementation} using effects might be beneficial.
+There may be other opportunities for implementing components as effects.
 
-select (where' (union q q') e) f
-\end{lstlisting}
+Type providers allow the Idris type-system to define and predicate types on input from the outside world.
+A classic example is grabbing schemas directly from the database itself, but this could easily be extended to also grab that data source's remaining privacy budget.
+DPDT's implementation could also be adjusted such that \texttt{PureFn} is disabled for backends which do not support it.
+The current implementation will (embarassingly) quit with a runtime error.
 
-The above listing shows how a combined select, where and union application looks in DPDT.
-Notice that combining more transformations will decrease the readability of the query.
+%%%%%%%
 
-One of Idris' many neat language features is the ability to describe syntax desugaring rules using regular expressions which the parser can then make use of.
-Syntax rules allow developers to define custom ways of executing functions beyond the standard $f x \: y$ application of the function $f$ on the arguments $x$ and $y$.
-Below are two examples of syntax rules and the same $select \circ where \circ union$ query written using the $select \circ where$ syntax rule.
+Finally, improving DPDT's syntax would be of benefit to all future users.
+In its current form, it is not particularly well suited to users who aren't familiar with Idris' syntax.
+However, Idris tries to make embedding domain specific languages easier by providing various extensions allowing users to modify its parser and other moving parts.
+One of these is the ability to describe syntax extensions with regular expressions which the parser can then make use of.
+Custom syntax rules allow embedded language develoeprs to extend the parser with EDSL-specific syntax constructs.
 
-\begin{lstlisting}
-||| Definition
+Idris syntax extensions consist of two components: reserved keywords and non-terminals.
+Keywords help anchor the parser around the non-terminals, which are captured and usable on the right hand side of a custom syntax declaration.
+Listing~\ref{lst:syntax_extensions} contains two examples of syntax rules.
+
+\begin{lstlisting}[caption={Extending Idris' syntax},label={lst:syntax_extensions}]
+-- Definition
 syntax select [f] from [q] = select q f
 syntax select [f] from [q] where [e] = select (where q e) f
 
-||| Application
-select f from (union q q') where e
+-- Application
+select f from (q `union` q') where e
 \end{lstlisting}
 
-The above examples utilize keywords and non-terminals to construct the syntax rules.
-The keywords in the examples are $select$, $from$ and $where$, while the non-terminals are [f], [q] and [e].
-
-We assume the use of syntax rules could improve the usability of DPDT, but we are not sure how much work it is to implement it in a flexible way. 
-As you can see in the example above, we are including the \texttt{select [f] from [q]} as part of the $where$ syntax rule.
-This is the typical SQL syntax, and is therefore a syntax to stride for, as it is familiar to users and well understood.
-If we add more operations into the mix with this syntax rule design, we end up with combinations of the operations that are additional to $select$.
-Below is an example of syntax rule definitions if we add support for $groupBy$ with this design.
-
-\begin{lstlisting}
-||| Definition
-syntax select [f] from [q]                         = ...
-syntax select [f] from [q] where [e]               = ...
-syntax select [f] from [q] group by [e]            = ...
-syntax select [f] from [q] where [e] group by [e'] = ...
-\end{lstlisting}
+In fact, it may be possible to recreate a SQL-like syntax using Idris parser extensions exclusively.
+They should, however, be used with caution.
+Poorly implemented syntax rules can cause the parser to diverge.
 
 \section{Conclusion}\label{sec:conclusion}
 
