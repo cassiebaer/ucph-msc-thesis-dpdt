@@ -23,7 +23,6 @@
 }
 \title{Differential Privacy with Dependent Types}
 \undertitel{or: How I Learned to Stop Worrying and Love Dependent Types}
-% TODO 2 : make a catchy subtitle
 \vejleder{Ken Friis Larsen}
 \dato{November 11, 2015}
 
@@ -45,9 +44,10 @@ This is the paper's abstract \ldots
 \end{abstract}
 
 % TODO 1 : write an abstract
-% TODO 2 : add captions and labels to all code snippets
 
 \section{Introduction}\label{sec:introduction}
+
+% TODO 1 : work related work into the intro and diff.priv. sections
 
 With each passing day, more and more of our personal information is being collected, cataloged and analyzed by an ever increasing number of interested parties.
 Their interests range from selective marketing of products and services to collecting business performance metrics and even to malicious and potentially illegal surveillance.
@@ -163,14 +163,14 @@ Suddenly, many of the Big Data databases which would otherwise be off limits can
 Each individuals participation in the database has a negligible effect on their risk of a privacy breach, so honest participation follows as a direct consequence.
 
 In fact, a classic example of differentially private thinking is randomized response.
-Randomized response is a technique originally proposed in 1965 for encouraging survey respondents to answer potentially embarassing questions honestly.
+Randomized response is a technique originally proposed in 1965 for encouraging survey respondents to answer potentially embarassing questions honestly\cite{warner1965randomized}.
 By introducing an element of randomness, participants are given plausible deniability regardless of how they respond.
 
 After reading the question, participants are instructed to flip a coin.
 If the coin yields ``tails,'' the participant responds ``No''.
 If the coin reads ``heads,'' he/she answers truthfully.
 The net result is that $1/2$ of the responses are ``No'' by default, while the other half should be a representative sampling of the population.
-Thus, if researchers using randomized response find that 10\% of participants admit to an illegal activity, the true percentage is actually around 20\%.
+Thus, if researchers using randomized response find that 10\% of participants admit to an illegal activity, the true percentage is actually around 20\% and all database participants are given plausible deniability.
 
 The rest of this section will focus on specific ideas from the differential privacy literature as it relates to our implementation of DPDT.
 In particular, we will discuss function sensitivity, which is a relative measure of how much a function can magnify the distances between collections of objects; and indistinguishability, which is the key idea which quantifies what it means for a computation to be differentially private.
@@ -227,11 +227,14 @@ However, function sensitivity can be applied much more generally and to much mor
 We will use $\mathbb D$ to describe the domain of all possible databases.
 Hence, a function $f : \mathbb D \rightarrow \mathbb D$ is an endomorphism for databases.
 The distance between two databases is their symmetric difference; i.e. $d_{\mathbb D}(D_1,D_2) = | D_1 \oplus D_2 |$.
+
 There is a special case that turns up often in the differential privacy literature.
-We are primarily concerned with whether a particular individual's records are included in the database or not.
+We are primarily concerned with whether a particular individual's records are included in the database or not, so we often focus on adjacent databases.
+We say that two databases are adjacent if they differ by exactly one row.
 
 \begin{defn}
   We denote the case when two databases, $D_1$ and $D_2$, differ by exactly 1 row (i.e. $d_{\mathbb D}(D_1,D_2)=1$) with the special notation: $D_1 \sim D_2$.
+  We say that $D_1$ and $D_2$ are adjacent.
 \end{defn}
 
 Despite the change of scenery, function sensitivity behaves as outlined above.
@@ -308,7 +311,8 @@ This may seem limiting, but in practice is not so.
 Certainly, entire classes of queries and algorithms are precluded by this necessity, but the vast majority of statistical research is performed using aggregations over tables, not querying for the information pertaining to particular individuals.
 
 An additional constraint emerges from the previous one: the data type returned by the aggregation must be a semigroup; i.e. it must have an associative binary operator for folding new values into the aggregate.
-However, aggregations alone are not capable of protecting privacy.
+This is the case because the order in which rows are considered should have no bearing on the resulting value; otherwise, an attacker may be able to learn something about the ordering of individuals.
+Aggregations alone, however, are not capable of protecting privacy.
 
 Consider a database consisting of all patients who have ever been treated at the \textit{ABC ABortion Clinic}.
 Alice is one of those patients.
@@ -345,9 +349,14 @@ Noise sampled from the Laplace distribution scaled according to $b=c/\epsilon$ i
 
 \subsection{PINQ}\label{sec:pinq}
 
+<<<<<<< HEAD
 This section provides an overview of PINQ, the framework we modelled our language after.
 PINQ is a privacy layer built over top of the .NET integrated query language, LINQ.
 % TODO 3 : expand on what LINQ is to make PINQ's contribution more clear?
+=======
+This section provides a brief overview of PINQ, the framework that originally inspired DPDT.
+PINQ is a privacy layer built over top of the .NET integrated query language, LINQ.
+>>>>>>> Make edits according to Chelsea's feedback
 It provides carefully implemented primitives and the ability to build arbitrarily complex, differentially private algorithms from them.
 There are two main components to PINQ: transformations and aggregations.
 Each PINQ server will keep track of its own privacy budget and reject queries whose costs exceed the remaining budget.
@@ -366,7 +375,7 @@ However, they have all been carefully reimplemented to keep track of their funct
 Each transformation is aware of its own sensitivity and the sensitivies of the subqueries beneath it.
 The word ``stability'' is commonly used when discussing sensitivity in the context of database transformations.
 We have already seen a proof that a filtering function (selection) is 1-sensitive.
-Similar proofs exist for all of the other transformations provided by PINQ.
+Similar proofs exist for all of the other transformations provided by PINQ\cite{conf/sigmod/McSherry09}.
 
 % TODO 1 : figure out what to do with the rest of this subsection
 
@@ -703,7 +712,8 @@ namespace Examples
 \section{Typing the Relational Algebra}\label{sec:typing_the_relational_algebra}
 
 In this section, we review the relational algebra and show how it can be modelled in a dependently typed language.
-Our approach is based on an example from \cite{OurySwierstra08PowerOfPi} presenting a database schema representation in another dependently typed language, Agda\footnote{https://github.com/agda/agda}.
+Our approach is based on Chapter 4 from \textit{The Power of Pi}\cite{OurySwierstra08PowerOfPi}, an excellent resource for practical examples of what dependent types are capable of.
+% TODO 3 : make this sentence citation read better
 
 The relational algebra describes semantics for modelling and querying data in relational databases (e.g. MySQL\footnote{https://www.mysql.com/}).
 E.F. Codd described relational databases and their associated algebra back in the 1970's\cite{codd70}.
@@ -944,7 +954,7 @@ namespace SQLiteBackend
 
 In this section, we describe how we bring together the material of the previous chapters and outline our entire implementation.
 
-Our goal is to leverage Idris's type-checker to statically verify differential privacy constraints.
+Our goal is to leverage Idris' type-checker to statically verify differential privacy constraints.
 We create new types to capture the necessities.
 We will focus on \texttt{PINQuery} because the other two have similar implementations, but are case-specific.
 
@@ -1020,8 +1030,7 @@ Additionally, the control flow of a program may be predicated on the value retur
 Sequential queries are additive in cost.
 Sequencing computations in functional programming is traditionally accomplished using the infamous \texttt{Monad}.
 In many languages, Idris included, types implementing \texttt{Monad} instances have access to special syntactic sugar, commonly known as \texttt{do}-notation.
-It is important to note that \texttt{do}-notation is not magic!
-It just allows developers an alternative method for writing monadic code.
+\texttt{do}-notation is not magic: it just allows developers to use an alternative syntax for writing monadic code.
 
 We want to take advantage of this, but the type signatures required to satisfy a monad instance preclude our ability to reflect sensitivities in the types.
 Fortunately, Idris does not actually require a \texttt{Monad} instance to overload \texttt{do}-notation.
