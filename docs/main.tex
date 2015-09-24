@@ -170,7 +170,7 @@ After reading the question, participants are instructed to flip a coin.
 If the coin yields ``tails,'' the participant responds ``Yes''.
 If the coin reads ``heads,'' he/she answers truthfully.
 The net result is that $1/2$ of the responses are ``Yes'' by default, while the other half should be a representative sampling of the population.
-Thus, if researchers using randomized response find that 70\% of participants admit to an illegal activity, the true percentage is actually around 20\% and all database participants are given plausible deniability.
+Thus, if researchers using randomized response find that 70\% of participants admit to an illegal activity, the true percentage is actually around 40\% and all database participants are given plausible deniability.
 
 The rest of this section will focus on specific ideas from the differential privacy literature as it relates to the implementation of our language, DPDT.
 In particular, we will discuss function sensitivity, which is a relative measure of how much a function can magnify the distances between collections of objects; and indistinguishability, which is the key idea which quantifies what it means for a computation to be differentially private.
@@ -240,6 +240,8 @@ We say that two databases are adjacent if they differ by exactly one row.
 Despite the change of scenery, function sensitivity behaves as outlined above.
 Consider a database endomorphism, $filter_p : \mathbb D \rightarrow \mathbb D$, which filters rows according to some pre-specified predicate, $p$.
 $filter_p$ is a 1-sensitive function because adding Alice to the database adds at most one row to the result for all possible values of $p$.
+
+% TODO 3 : should this proof be rewritten assuming D1 ~ D2?
 
 For all pairs of databases, $D_1$ and $D_2$, the distance between them is $d_{in} = d_{\mathbb D}(D_1,D_2)$.
 The distance $d_{out} = d_{\mathbb D}(filter_p(D_1),filter_p(D_2))$ cannot exceed $d_{in}$.
@@ -349,14 +351,8 @@ Noise sampled from the Laplace distribution scaled according to $b=c/\epsilon$ i
 
 \subsection{PINQ}\label{sec:pinq}
 
-<<<<<<< HEAD
-This section provides an overview of PINQ, the framework we modelled our language after.
-PINQ is a privacy layer built over top of the .NET integrated query language, LINQ.
-% TODO 3 : expand on what LINQ is to make PINQ's contribution more clear?
-=======
 This section provides a brief overview of PINQ, the framework that originally inspired DPDT.
 PINQ is a privacy layer built over top of the .NET integrated query language, LINQ.
->>>>>>> Make edits according to Chelsea's feedback
 It provides carefully implemented primitives and the ability to build arbitrarily complex, differentially private algorithms from them.
 There are two main components to PINQ: transformations and aggregations.
 Each PINQ server will keep track of its own privacy budget and reject queries whose costs exceed the remaining budget.
@@ -470,8 +466,8 @@ Familiarity with a functional programming language is a pre-requisite.
 First we will have a look at how basic dependent types work in Idris, then we will introduce some features used later in this report.
 
 A simple example of a good fit for a dependent type is a list with a fixed length, namely a vector.
-Here the vector type is \textit{indexed} by a natural number representing the length. 
-In other words, a vector type is dependent on a length. 
+Here the vector type is \textit{indexed} by a natural number representing the length.
+In other words, a vector type is dependent on a length.
 In addition, like a list, the vector type is \textit{parameterized} by the item type.
 A type that is indexed by a value is called a type family.
 
@@ -498,7 +494,7 @@ This excludes a lot of possible implementation errors, which in turn reduce the 
 \subsection{Construction}
 
 \begin{lstlisting}[caption={Natural Numbers Example},label={lst:nats_example}]
-data Nat = Z | S Nat 
+data Nat = Z | S Nat
 \end{lstlisting}
 
 Data types are constructed using a syntax similar to that of Haskell\footnote{https://www.haskell.org/}.
@@ -537,7 +533,7 @@ It expands to \lstinline{\x => x * 2}, and can be passed into functions and appl
 In functional programming, a Monad is a structure that abstracts away some computation.
 It defines how to chain Monad instances together, such that users don't have to be concerned with the abstracted computations.
 
-An example of a Monad instance is the state monad. 
+An example of a Monad instance is the state monad.
 Pure functional languages don't have global state or mutable variables.
 In order to represent state in a pure language an immutable state construct can be passed explicitly into functions that need state.
 We then update the state by constructing a new state based on the old state.
@@ -787,7 +783,7 @@ Schema = List Attribute
 namespace Examples
 
     people : Schema
-    people = [ "Key"          ::: Int 
+    people = [ "Key"          ::: Int
              , "Name"         ::: String
              , "Age"          ::: Int
              , "FavoriteFood" ::: String
@@ -1073,7 +1069,7 @@ Each aggregation is responsible for providing differential privacy.
 Our implementation provides several common aggregations, such as \texttt{noisyCount} and \texttt{noisyAverage}.
 Experts will be able to write their own aggregations to provide to the public.
 
-Of course, aggregations alone is not sufficient for guaranteeing privacy.
+Of course, aggregations alone are not sufficient for guaranteeing privacy.
 We must add Laplace noise according to the sensitivity of the \texttt{PINQuery} and a user-provided epsilon.
 
 \texttt{noisyCount} is a good example of a simple aggregation.
@@ -1086,7 +1082,7 @@ The added noise is scaled according to the user provided epsilon while the priva
 ||| @ q The query
 ||| @ e User provided epsilon, accuracy parameter
 noisyCount : (q:PINQuery IdrisTable s c) -> (e:Epsilon) -> Private (c*e) Double
-noisyCount (MkPINQuery q) eps = MkPrivate $ \g => 
+noisyCount (MkPINQuery q) eps = MkPrivate $ \g =>
   let (rx,g') = rndDouble g
       noise   = samplePure 0 (1 / toFloat eps) rx
       count   = the Double $ fromInteger $ fromNat $ length (eval q)
@@ -1284,7 +1280,7 @@ The goal of this thesis is to demonstrate that dependent types are also capable 
 Chapter~\ref{sec:function_sensitivity} showed just how easily metrics such as function sensitivity can be tracked using dependent types and Chapter~\ref{sec:our_implementation} put it all together into a completely type-safe, PINQ-like EDSL for Idris.
 
 % pinq vs dpdt
-% dpdt vs 
+% dpdt vs
 
 LINQ provides type-safety for most of the relational algebra.
 PINQ expands this safety to include privacy metrics, but it does so dynamically.
