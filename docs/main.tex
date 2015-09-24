@@ -167,12 +167,12 @@ Randomized response is a technique originally proposed in 1965 for encouraging s
 By introducing an element of randomness, participants are given plausible deniability regardless of how they respond.
 
 After reading the question, participants are instructed to flip a coin.
-If the coin yields ``tails,'' the participant responds ``No''.
+If the coin yields ``tails,'' the participant responds ``Yes''.
 If the coin reads ``heads,'' he/she answers truthfully.
-The net result is that $1/2$ of the responses are ``No'' by default, while the other half should be a representative sampling of the population.
-Thus, if researchers using randomized response find that 10\% of participants admit to an illegal activity, the true percentage is actually around 20\% and all database participants are given plausible deniability.
+The net result is that $1/2$ of the responses are ``Yes'' by default, while the other half should be a representative sampling of the population.
+Thus, if researchers using randomized response find that 70\% of participants admit to an illegal activity, the true percentage is actually around 20\% and all database participants are given plausible deniability.
 
-The rest of this section will focus on specific ideas from the differential privacy literature as it relates to our implementation of DPDT.
+The rest of this section will focus on specific ideas from the differential privacy literature as it relates to the implementation of our language, DPDT.
 In particular, we will discuss function sensitivity, which is a relative measure of how much a function can magnify the distances between collections of objects; and indistinguishability, which is the key idea which quantifies what it means for a computation to be differentially private.
 Finally, we describe PINQ, the framework that allows users to build differentially private computations by construction.
 
@@ -210,7 +210,7 @@ Similarly, consider the case where $f_{+10}(x) = x + 10$.
 Clearly, it doesn't matter which $x$ and $y$ you sample; the distance $d_{\mathbb R}(x,y)$ will always equal $d_{\mathbb R}(f(x),f(y))$.
 Therefore, $f_{+10}$ is a 1-sensitive function.
 Now consider the case of $f_{\times 2+10}(x) = 2x + 10$.
-Distances between input and output objects can be now be doubled (but no more), so it is a 2-sensitive function.
+Distances between input and output objects can now be doubled (but no more), so it is a 2-sensitive function.
 Intuitively, when dealing with linear functions on $\mathbb R$ and the absolute value norm, the largest linear coefficient will dictate the c-sensitivity.
 Higher order polynomials are necessarily $\infty$-sensitive.
 
@@ -239,7 +239,7 @@ We say that two databases are adjacent if they differ by exactly one row.
 
 Despite the change of scenery, function sensitivity behaves as outlined above.
 Consider a database endomorphism, $filter_p : \mathbb D \rightarrow \mathbb D$, which filters rows according to some pre-specified predicate, $p$.
-$filter_p$ is a 1-sensitive function because adding Alice's in the database adds at most one row to the result for all possible values of $p$.
+$filter_p$ is a 1-sensitive function because adding Alice to the database adds at most one row to the result for all possible values of $p$.
 
 For all pairs of databases, $D_1$ and $D_2$, the distance between them is $d_{in} = d_{\mathbb D}(D_1,D_2)$.
 The distance $d_{out} = d_{\mathbb D}(filter_p(D_1),filter_p(D_2))$ cannot exceed $d_{in}$.
@@ -270,7 +270,7 @@ Thus, we can fix $c=1$ and conclude that filtering is a 1-sensitive function.
 
 Similar proofs exist for the other relational algebra operators.
 Proofs like these provide the basic building blocks used by PINQ and DPDT.
-The real power of PINQ and DPDT, however, comes from the ability to freely combine these building blocks without having to manually consider sensitivies.
+The real power of PINQ and DPDT, however, comes from the ability to freely combine these building blocks without having to manually consider sensitivities.
 
 Consider two functions, $f : \mathbb D \rightarrow \mathbb D$ and $g : \mathbb D \rightarrow \mathbb D$, with sensitivities $c$ and $c'$, respectively.
 What is the sensitivity of the function resulting from their composition, $k = f . g$?
@@ -326,7 +326,7 @@ The final requirement is randomness.
 When we run an aggregation, we need to randomize the output to satisfy indistinguishability.
 If not, an attacker can draft clever aggregations to deduce private information about particular individuals.
 Noising the result before returning it gives Alice plausible deniability.
-The aggregation function from earlier will no longer be enough to determine whether any records in the database related to Alice and what they contain if they do.
+The aggregation function from earlier will no longer be enough to determine whether any records in the database are related to Alice.
 
 \begin{figure}
     \centering
@@ -393,8 +393,8 @@ As shown earlier, the only safe way to return data from a sensitive database is 
 PINQ provides a few carefully implemented aggregation operations and disallows everything else.
 Each aggregation is proven to be $\epsilon$-differentially private.
 $\epsilon$ is an argument provided by the user to specify how much of the privacy budget should be consumed to run the aggregation.
+The bigger the value of $\epsilon$, the more accurate the result will be.
 The ultimate cost of a query is the product of the transformation stability and $\epsilon$.
-The more costly a query is, the more accurate the result may be.
 
 The simplest of PINQ's mechanisms is \texttt{noisyCount}, which just returns the number of rows described by the given query plus some noise.
 \texttt{noisyCount} is a 1-sensitive function.
@@ -503,8 +503,8 @@ data Nat = Z | S Nat
 
 Data types are constructed using a syntax similar to that of Haskell\footnote{https://www.haskell.org/}.
 The data type above represents natural numbers recursively.
-There are two constructors, $Z$ and $S$ $Nat$.
-$Z$ constructs a zero and $S$ $n$ constructs the successor of $n$.
+There are two constructors, \lstinline{Z} and \lstinline{S Nat}.
+\lstinline{Z} constructs a zero and \lstinline{S n} constructs the successor of $n$.
 
 \begin{lstlisting}[caption={Vector Example},label={lst:vect_example_def}]
 data Vect : Nat -> Type -> Type where
@@ -513,6 +513,7 @@ data Vect : Nat -> Type -> Type where
 \end{lstlisting}
 
 Type families like Vect have to provide a value for a index during construction, so the constructor syntax is a bit more complex than the one of Nat.
+\lstinline{NIL} constructs a vector of dimension 0, while \lstinline{(::)} extends a vector of dimension $k$ with a new value.
 
 \subsection{Operator sections}
 
@@ -620,7 +621,7 @@ Recall that function sensitivity is a metric describing how much a function can 
 
 $$ \forall x,y.\; d(f(x),f(y)) \le c \times d(x,y) $$
 
-We want to reflect the sensitivity of the function in its type, so we will need to index the type on some numeric value.
+We want to reflect the sensitivity of a function in its type, so we will need to index the type on some numeric value.
 To keep this example simple, we will use \texttt{Float} to represent sensitivity, but our implementation uses an implementation of \texttt{Rational}s, which should be more stable numerically than IEEE floating point numbers.
 
 Listing~\ref{lst:rep_sens_fns} defines a type constructor indexed by the sensitivity and parameterized by its input and output types.
@@ -987,8 +988,8 @@ A \texttt{PINQuery t s c} describes a \texttt{c}-differentially private query wi
 There is only one data constructor which serves simply to wrap a \texttt{Query}, which was defined in Section~\ref{sec:typing_the_relational_algebra}.
 This allows us to define a \texttt{Query} and assign it an arbitrary stability.
 
-Next, we provide the standard operators from the relational algebra.
-Instead, we unwrap the \texttt{Query} and then rewrap it in the same data constructor, but using a different type constructor.
+Next, we provide the standard operators from the relational algebra as functions operating on \texttt{PINQuery t s c}.
+We simply unwrap the \texttt{Query} and then rewrap it in the same data constructor, but using a different type constructor.
 This is because the schema and stability could potentially change.
 We control the API that is exported, so we carefully implement the relational algebra operators with the correct stability costs.
 By unwrapping and rewrapping the \texttt{Query} trees from Section~\ref{sec:typing_the_relational_algebra} in our new type, we are now able to build query trees that carry privacy metrics in the type.
@@ -1072,7 +1073,7 @@ Each aggregation is responsible for providing differential privacy.
 Our implementation provides several common aggregations, such as \texttt{noisyCount} and \texttt{noisyAverage}.
 Experts will be able to write their own aggregations to provide to the public.
 
-Of course, aggregation alone is not sufficient for guaranteeing privacy.
+Of course, aggregations alone is not sufficient for guaranteeing privacy.
 We must add Laplace noise according to the sensitivity of the \texttt{PINQuery} and a user-provided epsilon.
 
 \texttt{noisyCount} is a good example of a simple aggregation.
@@ -1349,7 +1350,7 @@ Finally, improving DPDT's syntax would be of benefit to all future users.
 In its current form, it is not particularly well suited to users who aren't familiar with Idris' syntax.
 However, Idris tries to make embedding domain specific languages easier by providing various extensions allowing users to modify its parser and other moving parts.
 One of these is the ability to describe syntax extensions with regular expressions which the parser can then make use of.
-Custom syntax rules allow embedded language develoeprs to extend the parser with EDSL-specific syntax constructs.
+Custom syntax rules allow embedded language developers to extend the parser with EDSL-specific syntax constructs.
 
 Idris syntax extensions consist of two components: reserved keywords and non-terminals.
 Keywords help anchor the parser around the non-terminals, which are captured and usable on the right hand side of a custom syntax declaration.
