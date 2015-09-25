@@ -47,8 +47,8 @@ PINQ is a framework for C\# implementing differential privacy on top of a popula
 PINQ dynamically verifies that queries abide to differential privacy constraints, and discard queries if they don't.
 
 We show that it is feasible to represent differential privacy metrics in the types of a dependently typed programming language.
-We have implemented a prototype of a differentially private query language embedded in Idris. 
-Idris is a general purpose pure functional language with dependent types.
+We have implemented a prototype of a differentially private query language embedded in Idris.
+Idris is a general purpose, pure functional programming language with dependent types.
 Our query language is called DPDT, which is an abbreviation for Differential Privacy and Dependent Types.
 While PINQ verifies privacy constraints dynamically, DPDT does it statically.
 In addition, our query language is completely type-safe in all its relational algebra operations.
@@ -59,8 +59,6 @@ However, a large number of side-channel attacks that PINQ is unable to stop are 
 \end{abstract}
 
 \section{Introduction}\label{sec:introduction}
-
-% TODO 1 : work related work into the intro and diff.priv. sections
 
 With each passing day, more and more of our personal information is being collected, cataloged and analyzed by an ever increasing number of interested parties.
 Their interests range from selective marketing of products and services to collecting business performance metrics and even to malicious and potentially illegal surveillance.
@@ -102,7 +100,6 @@ A trusted runtime-system tracks and rejects queries whose cost exceed the remain
 PINQ and its trusted system manage the budget at runtime.
 An analyst has no way of knowing whether a query will be accepted without manually tracking their budget.
 Reed and Pierce solve this by building a strongly-typed programming language which represents query costs in the types\cite{conf/icfp/ReedP10}.
-% TODO 3 : Include more about DFuzz to lead into our hypothesis?
 We aim to build on this idea by demonstrating that a dependent type system is a natural fit for capturing differential privacy requirements.
 
 Strongly-typed programming languages are capable of statically verifying programs for type-correctness, precluding many potential sources of runtime errors: ``well-typed programs can't go wrong''.
@@ -121,11 +118,10 @@ Dependent type systems have come a long way since Martin-L\"of's original intuit
 We show that dependent types are a natural fit for describing and verifying differential privacy constraints.
 
 We implemented a fully-typed abstract language for describing the relational algebra; and we developed a simple in-memory Idris database backend for it.
-% TODO 3 : include reference to Power of Pi paper again?
 Our main contribution is the layering of differential privacy metrics into the types over top of the fully-typed relational algebra.
 PINQ's differential privacy metrics are checked dynamically at runtime, whereas our privacy layer leverages the power of dependent types to verify that privacy constraints are not violated \textit{at compile time}.
 
-% TODO 1 : add more contributions if there are any. noisyAverage improvement?
+% TODO 5 : add more contributions if there are any. noisyAverage improvement? improved PRNG? contributions to idris-dev
 
 \paragraph{Outline}
 
@@ -140,8 +136,6 @@ We evaluate our work in Chapter~\ref{sec:evaluation} and provide concluding rema
 
 In this section, we describe some of the central ideas and metrics behind differential privacy.
 We begin by motivating the necessity for differential privacy before moving on to outlining the key concepts used in our implementation.
-
-% TODO 1 : first part of this section and Intro overlap a lot!
 
 In today's ``Big Data'' world, more and more of our data is being stored on servers belonging to others.
 Even though it may feel like it, we are not the consumers of free online services: we are the product.
@@ -165,7 +159,7 @@ With this technique, an attacker might be able to deduce information about Alice
 
 Compositions attacks are not only interesting to academics, either.
 AOL\footnote{\label{fn:aol} http://arstechnica.com/business/2006/09/7835/}, Twitter\footnote{\label{fn:twitter}http://arstechnica.com/tech-policy/2009/03/pulling-back-the-curtain-on-anonymous-twitterers/}, Netflix\footnote{\label{fn:netflix}http://arstechnica.com/tech-policy/2009/09/your-secrets-live-online-in-databases-of-ruin/}, and the Massachusetts Group Insurance Commission (GIC) database\footnote{\label{fn:gic}http://web.mit.edu/sem083/www/assignments/reidentification.html} have all suffered publicly in the wakes of linkage attacks.
-% TODO 2 : talk about the parallel to cryptography guarantees
+% TODO 5 : talk about the parallel to cryptography guarantees
 
 Rather than trying to prove the impossibility of a privacy breach, differential privacy guarantees that a users participation in a database can only increase their risk of a privacy breach by some negligible amount.
 This is true regardless of how much auxiliary information a would-be attacker knows or might learn in the future.
@@ -304,20 +298,18 @@ A query is said to be differentially private if it satisfies this property.
 We turn to randomness to achieve this kind of behavior.
 Consider a randomized function, $f_r : A \rightarrow B$.
 Then, for all $x,y \in A$, if the probability of both $f_r(x)$ and $f_r(y)$ being in $S \subseteq B$ is nearly equal, then it is nearly impossible to determine which input was used.
-% TODO 3 : clarify what $S$ is in this case
 
 $$ Pr[f_r(x)\in S] \qquad\approx\qquad  Pr[f_r(y)\in S] $$
 
 This is the core idea behind indistinguishability.
 The intrinsic randomness of the function prevents an attacker from deducing anything about the input based on the output.
 Now consider a randomized query, or mechanism, $\mathcal M : \mathbb D \rightarrow \mathbb R$.
-We say that such a query is $\epsilon$-differentially-private if the inclusion of Alice's data affects her privacy risk by at most $e^\epsilon$. % TODO 4 : What is 'privacy risk'
+We say that such a query is $\epsilon$-differentially-private if the inclusion of Alice's data increases her privacy risk by at most $e^\epsilon$.
 
 \begin{defn}\label{def:diffpriv}
   A randomized mechanism, $\mathcal{M} : \mathbb D \rightarrow A$, is $\epsilon$-differentially-private if, for all databases $D_1 \sim D_2$, and all $S \in A$,
   $$Pr[\mathcal M(D_1)\in S] \le e^\epsilon \times Pr[\mathcal M(D_2)\in S]$$
 \end{defn}
-% TODO 1 : check whether S \in R should be \in or \subseteq
 
 There are a few restrictions on mechanisms in the context of sensitive databases.
 Obviously, there are limits to the types of data that queries are allowed to return.
@@ -383,7 +375,6 @@ Our work includes a fully-typed LINQ-like implementation in Idris (\texttt{Datab
 PINQ's big contribution is the addition of a privacy layer around the LINQ query language.
 The majority of operations available in LINQ have also been made available in PINQ.
 However, some transformations cannot be made differentially private and have been removed.
-% TODO 4 : which ones aren't and why
 The word ``stability'' is commonly used when discussing sensitivity in the context of database transformations.
 Each PINQ transformation is stability-aware and knows how to compose its stability with that of others.
 Section~\ref{subsec:fn_sens} contained a proof that the filter transformation (selection) is 1-sensitive (or 1-stable).
@@ -400,7 +391,6 @@ However, the cost of running the aggregation scales directly with $\epsilon$ and
 The total cost of a query is the product of the transformation stability and $\epsilon$.
 
 The simplest of PINQ's aggregation mechanisms is \texttt{noisyCount}, which returns the number of rows described by the given query plus just enough noise to mask the true response.
-% TODO 1 : can we even talk about sensitivity of mechanisms?
 \texttt{noisyCount} is a 1-stable operation.
 Consider two databases which differ by exactly one row, $D_1 \sim D_2$.
 Because we know the databases differ by only one row, the distance between the inputs is $d_{in} = d_{\mathbb D}(D_1,D_2)=1$.
@@ -461,43 +451,47 @@ Then, if we get a response of $0.5$, we can translate that back to $21$.
 
 \section{Dependent Types in Idris}\label{sec:dependent_types_in_idris}
 
-Idris is a general purpose pure functional programming language with dependent types.
+Idris is a general purpose, pure functional programming language with dependent types.
 Dependent types allow types to be predicated on values.
-With this feature, larger portions of a program can be descibed in types, and can thus be verified by the compiler.
+This allows developers to describe many aspects of a program in the types which can be mechanically verified by the compiler.
 
-This section will serve as a introduction to dependent types in Idris, but will not describe the language in whole.
-Familiarity with a functional programming language is a pre-requisite.
-First we will have a look at how basic dependent types work in Idris, then we will introduce some features used later in this report.
+This section serves as an introduction to some of Idris' interesting language features.
+We assume a basic familiarity with functional programming languages.
+First, we outline the basic capabilities of dependent types with the classic vector example.
+Then, we will move on to introduce some of Idris' features which we used in our implementation of DPDT.
 
-A simple example of a good fit for a dependent type is a list with a fixed length, namely a vector.
-Here the vector type is \textit{indexed} by a natural number representing the length.
-In other words, a vector type is dependent on a length.
-In addition, like a list, the vector type is \textit{parameterized} by the item type.
-A type that is indexed by a value is called a type family.
+The classic dependent types example is the move from traditional \texttt{cons}-lists to vectors.
+A vector is a list-like type that is \textit{indexed} by a natural number representing its length; i.e. the type of a vector is determined in part by the number of elements it contains.
+Additionally, like lists, vectors are \textit{parameterized} by their element type.
+One consequence of this is that \texttt{Vect 3 a} and \texttt{Vect 5 a} are \textit{different} types.
 
 \begin{lstlisting}[caption={Vector Example},label={lst:vector_example}]
-|||Vector type signature in Idris
+||| Represents a vector indexed by its length
 data Vect : (length:Nat) -> (itemType:Type) -> Type
 \end{lstlisting}
 
-Using the vector as an example, we can create some functions on vectors in which the types reflect the functionality. As illustrated in the example above, types are first class language constructs in Idris. A type has the type \textit{Type} and can be passed around a program and computed as any other type.
+As illustrated in Listing~\ref{lst:vector_example}, types are first class values in Idris.
+The type of types is \texttt{Type} and we can directly access and manipulate \texttt{Type}s like any other value.
+Without even knowing the underlying data representation of \texttt{Vect}, we can now discuss dependent type signatures of various vector functions.
+How should the type signature of \texttt{append} look?
+If we append two vectors, with lengths $n$ and $m$, respectively, the resulting vector should have length $n+m$.
+See Listing~\ref{lst:vector_ops_example} for an example of this and others.
 
 \begin{lstlisting}[caption={Vector Operations Example},label={lst:vector_ops_example}]
-append : Vect n a -> Vect m a -> Vect (n + m) a
-
+append  : Vect n a -> Vect m a -> Vect (n + m) a
 reverse : Vect n a -> Vect n a
-
-take : (n : Nat) -> Vect (n + m) a -> Vect n a
+take    : (n : Nat) -> Vect (n + m) a -> Vect n a
 \end{lstlisting}
 
-Notice how the signature of append in itself makes it fairly clear what the function does.
-Not only is it useful to users to see descriptive signatures like these, but it proves very helpful during implementation.
-The Idris compiler will complain if the returned data type does not match the defined return type.
-This excludes a lot of possible implementation errors, which in turn reduce the amount of unit tests needed to validate the functionality.
+Notice how the signature of \texttt{append} clearly describes the input and output types.
+Not only is it useful for users to see descriptive type signatures like these, but it helps to prevent many developer errors.
+The type-checker will verify that \texttt{append}'s implementation does indeed return a vector of length $n+m$.
+Proper use of dependent types can reduce or even eliminate the need for unit testing.
 
 \subsection{Construction}
 
-\begin{lstlisting}[caption={Natural Numbers Example},label={lst:nats_example}]
+\begin{lstlisting}[caption={Nat definition},label={lst:nats_example}]
+||| Represents the natural numbers
 data Nat = Z | S Nat
 \end{lstlisting}
 
@@ -506,14 +500,19 @@ The data type above represents natural numbers recursively.
 There are two constructors, \lstinline{Z} and \lstinline{S Nat}.
 \lstinline{Z} constructs a zero and \lstinline{S n} constructs the successor of $n$.
 
-\begin{lstlisting}[caption={Vector Example},label={lst:vect_example_def}]
+\begin{lstlisting}[caption={List and Vect definitions},label={lst:vect_example_def}]
+data List : Type -> Type where
+  Nil  : List a
+  (::) : a -> List a -> List a
+
 data Vect : Nat -> Type -> Type where
-   Nil  : Vect Z a
-   (::) : a -> Vect k a -> Vect (S k) a
+  Nil  : Vect Z a
+  (::) : a -> Vect k a -> Vect (S k) a
 \end{lstlisting}
 
-Type families like Vect have to provide a value for a index during construction, so the constructor syntax is a bit more complex than the one of Nat.
-\lstinline{NIL} constructs a vector of dimension 0, while \lstinline{(::)} extends a vector of dimension $k$ with a new value.
+Listing~\ref{lst:vect_example_def} contains definitions for \texttt{List}s and \texttt{Vect}s.
+Notice how the type signature of \texttt{(::)} for \texttt{Vect} builds the length index with the \texttt{S} data constructor from \texttt{Nat}.
+The type signature can loosely be interpreted as ``when you add an element to a vector of length k, the resulting type is a vector of length (k+1)''.
 
 \subsection{Operator sections}
 
@@ -532,77 +531,97 @@ Idris also provides constructs for writing anonymous functions more compactly, n
 $(*2)$ is a operator section that simply multiplies a numeric value by 2.
 It expands to \lstinline{\x => x * 2}, and can be passed into functions and applied to a numeric argument.
 
-\subsection{Monad and do-notation}
+\subsection{Monadic sequencing and do-notation}
 
-In functional programming, a Monad is a structure that abstracts away some computation.
-It defines how to chain Monad instances together, such that users don't have to be concerned with the abstracted computations.
+In functional programming, a monad is a structure that abstracts computation in some way.
+Monads must support two operations: lifting pure elements ``into'' the computation and sequencing two monadic computations.
+How these operations are implemented is monad-specific, but the abstraction they provide is powerful.
 
-An example of a Monad instance is the state monad.
-Pure functional languages don't have global state or mutable variables.
-In order to represent state in a pure language an immutable state construct can be passed explicitly into functions that need state.
-We then update the state by constructing a new state based on the old state.
+One example of a monad instance is the state monad.
+Pure functional languages don't directly support global state or mutable variables.
+However, state can be represented in such languages by threading the state through a series of function calls.
+Functions cannot directly modify the state because it is immutable, but they can modify a local copy of it before passing it on to the next function call.
 
-% TODO 3: Add more complex example for motivation
-\begin{lstlisting}
-addToState : Int -> Int -> Int
-addToState x state = x + state
+\begin{lstlisting}[caption={Threading state through function calls, no monad},label={lst:state_example}]
+||| State holding one integer
+data MyState = MkState Int
+
+||| Add an int to the state's int
+addToState : Int -> MyState -> MyState
+addToState x (MkState st) = MkState (x + st)
+
+namespace Examples
+
+  add15 : MyState -> MyState
+  add15 = addToState 5 . addToState 10
+
+  foo : Int
+  foo = let MkState i = add15 (MkState 0) in i
+  -- foo == 15
 \end{lstlisting}
 
-Passing the state explicitly works fine for a simple example as above, but leads to a lot of boilerplate code if the repeated computations are complex.
-The state monad abstracts away the state operations, so users can access the state if needed with less boilerplate.
+The burden of threading state around is left to the developer.
+Monads allow us to abstract unnecessary details like that away, allowing developers to focus on more important things.
+Specifically, monad instances are automatically provided with an alternative syntax for writing monadic code called \texttt{do}-notation.
+Idris will simply desugar \texttt{do}-notation syntax to regular function calls.
 
-In Idris, Monad is a typeclass, which is an abstract class.
-An example of an instance of the Monad typeclass is the state monad.
+\begin{lstlisting}[caption={Threading state through function calls with do-notation},label={lst:threading_state_do_notation}]
+get       : State s s
+put       : s -> State s ()
+modify    : (s -> s) -> State s ()
+evalState : State s a -> s -> a
 
-Idris provides a do-notation for sequentially interacting with monad instances in a clean manner.
+addToState : Int -> State MyState ()
+addToState x = modify (\MkState i => MkState (i + x))
 
-\begin{lstlisting}
-addToState : Int -> State Int Int
-addToState x = do
-   	state <- get
-        return (x + state)
+namespace Examples
+
+  add15 : State MyState ()
+  add15 = do
+    addToState 5
+    addToState 10
+
+  foo : Int
+  foo = evalState add15 (MkState 0)
+  -- foo == 15
 \end{lstlisting}
 
-The do-notation allows us to get the state out of the monad context, perform computations on it, and return the updated state.
-In Idris a data type can get access to do-notation by implementing the chaining function \lstinline{>>=} and the \lstinline{return} function.
+The \texttt{do}-notation allows us to get the state out of the monad context and update it locally before passing it on to the next computation in the sequence.
+Idris gives \texttt{do}-notation to any types overloading the \texttt{return} and $(>>=)$ functions.
 
 \subsection{Implicit arguments and automatic proof search}
 
-Even though Idris' type checker is rather powerful, there is still correct types that can not be validated by the type checker alone.
+Even though Idris' type checker is rather powerful, there are still correct types that can not be validated by the type checker alone.
 The \lstinline{head} function on a list is an example of such a type.
-\lstinline{head} returns the first element of the list.
-By providing a static proof that the list is not empty, the implementation below is correct.
+\lstinline{head} returns the first element of the list, but what if that list is empty?
+\texttt{List}s do not provide type safety for these kinds of operations by themselves.
+The Idris type-checker will require a proof that the list is empty.
+The type signature of \texttt{head} in Listing~\ref{lst:head_example} shows two arguments: the first is the list and the second is the proof that the list even has a head element.
 
-\begin{lstlisting}
+\begin{lstlisting}[caption={Taking the head of a list},label={lst:head_example}]
 head : (xs : List a) -> (isCons xs = True) -> a
-head (x :: xs) _ = x
+head (x :: xs) Refl = x
 \end{lstlisting}
 
-Idris also allows function arguments to be implicit, meaning that it is not necessary to pass the argument in during function application.
-This is a good fit for proofs, like \lstinline{isCons} for \lstinline{head}.
+Don't worry too much about the proof is constructed for now.
+For proofs which are easily machine-checkable, Idris allows us to mark them as implicit arguments.
+The compiler will automatically search for and provide the correct proof if possible so the developer doesn't have to.
 
-\begin{lstlisting}
-head : (xs : List a) -> {auto p : isCons xs = True} -> a
+\begin{lstlisting}[caption={Automatic proof derivation},label={lst:auto_proof_example}]
+head : (xs : List a) -> { auto p : isCons xs = True } -> a
 head (x :: xs) = x
 \end{lstlisting}
 
-Implicit arguments are written in curly braces, and can be derived in different ways, one being the automatic proof search.
-Automatic proof search is invoked by adding the \lstinline{auto} annotation to an implicit argument, and makes Idris search for a matching type.
-If it can't find a matching type, the proof has to be passed in explicitly, or the program will not compile.
-
-Too access an implicit argument within a function, the parameter name is surrounded by curly braces as illustrated by $p$ below.
-
-\begin{lstlisting}
-head : (xs : List a) -> {auto p : isCons xs = True} -> a
-head (x :: xs) {p} = x
-\end{lstlisting}
+Implicit arguments are declared using curly braces and the \texttt{auto} keyword.
+Alternative proof search methods are available, but are outside the scope of this paper.
+The compiler will complain if it is unable to find a proof automatically, requiring one to be manually provided by the developer.
 
 \section{Function Sensitivity in Idris}\label{sec:function_sensitivity}
 
 This section demonstrate how we use dependent types to model function sensitivity in Idris.
 
-Modelling function sensitivity with dependent types is fairly straight-forward.
-In fact, using Idris it is quite simple.
+Modelling function sensitivity with dependent types is straight-forward.
+In fact, Idris makes it very easy.
 Recall that function sensitivity is a metric describing how much a function can amplify the distances between pairs of objects.
 
 $$ \forall x,y.\; d(f(x),f(y)) \le c \times d(x,y) $$
@@ -700,7 +719,6 @@ namespace Examples
 
 In this section, we review the relational algebra and show how it can be modelled in a dependently typed language.
 Our approach is based on Chapter 4 from \textit{The Power of Pi}\cite{OurySwierstra08PowerOfPi}, an excellent resource for practical examples of what dependent types are capable of.
-% TODO 3 : make this sentence citation read better
 
 The relational algebra describes semantics for modelling and querying data in relational databases (e.g. MySQL\footnote{https://www.mysql.com/}).
 E.F. Codd described relational databases and their associated algebra back in the 1970's\cite{codd70}.
@@ -787,7 +805,7 @@ Thus, an expression with the type \texttt{Expr s a} can be read as an expression
 Notice that we have not yet defined any underlying representation for the rows.
 
 Expressions are built up from other expressions, forming an expression tree.
-See Figure~\ref{fig:expr_tree} for an example of a simple expression tree.
+See Figure~\ref{fig:expr_tree} for an example of a simple singly-typed expression tree.
 
 \begin{figure}[h!]
     \centering
@@ -795,7 +813,6 @@ See Figure~\ref{fig:expr_tree} for an example of a simple expression tree.
     \caption{Example Expression Tree $(1 + 2 \times 3)$}
     \label{fig:expr_tree}
 \end{figure}
-% TODO : resize and work with this graph. write about it in the neighboring text
 
 The return type of the tree in Figure~\ref{fig:expr_tree} is obvious, but what type will a more complex tree from our expression langage have?
 Expressions cannot change the schema, so that must remain constant even as the tree grows.
@@ -889,8 +906,6 @@ Set union and difference require that the two operands share matching schemas.
 Cartesian product requires that they be disjoint.
 Notice how easily type unification allows us to express the first two constraints.
 The disjoint proof is only slightly more complex; but because it is decidable it can be automatically derived, so the users will be unaware of any additional complexity.
-
-% TODO : write about backends
 
 In trying to emulate PINQ, we chose to focus most of our efforts on implementing an in-memory Idris backend.
 However, we believe that our abstract representation of the relational algebra allows for a wide variety of backends to be developed.
@@ -1002,8 +1017,8 @@ groupBy : Eq k => Expr s k -> PINQuery b s c -> PINGrouping b s k (c * 2)
 groupBy e (MkPINQuery q) = MkPINGrouping (GroupBy e q)
 \end{lstlisting}
 
-\texttt{where'} is a 1-sensitive function and it's type declaration reflects that.
-% TODO 2 : reference proof of filter from earlier
+Recall from Section~\ref{subsec:fn_sens} that \texttt{where'} is a 1-sensitive function.
+Notice how its type declaration reflects that.
 The \texttt{c} parameter remains unchanged through the rewrapping.
 
 \texttt{union}, however, costs the sum of the costs of the operands.
@@ -1083,7 +1098,6 @@ noisyCount (MkPINQuery q) eps = MkPrivate $ \g =>
 
 In this section, we will evaluate how well dependent types allow differential privacy metrics to be tracked and verified in the type system.
 We begin our evaluation of DPDT with simple queries before moving on to more complex algorithms.
-% TODO 3 : does this section actually do that?
 
 \subsection{Differentially private queries}
 
@@ -1134,7 +1148,6 @@ The mean should approach one as we increase the number of samples (because there
 The Laplace probability density function (PDF) is densest at its center and quickly tapers off according to the diversity parameter, $b$.
 Therefore, we expect the majority of results to lie within $1 \pm 2.5b$, where $b=1/\epsilon$ is the diversity parameter.
 Table~\ref{tab:testCountAlices_results} contains a statistical summary of running \texttt{testCountAlices} 1000 times.
-% TODO 5 : add a figure of Laplace PDF and refer to it from here
 
 \begin{table}[h!]
   \caption{Expected and actual results of \texttt{testCountAlices}}
@@ -1163,7 +1176,7 @@ Table~\ref{tab:testCountAlices_results} contains a statistical summary of runnin
   N.B. These numbers were actually calculated using real random numbers from RANDOM.ORG.
   The Idris psuedo-random number generator (PRNG) is a simple linear recurrence generator which unfortunately skews the Laplace distribution to the left by $0.2b$.
   We will implement Mersenne-Twister ASAP!
-  % TODO 1 : implement a better PRNG
+% TODO 5 : implement a better PRNG
 }
 
 Of course, we shouldn't be allowed to run that query 1,000 times (unless our privacy budget were that big) to learn the true mean.
@@ -1196,12 +1209,7 @@ The cost of the computation increases each time the analyst tries to extract inf
 In fact, \texttt{tripleCountAlice} and \texttt{tripleCountAlice'} are functionally equivalent.
 The analyst is unable to learn anything the privacy budget does not allow.
 
-% TODO 2 : discuss other backends
-
 \subsection{Standing on the shoulders of giants}
-% TODO 1 : think of a better title
-
-% TODO 5 : bring in turing completeness?
 
 One of LINQ's key features is that it is embedded within the .NET languages.
 This means that developers have access to much more than the LINQ DSL when writing applications; they are able to use all of the features of the host language.
@@ -1222,28 +1230,31 @@ patients.Select(p => if p.Name == "Alice" {
                      return p;
 );
 \end{lstlisting}
-% TODO 1 : check this code to see if it is even close to PINQ syntax
 
 The result is a no-op: the data remains unchanged.
 However, if the analyst hears a beep during the evaluation of this query, he knows that Alice is included in the \texttt{patients} database.
 In fact, beep is just one example of a side-channel.
 Other possible examples include timing attacks (e.g. \texttt{Thread.sleep}), writing to global memory or external file (e.g. \texttt{echo yes > /foundAlice}), or even sending an email.
+These kinds of interactions with the outside world are called \textit{side effects}.
 
-Idris' type system does not allow functions to contain side effects unless they are explicitly marked as such.
+Idris' type system does not allow functions to contain side effects unless they are explicitly marked as such in their type signature.
 This alone prevents many of the side-channel attacks that are possible in other systems.
-% TODO 3 : citation
-The types simply do not allow malicious users to write Alice's private records to a file.
+The types prevent malicious users from tricking the system into writing Alice's private records to a file.
 
-DPDT is an embedded query DSL.
-Alone, DPDT allows it to leverage Idris' powerful type system to statically verify the differential privacy constraints of a query.
+One side-channel which even Idris is susceptible to is a special class of timing attack.
+Idris will prevent an expression developer from making calls to \texttt{Thread.Sleep} and similar functions, but Idris is unable to predetermine the running time of an expression.
+Instead of calling \texttt{beep()} in the example above, the analyst could have asked for the prime factorization of some very large number.
+If he observes that a query takes significantly longer than it did without the call to the expensive computation, he can conclude that Alice's records are in the database.
+Stopping this kind of side-channel attack requires a dedicated runtime system which ensures that, regardless of which row the expression is evaluated on, it takes the same amount of time\cite{conf/uss/HaeberlenPN11}.
+
+Alone, DPDT leverages Idris' powerful type system to statically verify the differential privacy constraints of a query.
 Combining DPDT with Idris, however, gives it access to all of the features of a Turing complete language.
-
 It is no longer restricted to simple queries.
-We can write differentially private algorithms a la PINQ that preclude even more side channel attacks.
+We can write differentially private algorithms a la PINQ and prevent some of the side channel attacks it might have been susceptible to.
 We implemented an example of differentially private k-means clustering in DPDT.
 
 However, using dependent types to verify differential privacy metrics does prevent some types of algorithms from being expressible in DPDT.
-Our implementation of k-means runs for a predetermined number of iterations.
+Our implementation of k-means can only run for a predetermined number of iterations.
 Computing the total cost of running it is as easy as multiplying the cost of an iteration with the total number of iterations.
 
 However, k-means can also be developed with a criteria function for dynamic termination.
@@ -1261,16 +1272,12 @@ $$\sum_{x=2}^{\infty} 1/x = \frac{1}{2} + \frac{1}{4} + \frac{1}{8} + .. = 1$$
 In fact, PINQ is able to represent an impressive variety of algorithms in a differentially private manner.
 It may be possible for us to extend the \texttt{Sensitivity} type and convince the Idris type-checker that algorithms resembling a geometric series with $-1 < r < 1$ converge, but we have not yet explored this option.
 
-% \subsection{Type safety and security}
 \subsection{Differential privacy and dependent types}
 
 Nicolas Oury and Wouter Swierstra have already shown that dependent types are natural fit for fully typing the relational algebra\cite{OurySwierstra08PowerOfPi}.
 Chapter~\ref{sec:typing_the_relational_algebra} provided a brief overview of their method.
 The goal of this thesis is to demonstrate that dependent types are also capable of typing differential privacy metrics with ease and we certainly believe this to be the case.
 Chapter~\ref{sec:function_sensitivity} showed just how easily metrics such as function sensitivity can be tracked using dependent types and Chapter~\ref{sec:our_implementation} put it all together into a completely type-safe, PINQ-like EDSL for Idris.
-
-% pinq vs dpdt
-% dpdt vs
 
 LINQ provides type-safety for most of the relational algebra.
 PINQ expands this safety to include privacy metrics, but it does so dynamically.
@@ -1288,7 +1295,7 @@ In fact, DPDT's type-safety even protects against many side-channel attacks whic
 PINQ does try to ``scrub'' any expressions before they are evaluated, but mechanically determining which expressions consistute a side-channel attack is not feasible.
 However, timing attacks represent one side-channel which no type system is likely to be able to stop.
 Certainly, Idris' purity will prevent calls to \texttt{Thread.sleep}, but what about an expression computing the $n^{th}$ Fibonacci number for some large $n$?
-% TODO 1 : include citation to the paper which set time outs on a per row basis
+A specialized runtime system is required to prevent this kind of side-channel attack\cite{conf/uss/HaeberlenPN11}.
 
 Dependent type systems have benefitted from decades of research and come a long way from their purely academic origins.
 Languages like Agda\footnote{http://wiki.portal.chalmers.se/agda/pmwiki.php}, and more recently, Idris, provide the power of dependent types in a practical setting, allowing critical concepts, such as differential privacy constraints, to be recorded and mechanically verified at compile time.
@@ -1376,13 +1383,12 @@ Some improvements to DPDT's understanding of costs might be possible, but some c
 Despite these limitations, DPDT's type-system does offer some benefits over that of PINQ's.
 In particular, because it is a pure language, almost all side-channel attacks that might be possible in PINQ are prevented by default.
 Unfortunately, both PINQ and DPDT are susceptible to a particular form of timing attack: careful use of expensive computations.
-Preventing this kind of attack requires a smart server implementation like the one described in XX.
-% TODO 1 : add citation to the paper that stopped timing attacks. was it DFuzz?
+Preventing this kind of attack requires a smart server implementation like the one described in \cite{conf/uss/HaeberlenPN11}.
 
 Dependent types can fully represent the relational algebra and its contraints which have stumped lesser type-systems\cite{OurySwierstra08PowerOfPi}.
 We have shown that dependent types can also represent differential privacy metrics and their contraints---with some limitations on the types of algorithms that can be expressed.
-There are no limits on constructing independent, differentially-private queries.
-But dynamically terminating algorithms cannot easily be expressed because privacy constraints cannot be verified at compile-time.
+There are no limits on constructing independent, differentially-private queries, but dynamically terminating algorithms cannot easily be expressed because privacy constraints cannot be verified at compile-time.
+Despite this limitation, we believe that dependent types lend themselves very well to representing differential privacy metrics and constraints.
 
 \bibliographystyle{abbrv}
 \bibliography{main}
