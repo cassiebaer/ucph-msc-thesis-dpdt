@@ -47,7 +47,7 @@ PINQ is a framework for C\# implementing differential privacy on top of a popula
 PINQ dynamically verifies that queries abide to differential privacy constraints, and discard queries if they don't.
 
 We show that it is feasible to represent differential privacy metrics in the types of a dependently typed programming language.
-We have implemented a prototype of a differentially private query language embedded in Idris. 
+We have implemented a prototype of a differentially private query language embedded in Idris.
 Idris is a general purpose pure functional language with dependent types.
 Our query language is called DPDT, which is an abbreviation for Differential Privacy and Dependent Types.
 While PINQ verifies privacy constraints dynamically, DPDT does it statically.
@@ -1228,13 +1228,18 @@ The result is a no-op: the data remains unchanged.
 However, if the analyst hears a beep during the evaluation of this query, he knows that Alice is included in the \texttt{patients} database.
 In fact, beep is just one example of a side-channel.
 Other possible examples include timing attacks (e.g. \texttt{Thread.sleep}), writing to global memory or external file (e.g. \texttt{echo yes > /foundAlice}), or even sending an email.
+These kinds of interactions with the outside world are called \textit{side effects}.
 
-Idris' type system does not allow functions to contain side effects unless they are explicitly marked as such.
+Idris' type system does not allow functions to contain side effects unless they are explicitly marked as such in their type signature.
 This alone prevents many of the side-channel attacks that are possible in other systems.
-% TODO 3 : citation
-The types simply do not allow malicious users to write Alice's private records to a file.
+The types prevent malicious users from tricking the system into writing Alice's private records to a file.
 
-DPDT is an embedded query DSL.
+One side-channel which even Idris is susceptible to is a special class of timing attack.
+Idris will prevent an expression developer from making calls to \texttt{Thread.Sleep} and similar functions, but Idris is unable to predetermine the running time of an expression.
+Instead of calling \texttt{beep()} in the example above, the analyst could have asked for the prime factorization of some very large number.
+If he observes that a query takes significantly longer than it did without the call to the expensive computation, he can conclude that Alice's records are in the database.
+Stopping this kind of side-channel attack requires a dedicated runtime system which ensures that, regardless of which row the expression is evaluated on, it takes the same amount of time\cite{conf/uss/HaeberlenPN11}.
+
 Alone, DPDT allows it to leverage Idris' powerful type system to statically verify the differential privacy constraints of a query.
 Combining DPDT with Idris, however, gives it access to all of the features of a Turing complete language.
 
@@ -1243,7 +1248,7 @@ We can write differentially private algorithms a la PINQ that preclude even more
 We implemented an example of differentially private k-means clustering in DPDT.
 
 However, using dependent types to verify differential privacy metrics does prevent some types of algorithms from being expressible in DPDT.
-Our implementation of k-means runs for a predetermined number of iterations.
+Our implementation of k-means can only run for a predetermined number of iterations.
 Computing the total cost of running it is as easy as multiplying the cost of an iteration with the total number of iterations.
 
 However, k-means can also be developed with a criteria function for dynamic termination.
@@ -1376,8 +1381,7 @@ Some improvements to DPDT's understanding of costs might be possible, but some c
 Despite these limitations, DPDT's type-system does offer some benefits over that of PINQ's.
 In particular, because it is a pure language, almost all side-channel attacks that might be possible in PINQ are prevented by default.
 Unfortunately, both PINQ and DPDT are susceptible to a particular form of timing attack: careful use of expensive computations.
-Preventing this kind of attack requires a smart server implementation like the one described in XX.
-% TODO 1 : add citation to the paper that stopped timing attacks. was it DFuzz?
+Preventing this kind of attack requires a smart server implementation like the one described in \cite{conf/uss/HaeberlenPN11}.
 
 Dependent types can fully represent the relational algebra and its contraints which have stumped lesser type-systems\cite{OurySwierstra08PowerOfPi}.
 We have shown that dependent types can also represent differential privacy metrics and their contraints---with some limitations on the types of algorithms that can be expressed.
