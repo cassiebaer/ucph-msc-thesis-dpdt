@@ -60,8 +60,6 @@ However, a large number of side-channel attacks that PINQ is unable to stop are 
 
 \section{Introduction}\label{sec:introduction}
 
-% TODO 1 : work related work into the intro and diff.priv. sections
-
 With each passing day, more and more of our personal information is being collected, cataloged and analyzed by an ever increasing number of interested parties.
 Their interests range from selective marketing of products and services to collecting business performance metrics and even to malicious and potentially illegal surveillance.
 We don't curate and control the data they are collecting and the data we produce often gives a better picture of who we are than any data we might try to curate and control.
@@ -102,7 +100,6 @@ A trusted runtime-system tracks and rejects queries whose cost exceed the remain
 PINQ and its trusted system manage the budget at runtime.
 An analyst has no way of knowing whether a query will be accepted without manually tracking their budget.
 Reed and Pierce solve this by building a strongly-typed programming language which represents query costs in the types\cite{conf/icfp/ReedP10}.
-% TODO 3 : Include more about DFuzz to lead into our hypothesis?
 We aim to build on this idea by demonstrating that a dependent type system is a natural fit for capturing differential privacy requirements.
 
 Strongly-typed programming languages are capable of statically verifying programs for type-correctness, precluding many potential sources of runtime errors: ``well-typed programs can't go wrong''.
@@ -121,11 +118,10 @@ Dependent type systems have come a long way since Martin-L\"of's original intuit
 We show that dependent types are a natural fit for describing and verifying differential privacy constraints.
 
 We implemented a fully-typed abstract language for describing the relational algebra; and we developed a simple in-memory Idris database backend for it.
-% TODO 3 : include reference to Power of Pi paper again?
 Our main contribution is the layering of differential privacy metrics into the types over top of the fully-typed relational algebra.
 PINQ's differential privacy metrics are checked dynamically at runtime, whereas our privacy layer leverages the power of dependent types to verify that privacy constraints are not violated \textit{at compile time}.
 
-% TODO 1 : add more contributions if there are any. noisyAverage improvement?
+% TODO 5 : add more contributions if there are any. noisyAverage improvement? improved PRNG? contributions to idris-dev
 
 \paragraph{Outline}
 
@@ -140,8 +136,6 @@ We evaluate our work in Chapter~\ref{sec:evaluation} and provide concluding rema
 
 In this section, we describe some of the central ideas and metrics behind differential privacy.
 We begin by motivating the necessity for differential privacy before moving on to outlining the key concepts used in our implementation.
-
-% TODO 1 : first part of this section and Intro overlap a lot!
 
 In today's ``Big Data'' world, more and more of our data is being stored on servers belonging to others.
 Even though it may feel like it, we are not the consumers of free online services: we are the product.
@@ -165,7 +159,7 @@ With this technique, an attacker might be able to deduce information about Alice
 
 Compositions attacks are not only interesting to academics, either.
 AOL\footnote{\label{fn:aol} http://arstechnica.com/business/2006/09/7835/}, Twitter\footnote{\label{fn:twitter}http://arstechnica.com/tech-policy/2009/03/pulling-back-the-curtain-on-anonymous-twitterers/}, Netflix\footnote{\label{fn:netflix}http://arstechnica.com/tech-policy/2009/09/your-secrets-live-online-in-databases-of-ruin/}, and the Massachusetts Group Insurance Commission (GIC) database\footnote{\label{fn:gic}http://web.mit.edu/sem083/www/assignments/reidentification.html} have all suffered publicly in the wakes of linkage attacks.
-% TODO 2 : talk about the parallel to cryptography guarantees
+% TODO 5 : talk about the parallel to cryptography guarantees
 
 Rather than trying to prove the impossibility of a privacy breach, differential privacy guarantees that a users participation in a database can only increase their risk of a privacy breach by some negligible amount.
 This is true regardless of how much auxiliary information a would-be attacker knows or might learn in the future.
@@ -304,20 +298,18 @@ A query is said to be differentially private if it satisfies this property.
 We turn to randomness to achieve this kind of behavior.
 Consider a randomized function, $f_r : A \rightarrow B$.
 Then, for all $x,y \in A$, if the probability of both $f_r(x)$ and $f_r(y)$ being in $S \subseteq B$ is nearly equal, then it is nearly impossible to determine which input was used.
-% TODO 3 : clarify what $S$ is in this case
 
 $$ Pr[f_r(x)\in S] \qquad\approx\qquad  Pr[f_r(y)\in S] $$
 
 This is the core idea behind indistinguishability.
 The intrinsic randomness of the function prevents an attacker from deducing anything about the input based on the output.
 Now consider a randomized query, or mechanism, $\mathcal M : \mathbb D \rightarrow \mathbb R$.
-We say that such a query is $\epsilon$-differentially-private if the inclusion of Alice's data affects her privacy risk by at most $e^\epsilon$. % TODO 4 : What is 'privacy risk'
+We say that such a query is $\epsilon$-differentially-private if the inclusion of Alice's data increases her privacy risk by at most $e^\epsilon$.
 
 \begin{defn}\label{def:diffpriv}
   A randomized mechanism, $\mathcal{M} : \mathbb D \rightarrow A$, is $\epsilon$-differentially-private if, for all databases $D_1 \sim D_2$, and all $S \in A$,
   $$Pr[\mathcal M(D_1)\in S] \le e^\epsilon \times Pr[\mathcal M(D_2)\in S]$$
 \end{defn}
-% TODO 1 : check whether S \in R should be \in or \subseteq
 
 There are a few restrictions on mechanisms in the context of sensitive databases.
 Obviously, there are limits to the types of data that queries are allowed to return.
@@ -383,7 +375,6 @@ Our work includes a fully-typed LINQ-like implementation in Idris (\texttt{Datab
 PINQ's big contribution is the addition of a privacy layer around the LINQ query language.
 The majority of operations available in LINQ have also been made available in PINQ.
 However, some transformations cannot be made differentially private and have been removed.
-% TODO 4 : which ones aren't and why
 The word ``stability'' is commonly used when discussing sensitivity in the context of database transformations.
 Each PINQ transformation is stability-aware and knows how to compose its stability with that of others.
 Section~\ref{subsec:fn_sens} contained a proof that the filter transformation (selection) is 1-sensitive (or 1-stable).
@@ -400,7 +391,6 @@ However, the cost of running the aggregation scales directly with $\epsilon$ and
 The total cost of a query is the product of the transformation stability and $\epsilon$.
 
 The simplest of PINQ's aggregation mechanisms is \texttt{noisyCount}, which returns the number of rows described by the given query plus just enough noise to mask the true response.
-% TODO 1 : can we even talk about sensitivity of mechanisms?
 \texttt{noisyCount} is a 1-stable operation.
 Consider two databases which differ by exactly one row, $D_1 \sim D_2$.
 Because we know the databases differ by only one row, the distance between the inputs is $d_{in} = d_{\mathbb D}(D_1,D_2)=1$.
@@ -700,7 +690,6 @@ namespace Examples
 
 In this section, we review the relational algebra and show how it can be modelled in a dependently typed language.
 Our approach is based on Chapter 4 from \textit{The Power of Pi}\cite{OurySwierstra08PowerOfPi}, an excellent resource for practical examples of what dependent types are capable of.
-% TODO 3 : make this sentence citation read better
 
 The relational algebra describes semantics for modelling and querying data in relational databases (e.g. MySQL\footnote{https://www.mysql.com/}).
 E.F. Codd described relational databases and their associated algebra back in the 1970's\cite{codd70}.
@@ -787,7 +776,7 @@ Thus, an expression with the type \texttt{Expr s a} can be read as an expression
 Notice that we have not yet defined any underlying representation for the rows.
 
 Expressions are built up from other expressions, forming an expression tree.
-See Figure~\ref{fig:expr_tree} for an example of a simple expression tree.
+See Figure~\ref{fig:expr_tree} for an example of a simple singly-typed expression tree.
 
 \begin{figure}[h!]
     \centering
@@ -795,7 +784,6 @@ See Figure~\ref{fig:expr_tree} for an example of a simple expression tree.
     \caption{Example Expression Tree $(1 + 2 \times 3)$}
     \label{fig:expr_tree}
 \end{figure}
-% TODO : resize and work with this graph. write about it in the neighboring text
 
 The return type of the tree in Figure~\ref{fig:expr_tree} is obvious, but what type will a more complex tree from our expression langage have?
 Expressions cannot change the schema, so that must remain constant even as the tree grows.
@@ -889,8 +877,6 @@ Set union and difference require that the two operands share matching schemas.
 Cartesian product requires that they be disjoint.
 Notice how easily type unification allows us to express the first two constraints.
 The disjoint proof is only slightly more complex; but because it is decidable it can be automatically derived, so the users will be unaware of any additional complexity.
-
-% TODO : write about backends
 
 In trying to emulate PINQ, we chose to focus most of our efforts on implementing an in-memory Idris backend.
 However, we believe that our abstract representation of the relational algebra allows for a wide variety of backends to be developed.
@@ -1002,8 +988,8 @@ groupBy : Eq k => Expr s k -> PINQuery b s c -> PINGrouping b s k (c * 2)
 groupBy e (MkPINQuery q) = MkPINGrouping (GroupBy e q)
 \end{lstlisting}
 
-\texttt{where'} is a 1-sensitive function and it's type declaration reflects that.
-% TODO 2 : reference proof of filter from earlier
+Recall from Section~\ref{subsec:fn_sens} that \texttt{where'} is a 1-sensitive function.
+Notice how its type declaration reflects that.
 The \texttt{c} parameter remains unchanged through the rewrapping.
 
 \texttt{union}, however, costs the sum of the costs of the operands.
@@ -1083,7 +1069,6 @@ noisyCount (MkPINQuery q) eps = MkPrivate $ \g =>
 
 In this section, we will evaluate how well dependent types allow differential privacy metrics to be tracked and verified in the type system.
 We begin our evaluation of DPDT with simple queries before moving on to more complex algorithms.
-% TODO 3 : does this section actually do that?
 
 \subsection{Differentially private queries}
 
@@ -1134,7 +1119,6 @@ The mean should approach one as we increase the number of samples (because there
 The Laplace probability density function (PDF) is densest at its center and quickly tapers off according to the diversity parameter, $b$.
 Therefore, we expect the majority of results to lie within $1 \pm 2.5b$, where $b=1/\epsilon$ is the diversity parameter.
 Table~\ref{tab:testCountAlices_results} contains a statistical summary of running \texttt{testCountAlices} 1000 times.
-% TODO 5 : add a figure of Laplace PDF and refer to it from here
 
 \begin{table}[h!]
   \caption{Expected and actual results of \texttt{testCountAlices}}
@@ -1163,7 +1147,7 @@ Table~\ref{tab:testCountAlices_results} contains a statistical summary of runnin
   N.B. These numbers were actually calculated using real random numbers from RANDOM.ORG.
   The Idris psuedo-random number generator (PRNG) is a simple linear recurrence generator which unfortunately skews the Laplace distribution to the left by $0.2b$.
   We will implement Mersenne-Twister ASAP!
-  % TODO 1 : implement a better PRNG
+% TODO 5 : implement a better PRNG
 }
 
 Of course, we shouldn't be allowed to run that query 1,000 times (unless our privacy budget were that big) to learn the true mean.
@@ -1196,12 +1180,7 @@ The cost of the computation increases each time the analyst tries to extract inf
 In fact, \texttt{tripleCountAlice} and \texttt{tripleCountAlice'} are functionally equivalent.
 The analyst is unable to learn anything the privacy budget does not allow.
 
-% TODO 2 : discuss other backends
-
 \subsection{Standing on the shoulders of giants}
-% TODO 1 : think of a better title
-
-% TODO 5 : bring in turing completeness?
 
 One of LINQ's key features is that it is embedded within the .NET languages.
 This means that developers have access to much more than the LINQ DSL when writing applications; they are able to use all of the features of the host language.
@@ -1222,7 +1201,6 @@ patients.Select(p => if p.Name == "Alice" {
                      return p;
 );
 \end{lstlisting}
-% TODO 1 : check this code to see if it is even close to PINQ syntax
 
 The result is a no-op: the data remains unchanged.
 However, if the analyst hears a beep during the evaluation of this query, he knows that Alice is included in the \texttt{patients} database.
@@ -1240,11 +1218,10 @@ Instead of calling \texttt{beep()} in the example above, the analyst could have 
 If he observes that a query takes significantly longer than it did without the call to the expensive computation, he can conclude that Alice's records are in the database.
 Stopping this kind of side-channel attack requires a dedicated runtime system which ensures that, regardless of which row the expression is evaluated on, it takes the same amount of time\cite{conf/uss/HaeberlenPN11}.
 
-Alone, DPDT allows it to leverage Idris' powerful type system to statically verify the differential privacy constraints of a query.
+Alone, DPDT leverages Idris' powerful type system to statically verify the differential privacy constraints of a query.
 Combining DPDT with Idris, however, gives it access to all of the features of a Turing complete language.
-
 It is no longer restricted to simple queries.
-We can write differentially private algorithms a la PINQ that preclude even more side channel attacks.
+We can write differentially private algorithms a la PINQ and prevent some of the side channel attacks it might have been susceptible to.
 We implemented an example of differentially private k-means clustering in DPDT.
 
 However, using dependent types to verify differential privacy metrics does prevent some types of algorithms from being expressible in DPDT.
@@ -1266,16 +1243,12 @@ $$\sum_{x=2}^{\infty} 1/x = \frac{1}{2} + \frac{1}{4} + \frac{1}{8} + .. = 1$$
 In fact, PINQ is able to represent an impressive variety of algorithms in a differentially private manner.
 It may be possible for us to extend the \texttt{Sensitivity} type and convince the Idris type-checker that algorithms resembling a geometric series with $-1 < r < 1$ converge, but we have not yet explored this option.
 
-% \subsection{Type safety and security}
 \subsection{Differential privacy and dependent types}
 
 Nicolas Oury and Wouter Swierstra have already shown that dependent types are natural fit for fully typing the relational algebra\cite{OurySwierstra08PowerOfPi}.
 Chapter~\ref{sec:typing_the_relational_algebra} provided a brief overview of their method.
 The goal of this thesis is to demonstrate that dependent types are also capable of typing differential privacy metrics with ease and we certainly believe this to be the case.
 Chapter~\ref{sec:function_sensitivity} showed just how easily metrics such as function sensitivity can be tracked using dependent types and Chapter~\ref{sec:our_implementation} put it all together into a completely type-safe, PINQ-like EDSL for Idris.
-
-% pinq vs dpdt
-% dpdt vs
 
 LINQ provides type-safety for most of the relational algebra.
 PINQ expands this safety to include privacy metrics, but it does so dynamically.
@@ -1293,7 +1266,7 @@ In fact, DPDT's type-safety even protects against many side-channel attacks whic
 PINQ does try to ``scrub'' any expressions before they are evaluated, but mechanically determining which expressions consistute a side-channel attack is not feasible.
 However, timing attacks represent one side-channel which no type system is likely to be able to stop.
 Certainly, Idris' purity will prevent calls to \texttt{Thread.sleep}, but what about an expression computing the $n^{th}$ Fibonacci number for some large $n$?
-% TODO 1 : include citation to the paper which set time outs on a per row basis
+A specialized runtime system is required to prevent this kind of side-channel attack\cite{conf/uss/HaeberlenPN11}.
 
 Dependent type systems have benefitted from decades of research and come a long way from their purely academic origins.
 Languages like Agda\footnote{http://wiki.portal.chalmers.se/agda/pmwiki.php}, and more recently, Idris, provide the power of dependent types in a practical setting, allowing critical concepts, such as differential privacy constraints, to be recorded and mechanically verified at compile time.
