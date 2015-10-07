@@ -41,9 +41,7 @@ postbreak=\raisebox{0ex}[0ex][0ex]{\ensuremath{\color{red}\hookrightarrow\space}
 % TODO 1 : add problem statement to introduction
 % TODO 1 : improve introduction by giving it structure
 % TODO 1 : merge motivation from diff.priv. into intro.
-% TODO 1 : use \chapter
 % TODO 1 : improve captions for all figures
-% TODO 1 : grep for all uses of very/easy/easily
 % TODO 1 : improve evaluation by focusing on Hypothesis / Conclusion
 % TODO 1 : improve evaluation by comparing # of programs in PINQ vs DPDT
 
@@ -248,7 +246,7 @@ See Figure~\ref{fig:fn_sens} for a visualization of function sensitivity on $\ma
     \label{fig:fn_sens}
 \end{figure}
 
-Simple functions on $\mathbb R$ and one dimensional distance functions are not very interesting.
+Simple functions on $\mathbb R$ and one dimensional distance functions are not particularly interesting.
 However, function sensitivity can be applied much more generally and to much more interesting domains, such as databases containing sensitive information (e.g. Alice's tax records or health information).
 
 We will use $\mathbb D$ to describe the domain of all possible databases.
@@ -370,7 +368,7 @@ The aggregation function from earlier will no longer be enough to determine whet
 The differential privacy community has largely settled on using the Laplace distribution for generating noise.
 There are a number of reasons for this, but the main ones concern symmetry and ease of scaling.
 The Laplace distribution resembles a symmetric exponential distribution.
-Its diversity parameter, or ``width'', scales very easily with $\epsilon$.
+Its diversity parameter, or ``width'', scales predictably with $\epsilon$.
 In fact, any $c$-sensitive function can be made differentially private easily.
 
 \begin{defn}
@@ -628,6 +626,7 @@ head (x :: xs) Refl = x
 Don't worry too much about the proof is constructed for now.
 For proofs which are easily machine-checkable, Idris allows us to mark them as implicit arguments.
 The compiler will automatically search for and provide the correct proof if possible so the developer doesn't have to.
+In the event that it is unable to find a sufficient proof, the compiler will abort compilation with a descriptive error message.
 
 \begin{lstlisting}[caption={Automatic proof derivation},label={lst:auto_proof_example}]
 head : (xs : List a) -> { auto p : isCons xs = True } -> a
@@ -643,7 +642,6 @@ The compiler will complain if it is unable to find a proof automatically, requir
 This chapter demonstrate how we use dependent types to model function sensitivity in Idris.
 
 Modelling function sensitivity with dependent types is straight-forward.
-In fact, Idris makes it very easy.
 Recall that function sensitivity is a metric describing how much a function can amplify the distances between pairs of objects.
 
 $$ \forall x,y.\; d(f(x),f(y)) \le c \times d(x,y) $$
@@ -881,7 +879,7 @@ It is derived automatically, so users of our language should never have to worry
 
 The core of the relational algebra consists of the query operators, which we model as follows.
 \texttt{Query} is implemented as a data family, allowing us to adjust its internal data representation just enough to implement a variety of backends.
-In particular, the representation of tables is very backend specific.
+In particular, the representation of tables is backend specific.
 For example, an in-memory Idris backend might store pointers directly to the tables in memory, whereas a SQL backend might just store the name of the table as a string.
 One of the benefits of this is that any dataset which can be modelled using the relational algebra is usable.
 
@@ -927,7 +925,7 @@ namespace Examples
 Recall that the set operators require additional constraints that less powerful type systems have a difficult time capturing.
 Set union and difference require that the two operands share matching schemas.
 Cartesian product requires that they be disjoint.
-Notice how easily type unification allows us to express the first two constraints.
+Notice how type unification allows us to specify the first two constraints.
 The disjoint proof is only slightly more complex; but because it is decidable it can be automatically derived, so the users will be unaware of any additional complexity.
 
 In trying to emulate PINQ, we chose to focus most of our efforts on implementing an in-memory Idris backend.
@@ -1145,7 +1143,7 @@ people = MkPINQuery $ Table [ [ "Alice"  , 40 ]
                             ]
 \end{lstlisting}
 
-Let us consider some very primitive queries and their responses.
+Let us consider some primitive queries and their responses.
 First, we will try to determine whether Alice's records are included in the database.
 This simple example demonstrates several components of our implementation: the expression language, a transformation, and a differentially private mechanism: \texttt{noisyCount}.
 
@@ -1283,7 +1281,7 @@ We implemented an example of differentially private k-means clustering in DPDT.
 
 However, using dependent types to verify differential privacy metrics does prevent some types of algorithms from being expressible in DPDT.
 Our implementation of k-means can only run for a predetermined number of iterations.
-Computing the total cost of running it is as easy as multiplying the cost of an iteration with the total number of iterations.
+Computing the total cost of running it is accomplished by multiplying the cost of an iteration with the total number of iterations.
 
 However, k-means can also be developed with a criteria function for dynamic termination.
 How do we compute the total cost of an algorithm when we don't know how many iterations it will run through before terminating (if it even does)?
@@ -1305,7 +1303,7 @@ It may be possible for us to extend the \texttt{Sensitivity} type and convince t
 Nicolas Oury and Wouter Swierstra have already shown that dependent types are natural fit for fully typing the relational algebra\cite{OurySwierstra08PowerOfPi}.
 Chapter~\ref{sec:typing_the_relational_algebra} provided a brief overview of their method.
 The goal of this thesis is to demonstrate that dependent types are also capable of typing differential privacy metrics with ease and we certainly believe this to be the case.
-Chapter~\ref{sec:function_sensitivity} showed just how easily metrics such as function sensitivity can be tracked using dependent types and Chapter~\ref{sec:our_implementation} put it all together into a completely type-safe, PINQ-like EDSL for Idris.
+Chapter~\ref{sec:function_sensitivity} showed how metrics such as function sensitivity can be tracked using dependent types and Chapter~\ref{sec:our_implementation} put it all together into a completely type-safe, PINQ-like EDSL for Idris.
 
 LINQ provides type-safety for most of the relational algebra.
 PINQ expands this safety to include privacy metrics, but it does so dynamically.
@@ -1328,7 +1326,7 @@ A specialized runtime system is required to prevent this kind of side-channel at
 Dependent type systems have benefitted from decades of research and come a long way from their purely academic origins.
 Languages like Agda\footnote{http://wiki.portal.chalmers.se/agda/pmwiki.php}, and more recently, Idris, provide the power of dependent types in a practical setting, allowing critical concepts, such as differential privacy constraints, to be recorded and mechanically verified at compile time.
 
-We believe that in spite of the limitations outlined above, dependent types are very capable of representing differential privacy metrics.
+We believe that in spite of the limitations outlined above, dependent types are capable of representing differential privacy metrics.
 DPDT is an EDSL prototype demonstrating exactly this point.
 Some of the limitations described above can probably be lifted with more work (e.g. recursive descent geometric series costs), but some are impossible (e.g. dynamic termination with equal cost iterations).
 
@@ -1364,7 +1362,7 @@ Reimplementing the \texttt{Private} monad from Chapter~\ref{sec:our_implementati
 There may be other opportunities for implementing components as effects.
 
 Type providers allow the Idris type-system to define and predicate types on input from the outside world.
-A classic example is grabbing schemas directly from the database itself, but this could easily be extended to also grab that data source's remaining privacy budget.
+A classic example is grabbing schemas directly from the database itself, but this could be extended to grab that data source's remaining privacy budget as well.
 DPDT's implementation could also be adjusted such that \texttt{PureFn} is disabled for backends which do not support it.
 The current implementation will quit with a runtime error.
 
@@ -1395,8 +1393,8 @@ Additionally, SQL-like syntax may not necessarily the best syntax.
 
 \chapter{Conclusion}\label{sec:conclusion}
 
-Dependent types are very capable of representing differential privacy metrics and constraints.
-The ability to verify differential privacy by construction is a very desirable property.
+Dependent types are capable of representing differential privacy metrics and constraints.
+The ability to verify differential privacy by construction is a desirable property.
 PINQ has demonstrated one method for achieving this, but PINQ relies on dynamic checks for private computations.
 DPDT aims to provide the same differential privacy guarantees as PINQ by allowing users to compose complex algorithms from secure primitives, but with improved type-safety.
 By lifting the privacy concerns into the type-system, DPDT is able to statically verify a differentially private program at compile-time.
@@ -1404,7 +1402,7 @@ Any program written in DPDT is guaranteed to be differentially private, because 
 
 PINQ can accomodate some types of algorithms which aren't possible in DPDT.
 This is an unfortunate consequence of requiring that it statically verify all differential privacy costs at compile time.
-We have shown that dependent types can easily handle differentially private queries (as opposed to algorithms).
+We have shown that dependent types are capable of handling differentially private queries (as opposed to algorithms).
 Independent queries can be run in any order and may as well be considered a single query costing the sum of the subqueries' costs.
 The same is true of a sequence of dependent queries if we know its exact length.
 However, DPDT can't know how many iterations a dynamically-terminating algorithm will require, so it won't be able to type that kind of algorithm.
@@ -1417,8 +1415,8 @@ Preventing this kind of attack requires a smart server implementation like the o
 
 Dependent types can fully represent the relational algebra and its contraints which have stumped lesser type-systems\cite{OurySwierstra08PowerOfPi}.
 We have shown that dependent types can also represent differential privacy metrics and their contraints---with some limitations on the types of algorithms that can be expressed.
-There are no limits on constructing independent, differentially-private queries, but dynamically terminating algorithms cannot easily be expressed because privacy constraints cannot be verified at compile-time.
-Despite this limitation, we believe that dependent types lend themselves very well to representing differential privacy metrics and constraints.
+There are no limits on constructing independent, differentially-private queries, but dynamically terminating algorithms cannot be expressed because privacy constraints cannot be verified at compile-time.
+Despite this limitation, we believe that dependent types lend themselves quite well to representing differential privacy metrics and constraints.
 
 \bibliographystyle{abbrv}
 \bibliography{main}
