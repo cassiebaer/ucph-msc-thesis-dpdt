@@ -12,7 +12,7 @@
 \usepackage{listings}
 \usepackage{idrislang}
 \usepackage{amsfonts,amsthm,amsmath}
-% \usepackage[margin=1.5in]{geometry}
+\usepackage[margin=3.25cm]{geometry}
 \usepackage[en,nat,farve,titelside]{ku-forside}
 
 \newtheorem{defn}{Definition}[section]
@@ -648,8 +648,7 @@ Recall that function sensitivity is a metric describing how much a function can 
 $$ \forall x,y.\; d(f(x),f(y)) \le c \times d(x,y) $$
 
 We want to reflect the sensitivity of a function in its type, so we will need to index the type on some numeric value.
-To keep this example simple, we will use \texttt{Float} to represent sensitivity, but our implementation uses an implementation of \texttt{Rational}s, which should be more stable numerically than IEEE floating point numbers.
-% TODO 1 : rewrite this sentence
+To keep the examples in this chapter simple, we will use \texttt{Float} to represent sensitivity, but our implementation actually uses an implementation of \texttt{Rational}s similar to that in Haskell's \texttt{Data.Ratio}.
 
 Listing~\ref{lst:rep_sens_fns} defines a type constructor indexed by the sensitivity and parameterized by its input and output types.
 It has just one data constructor which is used for wrapping native Idris functions.
@@ -932,10 +931,9 @@ Notice how type unification allows us to specify the first two constraints.
 The disjoint proof is only slightly more complex; but because it is decidable it can be automatically derived, so the users will be unaware of any additional complexity.
 
 In trying to emulate PINQ, we chose to focus most of our efforts on implementing an in-memory Idris backend.
-However, we believe that our abstract representation of the relational algebra allows for a wide variety of backends to be developed.
-% TODO 1 : "why do you believe that?"
-The exception to this is \texttt{PureFn}, which is only available to Idris-based backends (e.g. an Idris-based server a la LINQ providers).
-Many uses of \texttt{PureFn} could be replaced by extensions to the expression language.
+However, any backend which can be modelled with the relational algebra can be supported and queried in a differentially-private manner.
+The exception to this is the \texttt{PureFn} feature, which is only available to Idris-based backends (e.g. an Idris-based server a la LINQ providers).
+However, most uses of \texttt{PureFn} could be replaced by extensions to the expression language.
 
 There are two main components required to make a functioning backend implementation:
 1) an underlying data representation and
