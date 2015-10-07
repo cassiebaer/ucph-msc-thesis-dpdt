@@ -6,6 +6,7 @@
 
 \documentclass[12pt]{report}
 
+\usepackage{caption}
 \usepackage{graphicx}
 \usepackage{lmodern}
 \usepackage{listings}
@@ -41,7 +42,6 @@ postbreak=\raisebox{0ex}[0ex][0ex]{\ensuremath{\color{red}\hookrightarrow\space}
 % TODO 1 : add problem statement to introduction
 % TODO 1 : improve introduction by giving it structure
 % TODO 1 : merge motivation from diff.priv. into intro.
-% TODO 1 : improve captions for all figures
 % TODO 1 : improve evaluation by focusing on Hypothesis / Conclusion
 % TODO 1 : improve evaluation by comparing # of programs in PINQ vs DPDT
 
@@ -72,6 +72,8 @@ However, a large number of side-channel attacks that PINQ is unable to stop are 
 
 \clearpage
 \tableofcontents
+\clearpage
+\listoffigures
 \clearpage
 
 \chapter{Introduction}\label{sec:introduction}
@@ -242,7 +244,7 @@ See Figure~\ref{fig:fn_sens} for a visualization of function sensitivity on $\ma
     \centering
     \def\svgwidth{\columnwidth}
     \input{assets/RealDistances.pdf_tex}
-    \caption{Real distances and sensitivities}
+    \caption{Visualizing function sensitivity on $\mathbb{R}$}
     \label{fig:fn_sens}
 \end{figure}
 
@@ -354,16 +356,15 @@ When we run an aggregation, we need to randomize the output to satisfy indisting
 If not, an attacker can draft clever aggregations to deduce private information about particular individuals.
 Noising a result before returning it gives database participants plausible deniability.
 The aggregation function from earlier will no longer be enough to determine whether any records in the database are related to Alice.
+See Figure~\ref{fig:indistinguishability} for a visualization of indistinguishability.
 
 \begin{figure}
     \centering
     \def\svgwidth{\columnwidth}
     \input{assets/Indistinguishability.pdf_tex}
-    \caption{Indistinguishability}
+    \caption{Visualizing indistinguishability with sample PDFs from a counting query on $D_1$ and $D_2$, where $D_1\sim D_2$}
+    \label{fig:indistinguishability}
 \end{figure}
-% TODO 1 : refer to this figure in the text
-% TODO 1 : improve caption for this figure in particular
-%          it should be able to stand on its own
 
 The differential privacy community has largely settled on using the Laplace distribution for generating noise.
 There are a number of reasons for this, but the main ones concern symmetry and ease of scaling.
@@ -461,7 +462,7 @@ Our implementation computes the subinterval for the uniform random variable that
     \centering
     \def\svgwidth{\columnwidth}
     \input{assets/LaplaceCDF.pdf_tex}
-    \caption{Constrained sampling from the Laplace distribution in \lstinline{noisyAverage}}
+    \caption{Visualizing constrained sampling from the Laplace distribution (as in \lstinline{noisyAverage})}
 \end{figure}
 
 Of course, the decision to clamp values to the interval $[-1,+1]$ will require analysts to pre-process their data.
@@ -831,9 +832,11 @@ See Figure~\ref{fig:expr_tree} for an example of a simple singly-typed expressio
 \begin{figure}[h!]
     \centering
     \includegraphics[width=0.25\linewidth]{assets/expr_tree.png}
-    \caption{Example Expression Tree $(1 + 2 \times 3)$}
+    \caption{Visualizing expression trees with an example of a simple integer arithmetic expression $(1 + 2 \times 3)$}
     \label{fig:expr_tree}
 \end{figure}
+
+% TODO 2 : make a figure of a Query tree showing the types
 
 The return type of the tree in Figure~\ref{fig:expr_tree} is obvious, but what type will a more complex tree from our expression langage have?
 Expressions cannot change the schema, so that must remain constant even as the tree grows.
