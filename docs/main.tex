@@ -1168,44 +1168,11 @@ Therefore, the cost of the entire computation is 1.
 
 Every time we run \texttt{testCountAlices}, we will get a different response because of the Laplacian noise being added to the result.
 Given the \texttt{people} table from Listing~\ref{lst:example_data_people}, we can describe from the outset what we expect the distribution of this query to look like (assuming an infinite budget).
-The mean should approach one as we increase the number of samples (because there is one Alice).
-The Laplace probability density function (PDF) is densest at its center and quickly tapers off according to the diversity parameter, $b$.
-Therefore, we expect the majority of results to lie within $1 \pm 2.5b$, where $b=1/\epsilon$ is the diversity parameter.
-Table~\ref{tab:testCountAlices_results} contains a statistical summary of running \texttt{testCountAlices} 1000 times.
-% TODO 1 : "why is this important"
+Figure~\ref{fig:indistinguishability} shows the PDF curves for \texttt{countAlices} being run on a database with and a database without Alice.
+Given a single value sampled from either of those two PDFs, an analyst will have no way of telling which PDF it came from.
 
-\begin{table}[h!]
-  \caption{Expected and actual results of \texttt{testCountAlices}}
-  \label{tab:testCountAlices_results}
-  \centering
-
-  \begin{tabular}{|l|rr|}
-  \hline
-
-  \hline
-  \textbf{} & \textbf{Expected} & \textbf{Actual} \\
-  \hline
-    N          &             -  &   1000 \\
-    5\% perc.  & $\approx -1.5$ & -1.346 \\
-    95\% perc. & $\approx +3.5$ &  3.406 \\
-    Min        &             -  &  -4.78 \\
-    Max        &             -  &  6.527 \\
-    Mean       &             1  & 1.0033 \\
-  \hline
-
-  \hline
-  \end{tabular}
-\end{table}
-
-{\color{red}
-  N.B. These numbers were actually calculated using real random numbers from RANDOM.ORG.
-  The Idris psuedo-random number generator (PRNG) is a simple linear recurrence generator which unfortunately skews the Laplace distribution to the left by $0.2b$.
-  We will implement Mersenne-Twister ASAP!
-% TODO 5 : implement a better PRNG
-}
-
-Of course, we shouldn't be allowed to run that query 1,000 times (unless our privacy budget were that big) to learn the true mean.
-In fact, it is more likely that an analyst will have enough budget to run the query just a few times.
+Of course, the analyst could try to sample multiple times, averaging the results, to learn the true mean.
+DPDT allows this, but the type system ensures that the cost of the query increases accordingly.
 Listing~\ref{lst:nested_aggrs} contains an example of how a malicious analyst might try to average a few queries.
 
 \begin{lstlisting}[caption={Counting Alices (revisited)},label={lst:nested_aggrs}]
@@ -1221,7 +1188,7 @@ tripleCountAlice = do x <- noisyCount alices 1
 tripleCountAlice' : Private 3 Double
 tripleCountAlice' = noisyCount alices 3
 
--- Sample outputs
+-- Sample outputs from running the same query
 
 > evalPrivateIO tripleCountAlice
 0.37815165965182446 : Double
@@ -1232,8 +1199,8 @@ tripleCountAlice' = noisyCount alices 3
 
 The cost of the computation increases each time the analyst tries to extract information from the database, regardless of how it is used.
 In fact, \texttt{tripleCountAlice} and \texttt{tripleCountAlice'} are functionally equivalent.
-% TODO 1 : "why?"
-The analyst is unable to learn anything the privacy budget does not allow.
+They are asking for the same thing at the same privacy cost; therefore, their representative PDFs will be equal.
+The analyst is limited by the privacy budget.
 
 \section{Standing on the shoulders of giants}
 
