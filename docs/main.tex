@@ -6,12 +6,13 @@
 
 \documentclass[12pt]{report}
 
+\usepackage{caption}
 \usepackage{graphicx}
 \usepackage{lmodern}
 \usepackage{listings}
 \usepackage{idrislang}
 \usepackage{amsfonts,amsthm,amsmath}
-% \usepackage[margin=1.5in]{geometry}
+\usepackage[margin=3.25cm]{geometry}
 \usepackage[en,nat,farve,titelside]{ku-forside}
 
 \newtheorem{defn}{Definition}[section]
@@ -41,9 +42,6 @@ postbreak=\raisebox{0ex}[0ex][0ex]{\ensuremath{\color{red}\hookrightarrow\space}
 % TODO 1 : add problem statement to introduction
 % TODO 1 : improve introduction by giving it structure
 % TODO 1 : merge motivation from diff.priv. into intro.
-% TODO 1 : use \chapter
-% TODO 1 : improve captions for all figures
-% TODO 1 : grep for all uses of very/easy/easily
 % TODO 1 : improve evaluation by focusing on Hypothesis / Conclusion
 % TODO 1 : improve evaluation by comparing # of programs in PINQ vs DPDT
 
@@ -74,6 +72,8 @@ However, a large number of side-channel attacks that PINQ is unable to stop are 
 
 \clearpage
 \tableofcontents
+\clearpage
+\listoffigures
 \clearpage
 
 \chapter{Introduction}\label{sec:introduction}
@@ -244,11 +244,11 @@ See Figure~\ref{fig:fn_sens} for a visualization of function sensitivity on $\ma
     \centering
     \def\svgwidth{\columnwidth}
     \input{assets/RealDistances.pdf_tex}
-    \caption{Real distances and sensitivities}
+    \caption{Visualizing function sensitivity on $\mathbb{R}$}
     \label{fig:fn_sens}
 \end{figure}
 
-Simple functions on $\mathbb R$ and one dimensional distance functions are not very interesting.
+Simple functions on $\mathbb R$ and one dimensional distance functions are not particularly interesting.
 However, function sensitivity can be applied much more generally and to much more interesting domains, such as databases containing sensitive information (e.g. Alice's tax records or health information).
 
 We will use $\mathbb D$ to describe the domain of all possible databases.
@@ -356,21 +356,20 @@ When we run an aggregation, we need to randomize the output to satisfy indisting
 If not, an attacker can draft clever aggregations to deduce private information about particular individuals.
 Noising a result before returning it gives database participants plausible deniability.
 The aggregation function from earlier will no longer be enough to determine whether any records in the database are related to Alice.
+See Figure~\ref{fig:indistinguishability} for a visualization of indistinguishability.
 
 \begin{figure}
     \centering
     \def\svgwidth{\columnwidth}
     \input{assets/Indistinguishability.pdf_tex}
-    \caption{Indistinguishability}
+    \caption{Visualizing indistinguishability with sample PDFs from a counting query on $D_1$ and $D_2$, where $D_1\sim D_2$}
+    \label{fig:indistinguishability}
 \end{figure}
-% TODO 1 : refer to this figure in the text
-% TODO 1 : improve caption for this figure in particular
-%          it should be able to stand on its own
 
 The differential privacy community has largely settled on using the Laplace distribution for generating noise.
 There are a number of reasons for this, but the main ones concern symmetry and ease of scaling.
 The Laplace distribution resembles a symmetric exponential distribution.
-Its diversity parameter, or ``width'', scales very easily with $\epsilon$.
+Its diversity parameter, or ``width'', scales predictably with $\epsilon$.
 In fact, any $c$-sensitive function can be made differentially private easily.
 
 \begin{defn}
@@ -463,7 +462,7 @@ Our implementation computes the subinterval for the uniform random variable that
     \centering
     \def\svgwidth{\columnwidth}
     \input{assets/LaplaceCDF.pdf_tex}
-    \caption{Constrained sampling from the Laplace distribution in \lstinline{noisyAverage}}
+    \caption{Visualizing constrained sampling from the Laplace distribution (as in \lstinline{noisyAverage})}
 \end{figure}
 
 Of course, the decision to clamp values to the interval $[-1,+1]$ will require analysts to pre-process their data.
@@ -628,6 +627,7 @@ head (x :: xs) Refl = x
 Don't worry too much about the proof is constructed for now.
 For proofs which are easily machine-checkable, Idris allows us to mark them as implicit arguments.
 The compiler will automatically search for and provide the correct proof if possible so the developer doesn't have to.
+In the event that it is unable to find a sufficient proof, the compiler will abort compilation with a descriptive error message.
 
 \begin{lstlisting}[caption={Automatic proof derivation},label={lst:auto_proof_example}]
 head : (xs : List a) -> { auto p : isCons xs = True } -> a
@@ -643,14 +643,12 @@ The compiler will complain if it is unable to find a proof automatically, requir
 This chapter demonstrate how we use dependent types to model function sensitivity in Idris.
 
 Modelling function sensitivity with dependent types is straight-forward.
-In fact, Idris makes it very easy.
 Recall that function sensitivity is a metric describing how much a function can amplify the distances between pairs of objects.
 
 $$ \forall x,y.\; d(f(x),f(y)) \le c \times d(x,y) $$
 
 We want to reflect the sensitivity of a function in its type, so we will need to index the type on some numeric value.
-To keep this example simple, we will use \texttt{Float} to represent sensitivity, but our implementation uses an implementation of \texttt{Rational}s, which should be more stable numerically than IEEE floating point numbers.
-% TODO 1 : rewrite this sentence
+To keep the examples in this chapter simple, we will use \texttt{Float} to represent sensitivity, but our implementation actually uses an implementation of \texttt{Rational}s similar to that in Haskell's \texttt{Data.Ratio}.
 
 Listing~\ref{lst:rep_sens_fns} defines a type constructor indexed by the sensitivity and parameterized by its input and output types.
 It has just one data constructor which is used for wrapping native Idris functions.
@@ -833,9 +831,11 @@ See Figure~\ref{fig:expr_tree} for an example of a simple singly-typed expressio
 \begin{figure}[h!]
     \centering
     \includegraphics[width=0.25\linewidth]{assets/expr_tree.png}
-    \caption{Example Expression Tree $(1 + 2 \times 3)$}
+    \caption{Visualizing expression trees with an example of a simple integer arithmetic expression $(1 + 2 \times 3)$}
     \label{fig:expr_tree}
 \end{figure}
+
+% TODO 2 : make a figure of a Query tree showing the types
 
 The return type of the tree in Figure~\ref{fig:expr_tree} is obvious, but what type will a more complex tree from our expression langage have?
 Expressions cannot change the schema, so that must remain constant even as the tree grows.
@@ -881,7 +881,7 @@ It is derived automatically, so users of our language should never have to worry
 
 The core of the relational algebra consists of the query operators, which we model as follows.
 \texttt{Query} is implemented as a data family, allowing us to adjust its internal data representation just enough to implement a variety of backends.
-In particular, the representation of tables is very backend specific.
+In particular, the representation of tables is backend specific.
 For example, an in-memory Idris backend might store pointers directly to the tables in memory, whereas a SQL backend might just store the name of the table as a string.
 One of the benefits of this is that any dataset which can be modelled using the relational algebra is usable.
 
@@ -927,14 +927,13 @@ namespace Examples
 Recall that the set operators require additional constraints that less powerful type systems have a difficult time capturing.
 Set union and difference require that the two operands share matching schemas.
 Cartesian product requires that they be disjoint.
-Notice how easily type unification allows us to express the first two constraints.
+Notice how type unification allows us to specify the first two constraints.
 The disjoint proof is only slightly more complex; but because it is decidable it can be automatically derived, so the users will be unaware of any additional complexity.
 
 In trying to emulate PINQ, we chose to focus most of our efforts on implementing an in-memory Idris backend.
-However, we believe that our abstract representation of the relational algebra allows for a wide variety of backends to be developed.
-% TODO 1 : "why do you believe that?"
-The exception to this is \texttt{PureFn}, which is only available to Idris-based backends (e.g. an Idris-based server a la LINQ providers).
-Many uses of \texttt{PureFn} could be replaced by extensions to the expression language.
+However, any backend which can be modelled with the relational algebra can be supported and queried in a differentially-private manner.
+The exception to this is the \texttt{PureFn} feature, which is only available to Idris-based backends (e.g. an Idris-based server a la LINQ providers).
+However, most uses of \texttt{PureFn} could be replaced by extensions to the expression language.
 
 There are two main components required to make a functioning backend implementation:
 1) an underlying data representation and
@@ -1145,7 +1144,7 @@ people = MkPINQuery $ Table [ [ "Alice"  , 40 ]
                             ]
 \end{lstlisting}
 
-Let us consider some very primitive queries and their responses.
+Let us consider some primitive queries and their responses.
 First, we will try to determine whether Alice's records are included in the database.
 This simple example demonstrates several components of our implementation: the expression language, a transformation, and a differentially private mechanism: \texttt{noisyCount}.
 
@@ -1169,44 +1168,11 @@ Therefore, the cost of the entire computation is 1.
 
 Every time we run \texttt{testCountAlices}, we will get a different response because of the Laplacian noise being added to the result.
 Given the \texttt{people} table from Listing~\ref{lst:example_data_people}, we can describe from the outset what we expect the distribution of this query to look like (assuming an infinite budget).
-The mean should approach one as we increase the number of samples (because there is one Alice).
-The Laplace probability density function (PDF) is densest at its center and quickly tapers off according to the diversity parameter, $b$.
-Therefore, we expect the majority of results to lie within $1 \pm 2.5b$, where $b=1/\epsilon$ is the diversity parameter.
-Table~\ref{tab:testCountAlices_results} contains a statistical summary of running \texttt{testCountAlices} 1000 times.
-% TODO 1 : "why is this important"
+Figure~\ref{fig:indistinguishability} shows the PDF curves for \texttt{countAlices} being run on a database with and a database without Alice.
+Given a single value sampled from either of those two PDFs, an analyst will have no way of telling which PDF it came from.
 
-\begin{table}[h!]
-  \caption{Expected and actual results of \texttt{testCountAlices}}
-  \label{tab:testCountAlices_results}
-  \centering
-
-  \begin{tabular}{|l|rr|}
-  \hline
-
-  \hline
-  \textbf{} & \textbf{Expected} & \textbf{Actual} \\
-  \hline
-    N          &             -  &   1000 \\
-    5\% perc.  & $\approx -1.5$ & -1.346 \\
-    95\% perc. & $\approx +3.5$ &  3.406 \\
-    Min        &             -  &  -4.78 \\
-    Max        &             -  &  6.527 \\
-    Mean       &             1  & 1.0033 \\
-  \hline
-
-  \hline
-  \end{tabular}
-\end{table}
-
-{\color{red}
-  N.B. These numbers were actually calculated using real random numbers from RANDOM.ORG.
-  The Idris psuedo-random number generator (PRNG) is a simple linear recurrence generator which unfortunately skews the Laplace distribution to the left by $0.2b$.
-  We will implement Mersenne-Twister ASAP!
-% TODO 5 : implement a better PRNG
-}
-
-Of course, we shouldn't be allowed to run that query 1,000 times (unless our privacy budget were that big) to learn the true mean.
-In fact, it is more likely that an analyst will have enough budget to run the query just a few times.
+Of course, the analyst could try to sample multiple times, averaging the results, to learn the true mean.
+DPDT allows this, but the type system ensures that the cost of the query increases accordingly.
 Listing~\ref{lst:nested_aggrs} contains an example of how a malicious analyst might try to average a few queries.
 
 \begin{lstlisting}[caption={Counting Alices (revisited)},label={lst:nested_aggrs}]
@@ -1222,7 +1188,7 @@ tripleCountAlice = do x <- noisyCount alices 1
 tripleCountAlice' : Private 3 Double
 tripleCountAlice' = noisyCount alices 3
 
--- Sample outputs
+-- Sample outputs from running the same query
 
 > evalPrivateIO tripleCountAlice
 0.37815165965182446 : Double
@@ -1233,8 +1199,8 @@ tripleCountAlice' = noisyCount alices 3
 
 The cost of the computation increases each time the analyst tries to extract information from the database, regardless of how it is used.
 In fact, \texttt{tripleCountAlice} and \texttt{tripleCountAlice'} are functionally equivalent.
-% TODO 1 : "why?"
-The analyst is unable to learn anything the privacy budget does not allow.
+They are asking for the same thing at the same privacy cost; therefore, their representative PDFs will be equal.
+The analyst is limited by the privacy budget.
 
 \section{Standing on the shoulders of giants}
 
@@ -1283,7 +1249,7 @@ We implemented an example of differentially private k-means clustering in DPDT.
 
 However, using dependent types to verify differential privacy metrics does prevent some types of algorithms from being expressible in DPDT.
 Our implementation of k-means can only run for a predetermined number of iterations.
-Computing the total cost of running it is as easy as multiplying the cost of an iteration with the total number of iterations.
+Computing the total cost of running it is accomplished by multiplying the cost of an iteration with the total number of iterations.
 
 However, k-means can also be developed with a criteria function for dynamic termination.
 How do we compute the total cost of an algorithm when we don't know how many iterations it will run through before terminating (if it even does)?
@@ -1305,7 +1271,7 @@ It may be possible for us to extend the \texttt{Sensitivity} type and convince t
 Nicolas Oury and Wouter Swierstra have already shown that dependent types are natural fit for fully typing the relational algebra\cite{OurySwierstra08PowerOfPi}.
 Chapter~\ref{sec:typing_the_relational_algebra} provided a brief overview of their method.
 The goal of this thesis is to demonstrate that dependent types are also capable of typing differential privacy metrics with ease and we certainly believe this to be the case.
-Chapter~\ref{sec:function_sensitivity} showed just how easily metrics such as function sensitivity can be tracked using dependent types and Chapter~\ref{sec:our_implementation} put it all together into a completely type-safe, PINQ-like EDSL for Idris.
+Chapter~\ref{sec:function_sensitivity} showed how metrics such as function sensitivity can be tracked using dependent types and Chapter~\ref{sec:our_implementation} put it all together into a completely type-safe, PINQ-like EDSL for Idris.
 
 LINQ provides type-safety for most of the relational algebra.
 PINQ expands this safety to include privacy metrics, but it does so dynamically.
@@ -1328,7 +1294,7 @@ A specialized runtime system is required to prevent this kind of side-channel at
 Dependent type systems have benefitted from decades of research and come a long way from their purely academic origins.
 Languages like Agda\footnote{http://wiki.portal.chalmers.se/agda/pmwiki.php}, and more recently, Idris, provide the power of dependent types in a practical setting, allowing critical concepts, such as differential privacy constraints, to be recorded and mechanically verified at compile time.
 
-We believe that in spite of the limitations outlined above, dependent types are very capable of representing differential privacy metrics.
+We believe that in spite of the limitations outlined above, dependent types are capable of representing differential privacy metrics.
 DPDT is an EDSL prototype demonstrating exactly this point.
 Some of the limitations described above can probably be lifted with more work (e.g. recursive descent geometric series costs), but some are impossible (e.g. dynamic termination with equal cost iterations).
 
@@ -1364,7 +1330,7 @@ Reimplementing the \texttt{Private} monad from Chapter~\ref{sec:our_implementati
 There may be other opportunities for implementing components as effects.
 
 Type providers allow the Idris type-system to define and predicate types on input from the outside world.
-A classic example is grabbing schemas directly from the database itself, but this could easily be extended to also grab that data source's remaining privacy budget.
+A classic example is grabbing schemas directly from the database itself, but this could be extended to grab that data source's remaining privacy budget as well.
 DPDT's implementation could also be adjusted such that \texttt{PureFn} is disabled for backends which do not support it.
 The current implementation will quit with a runtime error.
 
@@ -1395,8 +1361,8 @@ Additionally, SQL-like syntax may not necessarily the best syntax.
 
 \chapter{Conclusion}\label{sec:conclusion}
 
-Dependent types are very capable of representing differential privacy metrics and constraints.
-The ability to verify differential privacy by construction is a very desirable property.
+Dependent types are capable of representing differential privacy metrics and constraints.
+The ability to verify differential privacy by construction is a desirable property.
 PINQ has demonstrated one method for achieving this, but PINQ relies on dynamic checks for private computations.
 DPDT aims to provide the same differential privacy guarantees as PINQ by allowing users to compose complex algorithms from secure primitives, but with improved type-safety.
 By lifting the privacy concerns into the type-system, DPDT is able to statically verify a differentially private program at compile-time.
@@ -1404,7 +1370,7 @@ Any program written in DPDT is guaranteed to be differentially private, because 
 
 PINQ can accomodate some types of algorithms which aren't possible in DPDT.
 This is an unfortunate consequence of requiring that it statically verify all differential privacy costs at compile time.
-We have shown that dependent types can easily handle differentially private queries (as opposed to algorithms).
+We have shown that dependent types are capable of handling differentially private queries (as opposed to algorithms).
 Independent queries can be run in any order and may as well be considered a single query costing the sum of the subqueries' costs.
 The same is true of a sequence of dependent queries if we know its exact length.
 However, DPDT can't know how many iterations a dynamically-terminating algorithm will require, so it won't be able to type that kind of algorithm.
@@ -1417,8 +1383,8 @@ Preventing this kind of attack requires a smart server implementation like the o
 
 Dependent types can fully represent the relational algebra and its contraints which have stumped lesser type-systems\cite{OurySwierstra08PowerOfPi}.
 We have shown that dependent types can also represent differential privacy metrics and their contraints---with some limitations on the types of algorithms that can be expressed.
-There are no limits on constructing independent, differentially-private queries, but dynamically terminating algorithms cannot easily be expressed because privacy constraints cannot be verified at compile-time.
-Despite this limitation, we believe that dependent types lend themselves very well to representing differential privacy metrics and constraints.
+There are no limits on constructing independent, differentially-private queries, but dynamically terminating algorithms cannot be expressed because privacy constraints cannot be verified at compile-time.
+Despite this limitation, we believe that dependent types lend themselves quite well to representing differential privacy metrics and constraints.
 
 \bibliographystyle{abbrv}
 \bibliography{main}
