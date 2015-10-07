@@ -23,7 +23,7 @@
 }
 \title{Differential Privacy with Dependent Types}
 \undertitel{or: How I Learned to Stop Worrying and Love Dependent Types}
-\vejleder{Ken Friis Larsen}
+\vejleder{Supervised by Ken Friis Larsen}
 \dato{November 11, 2015}
 
 
@@ -38,7 +38,17 @@ breaklines=true,
 postbreak=\raisebox{0ex}[0ex][0ex]{\ensuremath{\color{red}\hookrightarrow\space}}
 }
 
+% TODO 1 : add problem statement to introduction
+% TODO 1 : improve introduction by giving it structure
+% TODO 1 : merge motivation from diff.priv. into intro.
+% TODO 1 : use \chapter
+% TODO 1 : improve captions for all figures
+% TODO 1 : grep for all uses of very/easy/easily
+% TODO 1 : improve evaluation by focusing on Hypothesis / Conclusion
+% TODO 1 : improve evaluation by comparing # of programs in PINQ vs DPDT
+
 \graphicspath{{assets/}}
+
 \begin{abstract}
 Differental privacy is an emerging field for ensuring the privacy of individuals whose sensitive data is in a data set.
 It differs from partition-based anonymization methods like \textit{k-anonymization} in that auxiliary data about the individuals does not pose a threat to their privacy guarantees.
@@ -55,8 +65,11 @@ In addition, our query language is completely type-safe in all its relational al
 
 Limitations of DPDT in comparison to PINQ are backend support, and expressibility in some cases.
 However, a large number of side-channel attacks that PINQ is unable to stop are impossible in our language.
-
 \end{abstract}
+
+\clearpage
+\tableofcontents
+\clearpage
 
 \section{Introduction}\label{sec:introduction}
 
