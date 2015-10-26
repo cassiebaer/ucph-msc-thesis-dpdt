@@ -33,6 +33,3 @@ data Expr : (s:Schema) -> (t:Type) -> Type where
 
 infixl 9 ^
 
-getType : Expr _ t -> Type
-getType {t} _ = t
--- TODO : Check whether getType is used anywhere

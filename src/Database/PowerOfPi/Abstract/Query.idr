@@ -13,19 +13,18 @@ mutual
     ||| Represents raw data as a Query.
     Table   : t s -> Query t s
     ||| Represents the union of two queries.
-    Union   : Query t s -> Query t s -> Query t s 
+    Union   : Query t s -> Query t s -> Query t s
     ||| Represents the set difference of two queries.
-    Diff    : Query t s -> Query t s -> Query t s 
+    Diff    : Query t s -> Query t s -> Query t s
     ||| Represents the cartesian product of two queries.
     ||| N.B. Currently not safe because Disjoint is not implemented.
     Product : Query t s -> Query t s' -> { auto p : Disjoint s s' } -> Query t (s ++ s')
     ||| Represents the projection of a new schema onto a Query.
     Projection : (f:String -> Maybe String) -> Query t s -> Query t (projectedSchema f s)
     ||| Represents selection on a Query using the given expression.
-    Select  : Expr s Bool -> Query t s -> Query t s 
+    Select  : Expr s Bool -> Query t s -> Query t s
     ||| Represents a lookup into the result of a GroupBy
     Lookup  : Eq k => k -> Grouping t s k -> Query t s
-    -- TODO: Check that Lookup is not harmful to D.P.
 
   data Grouping : (t:Schema -> Type) -> (s:Schema) -> (k:Type) -> Type where
     ||| Represents the grouping of a query into an associative map
