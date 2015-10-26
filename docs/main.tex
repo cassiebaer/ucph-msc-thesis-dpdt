@@ -12,7 +12,7 @@
 \usepackage{listings}
 \usepackage{idrislang}
 \usepackage{amsfonts,amsthm,amsmath}
-\usepackage[margin=3.25cm]{geometry}
+\usepackage[margin=3.5cm]{geometry}
 \usepackage[en,nat,farve,titelside]{ku-forside}
 
 \newtheorem{defn}{Definition}[section]
@@ -40,17 +40,15 @@ postbreak=\raisebox{0ex}[0ex][0ex]{\ensuremath{\color{red}\hookrightarrow\space}
 }
 
 % TODO 1 : add problem statement to introduction
-% TODO 1 : improve introduction by giving it structure
-% TODO 1 : merge motivation from diff.priv. into intro.
 % TODO 1 : improve evaluation by focusing on Hypothesis / Conclusion
 % TODO 1 : improve evaluation by comparing # of programs in PINQ vs DPDT
 
 \graphicspath{{assets/}}
 
 \begin{abstract}
-With personal data being stored on servers that could be anywhere in the world, privacy is becoming an important point of discussion in modern societies.
-The data is potentially very useful, but cannot be released in its raw form.
-Differental privacy is an emerging field for ensuring the privacy of individuals participating in a sensitive database.
+With more personal data being stored in the ``cloud'' every day, privacy is becoming an important topic for public discussion.
+Private data is potentially quite useful, but cannot be released in its raw form due to privacy concerns.
+Differental privacy is an emerging field of research aiming to protect the privacy of individuals participating in a database while maximizing its utility.
 
 PINQ is a framework for the C\# enforcing differential privacy constraints over top of the popular integrated query language, LINQ.
 Users are able to build complex, differentially-private queries from a few carefully implemented primitives.
@@ -88,97 +86,46 @@ Many countries even require legal privacy guarantees for systems maintaining sen
 However, our medical records contain valuable information for researchers aiming to understand health trends in our society.
 
 The benefits of ubiquitous data are not limited to medicine, either.
-``Big Data'' is a hot buzzword right now and for good reason: almost everything we do is being quantified and recorded.
-Imagine the potential insights we as a society could discover about ourselves with unlimited access to all of our own data.
+``Big Data'' is a hot buzzword right now for good reason: almost every action we make in the digital world is quantified and recorded.
+Imagine the potential insights we, as a society, could discover about ourselves with unlimited access to all of our own data.
 We are faced with a classic balancing act: how do we protect the privacy of the individual while maximizing the usefulness of our data?
 
+\section{Differential Privacy}\label{sec:intro-diffpriv}
+
 Differential privacy is an emerging field aiming to answer this question\cite{journals/cacm/Dwork11}.
+Databases containing large amounts of personal data can be tremendously valuable for researchers looking into a variety of important questions.
+For example, epidemiologists may be able to detect and prevent the spread of disease and doctors may be able to monitor and/or analyze the long-term health trends of a population over time.
+Big Data offers us new opportunities for learning about ourselves, but the value of these databases is held under lock and key for privacy concerns.
+
+Many approaches have been devised for sharing data while respecting privacy.
+One approach, which has received significant news\footnotemark[\ref{fn:aol}] coverage\footnotemark[\ref{fn:twitter}] a few times\footnotemark[\ref{fn:netflix}] by now\footnotemark[\ref{fn:gic}], is to try to anonymize or otherwise ``fuzz'' a dataset before releasing it to the public.
+However, it is now evident that it is not possible to release a database that is both accurate enough to be useful and that respects the privacy of its participants\cite{journals/cacm/Dwork11}.
+
 One of the key ideas in differential privacy is that of indistinguishability, i.e. a query against a dataset should return more-or-less the same result regardless of whether or not Alice's records are included in the data.
 If the results are indistinguishable, with or without Alice's data, then the contents of her records must be indistinguishable, too.
 
 Indistinguishability is achieved by combining the true (distinguishable) result of a query with random noise.
 However, the addition of noise is insufficient by itself to guarantee privacy.
-A malicious data analyst could repeat semantically equivalent queries and compute the average of the results, eventually approaching the true mean as he runs more and more queries.
-How can this be prevented?
+A malicious data analyst could just repeat semantically equivalent queries and compute the average of the results, eventually approaching the true mean as he runs more and more queries.
+This susceptibility to repeated queries is one of the major factors preventing anonymization of a database without greatly affecting its utility.
+How can attacks like this be prevented?
+
 By imposing a hard limit on how many queries can be run against the data set.
 A \textit{privacy budget} is a value which limits the number of queries that can be run against a particular data set.
 Each query has a cost associated with it which is subtracted from the budget when it is evaluated.
 The data set is destroyed when the privacy budget is depleted.
 
-Many algorithms and metrics have been developed by the differential privacy community.
-Each algorithm is typically bundled with some sort of proof that it meets some privacy constraints or has some other privacy-related properties.
-The burden of producing such a proof and algorithm is typically manual, and therefore error-prone.
+\subsection{Almost Perfect Anonymity}
+% TODO 5 : discuss "perfect secrecy" parallels?
 
-PINQ is a differential privacy framework that takes a different approach\cite{conf/sigmod/McSherry09}.
-It is an embedded, SQL-like \textit{domain specific language} (DSL) for the Microsoft .NET languages which guarantees differential privacy by construction.
-Users of PINQ are able to compose carefully implemented primitives to build differentially private computations.
-The composition of these primitives happens according to well-defined rules, allowing PINQ to track privacy metrics as users build complex differentially private algorithms.
-A trusted runtime-system tracks and rejects queries whose cost exceed the remaining privacy budget.
-
-PINQ and its trusted system manage the budget at runtime.
-An analyst has no way of knowing whether a query will be accepted without manually tracking their budget.
-Reed and Pierce solve this by building a strongly-typed programming language which represents query costs in the types\cite{conf/icfp/ReedP10}.
-We aim to build on this idea by demonstrating that a dependent type system is a natural fit for capturing differential privacy requirements.
-
-Strongly-typed programming languages are capable of statically verifying programs for type-correctness, precluding many potential sources of runtime errors: ``well-typed programs can't go wrong''.
-We extend this notion of being ``well-typed'' to include differential privacy metrics.
-Just as PINQ is embedded in the .NET languages (particularly C\#), we plan to embed our implementation within the dependently-typed, functional programming language: Idris\footnote{http://idris-lang.org}.
-This allows us to take advantage of Idris' parser and advanced type checker, as well as the many improvements continually being made by Idris' active open-source community.
-
-Well-typed programs in our embedded language can't go wrong and also can't violate their privacy requirements.
-Formal proofs for type-correct algorithms written in our language are unnecessary - the program itself is the proof.
-Thus, all type-correct programs must respect expected privacy constraints.
-
-\section{Contributions}
-
-This paper describes a prototype implementation of an \textit{embedded domain specific language} (EDSL), \texttt{DPDT}, for describing differentially private computations using dependent types.
-Originally limited to a handful of academic proof assistants, dependently-typed languages have a come a long way since Per Martin-L\"of presented his intuitionistic type theory (TT)\cite{mlitt}.
-General purpose, practical programming languages such as Agda\footnote{http://wiki.portal.chalmers.se/agda/pmwiki.php} and Idris are under active development.
-We show that dependent types are a natural fit for describing and verifying differential privacy constraints.
-
-We implemented a fully-typed abstract language for describing the relational algebra; and we developed a simple in-memory Idris database backend for it.
-Our main contribution is the layering of differential privacy metrics into the types over top of the fully-typed relational algebra.
-PINQ's differential privacy metrics are checked dynamically at runtime, whereas our privacy layer leverages the power of dependent types to verify that privacy constraints are not violated \textit{at compile time}.
-
-% TODO 5 : add more contributions if there are any. noisyAverage improvement? improved PRNG? contributions to idris-dev
-
-\paragraph{Outline}
-
-In Chapter~\ref{sec:differential_privacy}, we cover some necessary background for understanding the basics of differential privacy.
-Chapter~\ref{sec:dependent_types_in_idris} serves as a brief tutorial to Idris with a focus on the language features we make use of in our implementation.
-Chapter~\ref{sec:function_sensitivity} combines the contents of the previous two chapters in an example implementation of function sensitivity.
-Chapter~\ref{sec:typing_the_relational_algebra} reviews the relational algebra and how we represent it using dependent types.
-Chapter~\ref{sec:our_implementation} covers the differential privacy layer that we built over top of the fully-typed relational algebra.
-We evaluate our work in Chapter~\ref{sec:evaluation} and provide concluding remarks in Chapter~\ref{sec:conclusion}.
-
-\chapter{Differential Privacy}\label{sec:differential_privacy}
-
-In this chapter, we describe some of the central ideas and metrics behind differential privacy.
-We begin by motivating the necessity for differential privacy before moving on to outlining the key concepts used in our implementation.
-
-In today's ``Big Data'' world, more and more of our data is being stored on servers belonging to others.
-Even though it may feel like it, we are not the consumers of free online services: we are the product.
-But regardless of whether we freely volunteered it, were legally compelled to share it, or just bought something online, we have a reasonable expectation to privacy of our data.
-
-However, databases containing large amounts of personal data can be tremendously valuable for researchers looking into a variety of important questions.
-For example, epidemiologists may be able to detect and prevent the spread of disease and doctors may be able to monitor and/or analyze the long-term health trends of a population over time.
-Big Data offers us huge potential for learning about ourselves, but most of these databases are held under lock and key.
-How to best balance database utility with individual privacy is the question differential privacy aims to answer.
-
-Many approaches have been devised for sharing data while respecting privacy.
-One approach, which has made news\footnotemark[\ref{fn:aol}] headlines\footnotemark[\ref{fn:twitter}] a few times\footnotemark[\ref{fn:netflix}] by now\footnotemark[\ref{fn:gic}], is to anonymize or otherwise ``fuzz'' a dataset before releasing it to the public.
-However, it is now evident that it is not possible to release a database that is both accurate enough to be useful and that respects the privacy of the participants\cite{journals/cacm/Dwork11}.
-
-Differential privacy aims to maximize database utility while minimizing the risk for all individuals contained within\cite{journals/cacm/Dwork11}.
-Traditionally, privacy research has focused on preventing a malicious attacker from learning anything about a particular individual (e.g. our dear friend Alice from the cryptography community).
-However, this has proved to be nearly impossible in the presence of auxiliary information.
+Traditional privacy research has focused on preventing a malicious attacker from learning anything about a particular individual (e.g. our dear friend Alice from the cryptography community).
+However, this has proven to be nearly impossible in the presence of auxiliary information.
 Ganta et al. showed that \textit{k-anonymity} and other proposed partition-based anonymization approaches are vulnerable to composition attacks\cite{ganta2008composition}.
 A composition attack is performed on an ``anonymized'' data set by matching it with auxiliary data, such as data from the web, public records, or domain knowledge.
-With this technique, an attacker might be able to deduce information about Alice's records in the anonymized set.
+With this technique, an attacker might be able to deduce information about Alice's records in an ``anonymized'' set.
 
 Compositions attacks are not only interesting to academics, either.
 AOL\footnote{\label{fn:aol} http://arstechnica.com/business/2006/09/7835/}, Twitter\footnote{\label{fn:twitter}http://arstechnica.com/tech-policy/2009/03/pulling-back-the-curtain-on-anonymous-twitterers/}, Netflix\footnote{\label{fn:netflix}http://arstechnica.com/tech-policy/2009/09/your-secrets-live-online-in-databases-of-ruin/}, and the Massachusetts Group Insurance Commission (GIC) database\footnote{\label{fn:gic}http://web.mit.edu/sem083/www/assignments/reidentification.html} have all suffered publicly in the wakes of linkage attacks.
-% TODO 5 : talk about the parallel to cryptography guarantees
 
 Rather than trying to prove the impossibility of a privacy breach, differential privacy guarantees that a users participation in a database can only increase their risk of a privacy breach by some negligible amount.
 This is true regardless of how much auxiliary information a would-be attacker knows or might learn in the future.
@@ -197,7 +144,59 @@ If the coin reads ``heads,'' he/she answers truthfully.
 The net result is that $1/2$ of the responses are ``Yes'' by default, while the other half should be a representative sampling of the population.
 Thus, if researchers using randomized response find that 70\% of participants admit to an illegal activity, they will know that the true percentage is actually around 40\% and all database participants are given plausible deniability.
 
-The rest of this chapter will focus on specific ideas from the differential privacy literature as it relates to the implementation of our language, DPDT.
+\subsection{Algorithms and Metrics}
+
+Many algorithms and metrics have been developed by the differential privacy community.
+Each algorithm is typically bundled with some sort of proof that it meets some privacy constraints or has some other privacy-related properties.
+The burden of producing such a proof and algorithm is typically manual, and therefore error-prone.
+
+PINQ is a differential privacy framework that takes a different approach\cite{conf/sigmod/McSherry09}.
+It is an embedded, SQL-like \textit{domain specific language} (DSL) for the Microsoft .NET languages which guarantees differential privacy by construction.
+Users of PINQ are able to compose carefully implemented primitives to build differentially private computations.
+The composition of these primitives happens according to well-defined rules, allowing PINQ to track privacy metrics as users build complex differentially private algorithms.
+A trusted runtime-system tracks and rejects queries whose cost exceed the remaining privacy budget.
+
+PINQ and its trusted system manage the budget at runtime.
+An analyst has no way of knowing whether a query will be accepted without manually tracking their budget.
+Reed and Pierce solve this by building a strongly-typed programming language which represents query costs in the types\cite{conf/icfp/ReedP10}.
+We aim to build on this idea by demonstrating that a dependent type system is a natural fit for capturing differential privacy requirements.
+
+\section{Dependent Types}\label{sec:intro-deptyps}
+% TODO 1 : add more about what dep.typ.s are
+% TODO 1 : add problem statement / hypothesis
+
+Strongly-typed programming languages are capable of statically verifying programs for type-correctness, precluding many potential sources of runtime errors: ``well-typed programs can't go wrong''.
+We extend this notion of being ``well-typed'' to include differential privacy metrics.
+Just as PINQ is embedded in the .NET languages (particularly C\#), we plan to embed our implementation within the dependently-typed, functional programming language Idris\footnote{http://idris-lang.org}.
+This allows us to take advantage of Idris' parser and advanced type-checker, as well as the many improvements continually being made by Idris' active open-source community.
+
+Well-typed programs in our embedded language can't go wrong and also can't violate their privacy requirements.
+Formal proofs for type-correct algorithms written in our language are unnecessary - the program itself is the proof.
+Thus, all type-correct programs must respect expected privacy constraints.
+
+\section{Contributions}
+
+This paper describes a prototype implementation of an \textit{embedded domain specific language} (EDSL), \texttt{DPDT}, for describing differentially private computations using dependent types.
+Originally limited to a handful of academic proof assistants, dependently-typed languages have a come a long way since Per Martin-L\"of presented his intuitionistic type theory (TT)\cite{mlitt}.
+General purpose, practical programming languages such as Agda\footnote{http://wiki.portal.chalmers.se/agda/pmwiki.php} and Idris are under active development.
+We show that dependent types are a natural fit for describing and verifying differential privacy constraints.
+
+We implemented a fully-typed abstract language for describing the relational algebra; and we developed a simple in-memory Idris database backend for it.
+Our main contribution is the layering of differential privacy metrics into the types over top of the fully-typed relational algebra.
+PINQ's differential privacy metrics are checked dynamically at runtime, whereas our privacy layer leverages the power of dependent types to verify that privacy constraints are not violated \textit{at compile time}.
+
+\paragraph{Outline}
+
+In Chapter~\ref{sec:differential_privacy}, we cover some necessary background for understanding the basics of differential privacy.
+Chapter~\ref{sec:dependent_types_in_idris} serves as a brief tutorial to Idris with a focus on the language features we make use of in our implementation.
+Chapter~\ref{sec:function_sensitivity} combines the contents of the previous two chapters in an example implementation of function sensitivity.
+Chapter~\ref{sec:typing_the_relational_algebra} reviews the relational algebra and how we represent it using dependent types.
+Chapter~\ref{sec:our_implementation} covers the differential privacy layer that we built over top of the fully-typed relational algebra.
+We evaluate our work in Chapter~\ref{sec:evaluation} and provide concluding remarks in Chapter~\ref{sec:conclusion}.
+
+\chapter{Differential Privacy}\label{sec:differential_privacy}
+
+In this chapter, we will focus on specific ideas from the differential privacy literature as it relates to the implementation of our language, DPDT.
 In particular, we will discuss function sensitivity, which is a relative measure of how much a function can magnify the distances between collections of objects; and indistinguishability, which is the key idea which quantifies what it means for a computation to be differentially private.
 Finally, we describe PINQ, the framework that allows users to build differentially private computations by construction.
 
