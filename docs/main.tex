@@ -151,7 +151,7 @@ Many algorithms and metrics have been developed by the differential privacy comm
 Each algorithm is typically bundled with some sort of proof that it meets some privacy constraints or has some other privacy-related properties.
 The burden of producing such a proof and algorithm is typically manual, and therefore error-prone.
 
-PINQ is a differential privacy framework that takes a different approach\cite{conf/sigmod/McSherry09}.
+PINQ is a differential privacy framework that takes a different approach\cite{mcsherry2010privacy}.
 It is an embedded, SQL-like \textit{domain specific language} (DSL) for the Microsoft .NET languages which guarantees differential privacy by construction.
 Users of PINQ are able to compose carefully implemented primitives to build differentially private computations.
 The composition of these primitives happens according to well-defined rules, allowing PINQ to track privacy metrics as users build complex differentially private algorithms.
@@ -253,7 +253,7 @@ However, function sensitivity can be applied much more generally and to much mor
 
 We will use $\mathbb D$ to describe the domain of all possible databases.
 Hence, a function $f : \mathbb D \rightarrow \mathbb D$ is an endomorphism for databases.
-The distance between two databases is their symmetric difference; i.e. $d_{\mathbb D}(D_1,D_2) = | D_1 \oplus D_2 |$.
+The distance between two databases is their symmetric difference; i.e. $d_{\mathbb D}(D_1,D_2) = | D_1 \ominus D_2 |$.
 
 There is a special case that turns up often in the differential privacy literature.
 We are primarily concerned with whether a particular individual's records are included in the database or not, so we often focus on adjacent databases.
@@ -393,12 +393,21 @@ LINQ is a query DSL written for the .NET languages allowing users to manipulate 
 In LINQ terminology, these operations are called transformations.
 Our work includes a fully-typed LINQ-like implementation in Idris (\texttt{Database.PowerOfPi.Idris}).
 
-PINQ's big contribution is the addition of a privacy layer around the LINQ query language.
+PINQ's primary contribution is the addition of a privacy layer around the LINQ query language.
 The majority of operations available in LINQ have also been made available in PINQ.
-However, some transformations cannot be made differentially private and have been removed.
-The word ``stability'' is commonly used when discussing sensitivity in the context of database transformations.
-Each PINQ transformation is stability-aware and knows how to compose its stability with that of others.
-Section~\ref{subsec:fn_sens} contained a proof that the filter transformation (selection) is 1-sensitive (or 1-stable).
+However, some transformations cannot be made differentially private and have been modified or removed.
+The word ``stability'' is commonly used when discussing a concept similar to function sensitivity in the context of database transformations.
+
+\begin{defn}
+A transformation $T$ is $c$-stable if for all pairs of input databases, $A$ and $B$,
+$$
+  |T(A)\ominus T(B)| \le c \times | A \ominus B |
+$$
+\end{defn}
+
+Not all transformations from the LINQ API are $c$-stable for finite values of $c$.
+In these cases, PINQ provides modified, boundable versions.
+As an example, see Section~\ref{subsec:fn_sens} for a proof that the filter transformation (selection) is 1-stable.
 Similar proofs exist for all of the other transformations provided by PINQ\cite{conf/sigmod/McSherry09}.
 
 \subsection{Aggregations}
@@ -476,7 +485,8 @@ Idris is a general purpose, pure functional programming language with dependent 
 Dependent types allow types to be predicated on values.
 This allows developers to describe many aspects of a program in the types which can be mechanically verified by the compiler.
 
-This section serves as an introduction to some of Idris' interesting language features.
+This section serves only as a brief overview to some of Idris' interesting language features.
+For a more complete introduction, see the Idris tutorial\footnote{http://docs.idris-lang.org/en/latest/tutorial/index.html}.
 We assume a basic familiarity with functional programming languages.
 First, we outline the basic capabilities of dependent types with the classic vector example.
 Then, we will move on to introduce some of Idris' features which we used in our implementation of DPDT.
