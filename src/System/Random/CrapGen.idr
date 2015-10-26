@@ -1,5 +1,4 @@
 module System.Random.CrapGen
-import public Data.Double
 %default total
 {-
    CrapGen comes directly from Idris' own Effect.Random module.
