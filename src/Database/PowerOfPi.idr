@@ -8,8 +8,7 @@ namespace Attribute
     (:::) : String -> Type -> Attribute
   infix 8 :::
 
-  -- TODO : Implement equality check for Type as well?
-  ||| N.B. Equality is currently only based on names!
+  ||| Attribute equality is based only on their names!
   instance Eq Attribute where
     (==) (n:::t) (n':::t') = n == n'
 
@@ -127,27 +126,24 @@ mutual
     ||| Represents the partitioning of a query into a dictionary
     Partition : Eq k => List k -> Expr s k -> Query t s -> Partitioning t s k
 
-getSchema : Query b s -> Schema
-getSchema {s} _ = s
-
 namespace Aggregations
 
   ||| Represents an aggregation of a typed query tree.
   |||
   ||| @a The resulting type of the aggregation
-  data QueryAggregation : (t:Schema -> Type) -> (s:Schema) -> (a:Type) -> Type where
+  data Aggregation : (t:Schema -> Type) -> (s:Schema) -> (a:Type) -> Type where
     ||| Represents an arbitrary aggregation
-    Aggregation : Query t s -> (a -> a -> a) -> a -> Expr s a -> QueryAggregation t s a
+    MkAggregation : Query t s -> (a -> a -> a) -> a -> Expr s a -> Aggregation t s a
     ||| Represents an arbitrary aggregation over a monoid
-    AggregationM : (Monoid a) => Query t s -> Expr s a -> QueryAggregation t s a
+    MkAggregationM : (Monoid a) => Query t s -> Expr s a -> Aggregation t s a
 
 namespace CommonAggregations
 
   ||| Counts the number of rows in a Query
-  count : Query t s -> QueryAggregation t s Nat
-  count q = Aggregation q (+) 0 (Lit 1)
+  count : Query t s -> Aggregation t s Nat
+  count q = MkAggregation q (+) 0 (Lit 1)
 
   ||| Computes the sum of the expression applied to each row.
-  sum : Num a => Query t s -> Expr s a -> QueryAggregation t s a
-  sum q e = Aggregation q (+) 0 e
+  sum : Num a => Query t s -> Expr s a -> Aggregation t s a
+  sum q e = MkAggregation q (+) 0 e
 

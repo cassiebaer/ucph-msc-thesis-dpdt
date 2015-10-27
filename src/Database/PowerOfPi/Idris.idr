@@ -24,9 +24,6 @@ project f (r::rs) {s=n:::t::as} with (f n)
   project f (r::rs) {s=n:::t::as} | Nothing = project f rs
   project f (r::rs) {s=n:::t::as} | Just n' = r :: project f rs
 
-getSchema : List $ Row s -> Schema
-getSchema {s} _ = s
-
 ----------------------------------------------------------------
 
 ||| Get the value of an attribute given a proof that the
@@ -93,10 +90,8 @@ mutual
     eval : (q:Partitioning Table s k) -> GroupingMap k s
     eval (Partition ks e q) = mkPartitionMap ks e (eval q)
 
-namespace QueryAggregation
+  namespace Aggregation
 
-  eval : QueryAggregation Table s a -> a
-  eval (Aggregation  q f z e) = foldr f z (map (eval e) (eval q))
-  eval (AggregationM q e)     = foldr (<+>) neutral (map (eval e) (eval q))
-
-
+    eval : Aggregation Table s a -> a
+    eval (MkAggregation  q f z e) = foldr f z (map (eval e) (eval q))
+    eval (MkAggregationM q e)     = foldr (<+>) neutral (map (eval e) (eval q))
