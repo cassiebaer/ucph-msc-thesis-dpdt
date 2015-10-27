@@ -1,8 +1,8 @@
-module Database.PINQ.SQLite
+module Database.DPDT.SQLite
 
 import public Data.Rational
-import public Database.PowerOfPi.SQLite -- TODO : should be public?
-import public Database.PINQ
+import public Database.PowerOfPi.SQLite
+import public Database.DPDT
 
 %default total
 
@@ -14,10 +14,10 @@ signum : String -> String
 signum x = "(CASE WHEN " ++ x ++ " < 0 THEN -1 ELSE 1 END)"
 
 samplePure : Double -> Double -> String
-samplePure mu b = "("   ++ show mu ++ 
-                  " - " ++ show b ++ 
-                  " * " ++ signum rndVar ++ 
-                  " * log(1 - 2 * abs(" ++ rndVar ++ "))" 
+samplePure mu b = "("   ++ show mu ++
+                  " - " ++ show b ++
+                  " * " ++ signum rndVar ++
+                  " * log(1 - 2 * abs(" ++ rndVar ++ "))"
 
 
 noisyCount : (PINQuery SQLiteTable s c) -> (e:Epsilon) -> Private (c*e) String

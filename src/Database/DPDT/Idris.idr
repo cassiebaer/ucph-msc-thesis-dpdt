@@ -1,8 +1,8 @@
-module Database.PINQ.Idris
+module Database.DPDT.Idris
 
 import public Data.Rational
-import public Database.PowerOfPi.Idris -- TODO : should be public?
-import public Database.PINQ
+import public Database.PowerOfPi.Idris
+import public Database.DPDT
 
 import System.Random.CrapGen
 import Statistics.Distribution.Laplace
@@ -22,7 +22,7 @@ bounds width tally = let lb = cdf 0 width (-1 - tally)
                       in (lb,ub)
 
 noisyCount : (PINQuery Table s c) -> (e:Epsilon) -> Private (c*e) Double
-noisyCount (MkPINQuery q) eps = MkPrivate $ \g => 
+noisyCount (MkPINQuery q) eps = MkPrivate $ \g =>
   let (rx,g') = rndDouble g
       noise   = samplePure 0 (1 / toFloat eps) rx
       count   = the Double $ fromInteger $ fromNat $ length (eval q)

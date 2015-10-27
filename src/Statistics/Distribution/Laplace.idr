@@ -1,7 +1,6 @@
 module Statistics.Distribution.Laplace
 
 import Data.Floats
-import Data.Double
 
 ||| Returns the sign of the given number.
 signum : Double -> Double

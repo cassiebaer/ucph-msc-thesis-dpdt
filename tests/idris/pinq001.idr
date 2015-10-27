@@ -1,6 +1,6 @@
 module Main
 
-import Database.PINQ.Idris
+import Database.DPDT.Idris
 import Statistics.Distribution.Laplace
 import Statistics.Distribution.Summary
 import System.Random.CrapGen
