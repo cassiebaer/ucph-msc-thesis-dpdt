@@ -1,3 +1,0 @@
-package RelAlg
-
-modules = Expr, Query
