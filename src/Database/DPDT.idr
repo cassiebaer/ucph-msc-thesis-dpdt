@@ -40,7 +40,7 @@ intersect : Query b s c -> Query b s c' -> Query b s (c + c')
 intersect (MkQuery q) (MkQuery q') = MkQuery (Diff q q')
 
 groupBy : Eq k => Expr s k -> Query b s c -> Grouping b s k (c * 2)
-groupBy e (MkQuery q) = MkGrouping (GroupBy e q)
+groupBy e (MkQuery q) = MkGrouping (MkGrouping e q)
 
 lookup : Eq k => k -> Grouping b s k c -> Query b s c
 lookup k (MkGrouping q) = MkQuery (Lookup k q)

@@ -4,6 +4,8 @@ import Data.Dictionary
 import Data.List
 import public Database.PowerOfPi
 
+%default total
+
 ||| Represents a row in a table.
 ||| We impose an Eq constraint for the Expr language.
 data Row : Schema -> Type where
@@ -76,19 +78,18 @@ mutual
     eval (Product x y)    = [ x' ++ y' | x' <- eval x, y' <- eval y ]
     eval (Projection f x) = map (project f) (eval x)
     eval (Select e x)     = filter (eval e) (eval x)
-    --eval (GroupBy e x)    = constructMap e $ eval x
     eval (Lookup k group) = lookupWithDefault [] k (eval group)
 
   namespace Grouping
 
     %assert_total
     eval : (q:Grouping Table s k) -> GroupingMap k s
-    eval (GroupBy e q) = mkGroupingMap e (eval q)
+    eval (MkGrouping e q) = mkGroupingMap e (eval q)
 
   namespace Partitioning
 
     eval : (q:Partitioning Table s k) -> GroupingMap k s
-    eval (Partition ks e q) = mkPartitionMap ks e (eval q)
+    eval (MkPartitioning ks e q) = mkPartitionMap ks e (eval q)
 
   namespace Aggregation
 
