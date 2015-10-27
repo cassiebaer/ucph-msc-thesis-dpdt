@@ -2,7 +2,7 @@ module Database.PowerOfPi.Idris.Query
 
 import Data.Dictionary
 import Data.List
-import Database.PowerOfPi.Abstract
+import Database.PowerOfPi
 import Database.PowerOfPi.Idris.Expr
 import Database.PowerOfPi.Idris.Types
 %default total
