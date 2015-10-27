@@ -1,6 +1,6 @@
 module PINQ001
 
-import Database.PINQ.SQLite
+import Database.DPDT.SQLite
 import System.Random.CrapGen
 
 Person : Schema
@@ -25,7 +25,7 @@ namespace Aggregations
                                    return ((x+y)/2)
                                ) 123
 
-  --avgAge : 
+  --avgAge :
   --avgAge = noisyMean (MkPINQuery (Select (PureFn (>20) (Person^"Age"))
                                          --people))
 

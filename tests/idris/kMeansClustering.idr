@@ -1,6 +1,6 @@
 module kMeans
 
-import Database.PINQ.Idris
+import Database.DPDT.Idris
 import System.Random.CrapGen
 import Data.Floats
 import Data.Fin
@@ -48,7 +48,7 @@ classify ((MkClassifiedPoint center cl) :: centers) pt = classify' pt (dist cent
   classify' pt curDist curClass [] = curClass
   classify' pt curDist curClass ((MkClassifiedPoint center cl) :: centers) = let thisDist = (dist center pt)
                                                                      in if curDist > thisDist
-                                                                        then classify' pt thisDist cl centers 
+                                                                        then classify' pt thisDist cl centers
                                                                         else classify' pt curDist curClass centers
 
 ||| Initial cluster centers
@@ -57,13 +57,13 @@ initialCenters = [ MkClassifiedPoint (0,  1) 0,
             MkClassifiedPoint (-1,-1) 1,
             MkClassifiedPoint (1,  0) 2 ]
 
-classifyTest : classify initialCenters (1,0.9) = 2 
+classifyTest : classify initialCenters (1,0.9) = 2
 classifyTest = Refl
 
 ||| The classify function lifted up to an expression
 |||
 ||| @cc Cluster centers
-classifyExpr : (cc : Vect 3 (ClassifiedPoint 3)) -> Expr Point (Fin 3) 
+classifyExpr : (cc : Vect 3 (ClassifiedPoint 3)) -> Expr Point (Fin 3)
 classifyExpr centers = PureFn (classify centers) $ Couple (Point^"x") (Point^"y")
 
 ||| Update centers by calculating the mean of the points assigned to them
@@ -73,7 +73,7 @@ classifyExpr centers = PureFn (classify centers) $ Couple (Point^"x") (Point^"y"
 ||| @e Precission parameter
 updateCenters : (cc:Vect n (ClassifiedPoint 3)) -> (g:PINGrouping Table Point (Fin 3) c) -> (e:Epsilon) -> Vect n $ ClassifiedPoint 3
 updateCenters []                                    _      _ = []
-updateCenters ((MkClassifiedPoint _ cl) :: centers) groups e = 
+updateCenters ((MkClassifiedPoint _ cl) :: centers) groups e =
   let group     = lookup cl groups
       newCenter = evalPrivate ( do x <- noisyAverage (Point^"x") group e
                                    y <- noisyAverage (Point^"y") group e

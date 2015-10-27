@@ -1,4 +1,4 @@
-module Database.PINQ.Abstract.Types
+module Database.DPDT.Abstract.Types
 
 import Data.Rational
 import Database.PowerOfPi

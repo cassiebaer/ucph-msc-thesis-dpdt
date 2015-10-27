@@ -1,4 +1,4 @@
-module Database.PINQ.Types
+module Database.DPDT.Types
 
 import Data.So
 

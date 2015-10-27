@@ -1,8 +1,8 @@
-module Database.PINQ.Abstract.Aggregations
+module Database.DPDT.Abstract.Aggregations
 
 import Data.Rational
 import Database.PowerOfPi
-import Database.PINQ.Abstract.Types
+import Database.DPDT.Abstract.Types
 import Statistics.Distribution.Laplace
 import System.Random.CrapGen
 
@@ -19,7 +19,6 @@ return : a -> Private 0 a
 return x = MkPrivate $ \s => (x,s)
 
 ||| Sequencing primitive. Allows us to overload Idris' do-notation
-||| N.B. It may be necessary to prefix a 'do' with 'with PINQ '
 (>>=) : Private s a -> (a -> Private s' b) -> Private (s + s') b
 (>>=) (MkPrivate sf) f = MkPrivate $ \st => let (x,st1)       = sf st
                                                 MkPrivate sf' = f x

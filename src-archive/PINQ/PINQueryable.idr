@@ -1,6 +1,6 @@
-module Database.PINQ.PINQueryable
+module Database.DPDT.PINQueryable
 
-import Database.PINQ.Types
+import Database.DPDT.Types
 
 class PINQueryable (pinq : Type -> Type) where
 

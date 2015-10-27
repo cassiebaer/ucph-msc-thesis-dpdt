@@ -1,8 +1,8 @@
-module Database.PINQ.Abstract.PINQuery
+module Database.DPDT.Abstract.PINQuery
 
 import Data.Rational
 import Database.PowerOfPi
-import Database.PINQ.Abstract.Types
+import Database.DPDT.Abstract.Types
 
 -- Transformations work by unwrapping the Query from a PINQuery and rewrapping it with a new data and type constructor
 
