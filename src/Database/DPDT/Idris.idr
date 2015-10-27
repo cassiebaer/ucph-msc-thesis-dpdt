@@ -1,11 +1,11 @@
 module Database.DPDT.Idris
 
 import public Data.Rational
-import public Database.PowerOfPi.Idris
 import public Database.DPDT
+import public Database.PowerOfPi.Idris
 
-import System.Random.CrapGen
 import Statistics.Distribution.Laplace
+import System.Random.CrapGen
 %default total
 
 ||| Clamps a value to [-1.0,+1.0]
@@ -21,15 +21,15 @@ bounds width tally = let lb = cdf 0 width (-1 - tally)
                          ub = cdf 0 width ( 1 - tally)
                       in (lb,ub)
 
-noisyCount : (PINQuery Table s c) -> (e:Epsilon) -> Private (c*e) Double
-noisyCount (MkPINQuery q) eps = MkPrivate $ \g =>
+noisyCount : (Query Table s c) -> (e:Epsilon) -> Private (c*e) Double
+noisyCount (MkQuery q) eps = MkPrivate $ \g =>
   let (rx,g') = rndDouble g
       noise   = samplePure 0 (1 / toFloat eps) rx
       count   = the Double $ fromInteger $ fromNat $ length (eval q)
    in (count + noise, g')
 
-noisyAverage : Expr s Double -> (PINQuery Table s c) -> (e:Epsilon) -> Private (c*e) Double
-noisyAverage exp (MkPINQuery q) eps = MkPrivate $ \g =>
+noisyAverage : Expr s Double -> (Query Table s c) -> (e:Epsilon) -> Private (c*e) Double
+noisyAverage exp (MkQuery q) eps = MkPrivate $ \g =>
   let rs      = map (clamp . eval exp) (eval q)
       (tt,ct) = foldl (\(tt,ct),x => (tt+x,ct+1)) (0.0,0.0) rs
       trueAvg = tt / ct
