@@ -1,9 +1,9 @@
 package PowerOfPi
 
 modules = Database.PowerOfPi
-        , Database.PowerOfPi.Types
-        , Database.PowerOfPi.Expr
-        , Database.PowerOfPi.Query
+        , Database.PowerOfPi.Abstract.Types
+        , Database.PowerOfPi.Abstract.Expr
+        , Database.PowerOfPi.Abstract.Query
 
 sourcedir = src
 

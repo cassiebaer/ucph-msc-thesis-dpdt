@@ -52,7 +52,7 @@ namespace Diff
 namespace Product
 
   prodPeopleWithABC : List (Row (Person ++ ["Foo":::Char]))
-  prodPeopleWithABC = eval (Product people fooTable) where 
+  prodPeopleWithABC = eval (Product people fooTable) where
     fooTable : Query Table ["Foo":::Char]
     fooTable = Table [ [ 'A' ] , [ 'B' ] , [ 'C' ] ]
 
@@ -62,7 +62,7 @@ namespace Product
 namespace Projection
 
   projPeopleFirstNames : List (Row ["FirstName":::String])
-  projPeopleFirstNames = eval (Projection fooProj people) where 
+  projPeopleFirstNames = eval (Projection fooProj people) where
     fooProj : String -> Maybe String
     fooProj "Name" = Just "FirstName"
     fooProj _      = Nothing
@@ -70,7 +70,7 @@ namespace Projection
 namespace Select
 
   selectOneTable : List (Row Person)
-  selectOneTable = eval (Select expr people) where 
+  selectOneTable = eval (Select expr people) where
     expr : Expr Person Bool
     expr = (Person ^ "Age") == (Lit 25)
 
@@ -89,7 +89,7 @@ namespace Foo
 
   twentySixYOs : List (Row Person)
   twentySixYOs = eval $ Lookup 26 $ GroupBy (Person ^ "Age") people
-  
+
   length26YOs : length twentySixYOs = 2
   length26YOs = Refl
 
