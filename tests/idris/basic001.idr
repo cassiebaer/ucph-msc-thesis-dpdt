@@ -2,20 +2,23 @@ module Basic001
 
 import Database.PowerOfPi.Idris
 
+Query : Schema -> Type
+Query = Query ListRow
+
 Person : Schema
 Person = [ "Name" ::: String , "Age" ::: Nat ]
 
 Food : Schema
 Food = [ "Name" ::: String , "Food" ::: String ]
 
-people : Query Table Person
+people : Query Person
 people = Table [ [ "Casper" , 25 ]
                , [ "Knut"   , 26 ]
                , [ "Tor"    , 26 ]
                , [ "Gismo"  ,  2 ]
                ]
 
-foods : Query Table Food
+foods : Query Food
 foods = Table [ [ "Casper" , "Bruschetta" ]
               , [ "Knut"   , "Prim"       ]
               , [ "Gismo"  , "Dog food"   ]
@@ -23,13 +26,13 @@ foods = Table [ [ "Casper" , "Bruschetta" ]
 
 namespace Union
 
-  unionPeopleWithItself : Table Person
+  unionPeopleWithItself : ListRow Person
   unionPeopleWithItself = eval (people `Union` people)
 
   lengthUnionPeopleWithItself : length unionPeopleWithItself = 8
   lengthUnionPeopleWithItself = Refl
 
-  unionPeopleWithNew : Table Person
+  unionPeopleWithNew : ListRow Person
   unionPeopleWithNew = eval (people `Union` (Table [["Alice",18]]))
 
   lengthUnionPeopleWithNew : length unionPeopleWithNew = 5
@@ -37,7 +40,7 @@ namespace Union
 
 namespace Diff
 
-  diffPeopleWithItself : Table Person
+  diffPeopleWithItself : ListRow Person
   diffPeopleWithItself = eval (people `Diff` people)
 
   lengthDiffPeopleWithItself : length diffPeopleWithItself = 0
@@ -53,7 +56,7 @@ namespace Product
 
   prodPeopleWithABC : List (Row (Person ++ ["Foo":::Char]))
   prodPeopleWithABC = eval (Product people fooTable) where
-    fooTable : Query Table ["Foo":::Char]
+    fooTable : Query ["Foo":::Char]
     fooTable = Table [ [ 'A' ] , [ 'B' ] , [ 'C' ] ]
 
   lengthProdPeopleWithABC : length prodPeopleWithABC = 12
