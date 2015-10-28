@@ -17,7 +17,7 @@ data ClassifiedPoint : (k:Nat) -> Type where
 
 
 ||| Table of points
-points : Query Table Point 1
+points : Query ListRow Point 1
 points = MkQuery $ Table [ [ 0  , 0   ]
                             , [ 0.2, 0   ]
                             , [ 0.2 ,0.1 ]
@@ -71,7 +71,7 @@ classifyExpr centers = PureFn (classify centers) $ Couple (Point^"x") (Point^"y"
 ||| @cc Current cluster centers
 ||| @g Points grouped by cluster class index
 ||| @e Precission parameter
-updateCenters : (cc:Vect n (ClassifiedPoint 3)) -> (g:Grouping Table Point (Fin 3) c) -> (e:Epsilon) -> Vect n $ ClassifiedPoint 3
+updateCenters : (cc:Vect n (ClassifiedPoint 3)) -> (g:Grouping ListRow Point (Fin 3) c) -> (e:Epsilon) -> Vect n $ ClassifiedPoint 3
 updateCenters []                                    _      _ = []
 updateCenters ((MkClassifiedPoint _ cl) :: centers) groups e =
   let group     = lookup cl groups
@@ -81,7 +81,7 @@ updateCenters ((MkClassifiedPoint _ cl) :: centers) groups e =
   in (MkClassifiedPoint newCenter cl) :: updateCenters centers groups e
 
 ||| k-means clustering with x iterations.
-kMeans : (x:Nat) -> Vect 3 (ClassifiedPoint 3) -> Query Table Point c -> Epsilon -> Vect 3 (ClassifiedPoint 3)
+kMeans : (x:Nat) -> Vect 3 (ClassifiedPoint 3) -> Query ListRow Point c -> Epsilon -> Vect 3 (ClassifiedPoint 3)
 kMeans Z     centers q e = centers
 kMeans (S k) centers q e = let groups = groupBy (classifyExpr centers) q
                            in  kMeans k (updateCenters centers groups e) q e

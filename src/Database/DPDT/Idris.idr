@@ -5,7 +5,7 @@ import public Database.DPDT
 import public Database.PowerOfPi.Idris
 
 import Statistics.Distribution.Laplace
-import System.Random.CrapGen
+import public System.Random.CrapGen
 %default total
 
 ||| Clamps a value to [-1.0,+1.0]
@@ -21,14 +21,14 @@ bounds width tally = let lb = cdf 0 width (-1 - tally)
                          ub = cdf 0 width ( 1 - tally)
                       in (lb,ub)
 
-noisyCount : (Query Table s c) -> (e:Epsilon) -> Private (c*e) Double
+noisyCount : (Query ListRow s c) -> (e:Epsilon) -> Private (c*e) Double
 noisyCount (MkQuery q) eps = MkPrivate $ \g =>
   let (rx,g') = rndDouble g
       noise   = samplePure 0 (1 / toFloat eps) rx
       count   = the Double $ fromInteger $ fromNat $ length (eval q)
    in (count + noise, g')
 
-noisyAverage : Expr s Double -> (Query Table s c) -> (e:Epsilon) -> Private (c*e) Double
+noisyAverage : Expr s Double -> (Query ListRow s c) -> (e:Epsilon) -> Private (c*e) Double
 noisyAverage exp (MkQuery q) eps = MkPrivate $ \g =>
   let rs      = map (clamp . eval exp) (eval q)
       (tt,ct) = foldl (\(tt,ct),x => (tt+x,ct+1)) (0.0,0.0) rs
@@ -43,3 +43,11 @@ noisyAverage exp (MkQuery q) eps = MkPrivate $ \g =>
                           noise   = samplePure 0 width (rx * (ub-lb) + lb)
                        in (trueAvg + noise,g')
 
+namespace Grouping
+
+  noisyCount : (Grouping ListRow k s c) -> (e:Epsilon) -> Private (c*e) Double
+  noisyCount (MkGrouping q) eps = MkPrivate $ \g =>
+    let (rx,g') = rndDouble g
+        noise   = samplePure 0 (1 / toFloat eps) rx
+        count   = the Double $ fromInteger $ fromNat $ length (eval q)
+     in (count + noise, g')

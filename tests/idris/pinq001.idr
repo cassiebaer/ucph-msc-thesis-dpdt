@@ -5,13 +5,16 @@ import Statistics.Distribution.Laplace
 import Statistics.Distribution.Summary
 import System.Random.CrapGen
 
+Query : Schema -> Stability -> Type
+Query = Query ListRow
+
 Person : Schema
 Person = [ "Name" ::: String , "Age" ::: Double ]
 
 Food : Schema
 Food = [ "Name" ::: String , "Food" ::: String ]
 
-people : Query Table Person 1
+people : Query Person 1
 people = MkQuery $ Table [ [ "Alice"  , 40 ]
                             , [ "Casper" , 26 ]
                             , [ "Knut"   , 26 ]
@@ -19,7 +22,7 @@ people = MkQuery $ Table [ [ "Alice"  , 40 ]
                             , [ "Gismo"  ,  2 ]
                             ]
 
-foods : Query Table Food 1
+foods : Query Food 1
 foods = MkQuery ( Table [ [ "Casper" , "Bruschetta" ]
                            , [ "Knut"   , "Prim"       ]
                            , [ "Gismo"  , "Dog food"   ]

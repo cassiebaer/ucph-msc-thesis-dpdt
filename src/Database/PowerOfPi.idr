@@ -68,6 +68,7 @@ namespace Proofs
 |||
 ||| @ps The schema to check
 ||| @k  The name to look for
+%assert_total
 lookupType : (ps:Schema) -> (map cast ps) `ContainsKey` k -> Type
 lookupType (k:::v :: ps) Here = v
 lookupType (k':::v :: ps) (There x) = lookupType ps x

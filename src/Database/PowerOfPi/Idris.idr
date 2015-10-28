@@ -49,17 +49,18 @@ eval (PureFn f x)   r = f (eval x r)
 
 ----------------------------------------------------------------
 
-Table : Schema -> Type
-Table s = List (Row s)
+%assert_total
+ListRow : Schema -> Type
+ListRow s = List (Row s)
 
 GroupingMap : Type -> Schema -> Type
-GroupingMap k s = Dictionary k (List $ Row s)
+GroupingMap k s = Dictionary k (ListRow s)
 
-mkGroupingMap : Eq k => Expr s k -> Table s -> GroupingMap k s
+mkGroupingMap : Eq k => Expr s k -> ListRow s -> GroupingMap k s
 mkGroupingMap e []      = []
 mkGroupingMap e (r::rs) = insertWith (++) (eval e r) [r] (mkGroupingMap e rs)
 
-mkPartitionMap : Eq k => List k -> Expr s k -> Table s -> GroupingMap k s
+mkPartitionMap : Eq k => List k -> Expr s k -> ListRow s -> GroupingMap k s
 mkPartitionMap ks e []      = []
 mkPartitionMap ks e (r::rs) with (eval e r `elem` ks)
   mkPartitionMap ks e (r::rs) | False = mkPartitionMap ks e rs
@@ -71,7 +72,7 @@ mutual
 
     ||| Evaluates a Query, returning a Table s.
     %assert_total
-    eval : (q:Query Table s) -> Table s
+    eval : (q:Query ListRow s) -> ListRow s
     eval (Table xs)       = xs
     eval (Union x y)      = (eval x) ++ (eval y)
     eval (Diff x y)       = (eval x) \\ (eval y)
@@ -83,16 +84,16 @@ mutual
   namespace Grouping
 
     %assert_total
-    eval : (q:Grouping Table s k) -> GroupingMap k s
+    eval : (q:Grouping ListRow s k) -> GroupingMap k s
     eval (MkGrouping e q) = mkGroupingMap e (eval q)
 
   namespace Partitioning
 
-    eval : (q:Partitioning Table s k) -> GroupingMap k s
+    eval : (q:Partitioning ListRow s k) -> GroupingMap k s
     eval (MkPartitioning ks e q) = mkPartitionMap ks e (eval q)
 
   namespace Aggregation
 
-    eval : Aggregation Table s a -> a
+    eval : Aggregation ListRow s a -> a
     eval (MkAggregation  q f z e) = foldr f z (map (eval e) (eval q))
     eval (MkAggregationM q e)     = foldr (<+>) neutral (map (eval e) (eval q))

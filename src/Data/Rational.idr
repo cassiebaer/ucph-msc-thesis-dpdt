@@ -13,6 +13,7 @@ gcd x y = gcd' (abs x) (abs y)
   where gcd' a 0 = a
         gcd' a b = assert_total (gcd' b (a `mod` b))
 
+%assert_total
 reduce : Integer -> Integer -> Rational
 reduce x 0 = x :% 0
 reduce x y = case choose (d == 0) of

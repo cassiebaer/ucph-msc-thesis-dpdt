@@ -29,10 +29,6 @@ insertWith f k v ((k',v')::ps) = if k == k'
 ||| overwriting any previously existing value at that key.
 insert : Eq k => k -> v -> Dictionary k v -> Dictionary k v
 insert k v = insertWith (\_,new => new) k v
---insert k v []            = [(k,v)]
---insert k v ((k',v')::ps) = if k == k'
-                              --then (k',v)::ps
-                              --else (k',v')::insert k v ps
 
 ||| Looks up the value associated with a given key, and
 ||| if it doesn't exist, returns the provided default value.
