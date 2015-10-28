@@ -1,4 +1,4 @@
-module AOLData
+module Main
 
 import Database.DPDT.Idris
 
@@ -17,8 +17,16 @@ loadTable fname = do
   f <- map parseLine . lines <$> readFile fname
   return $ MkQuery (Table f)
 
+-- TODO 1 : FIX THIS! We need associativity: esp. with (fromInteger 1). Commutativity would be nice, too.
+-- (Try changing c*2*1 to anything else.)
+
+countUniqueAnonID : Query AOLSchema c -> Private (c*2*1) Double
+countUniqueAnonID q = do
+  let gq = groupBy (AOLSchema^"AnonID") q
+  noisyCount gq 1
+
 main : IO ()
 main = do
   t <- loadTable "tests/idris/AOL_sm.txt"
+  print $ evalPrivate (countUniqueAnonID t) 1238389612
   return ()
-
