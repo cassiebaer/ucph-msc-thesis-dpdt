@@ -77,10 +77,10 @@ namespace Select
   lengthSelectOneTable : length selectOneTable = 1
   lengthSelectOneTable = Refl
 
-namespace GroupBy
+namespace Grouping
 
   groupByAge : GroupingMap Nat Person
-  groupByAge = eval (GroupBy (Person ^ "Age") people)
+  groupByAge = eval (MkGrouping (Person ^ "Age") people)
 
   lengthGroupByAge : length groupByAge = 3
   lengthGroupByAge = Refl
@@ -88,7 +88,7 @@ namespace GroupBy
 namespace Foo
 
   twentySixYOs : List (Row Person)
-  twentySixYOs = eval $ Lookup 26 $ GroupBy (Person ^ "Age") people
+  twentySixYOs = eval $ Lookup 26 $ MkGrouping (Person ^ "Age") people
 
   length26YOs : length twentySixYOs = 2
   length26YOs = Refl
@@ -104,5 +104,5 @@ namespace Aggregation
 namespace Partition
 
   partitionByAge : GroupingMap Nat Person
-  partitionByAge = eval (Partition [2,26] (Person^"Age") people)
+  partitionByAge = eval (MkPartitioning [2,26] (Person^"Age") people)
 

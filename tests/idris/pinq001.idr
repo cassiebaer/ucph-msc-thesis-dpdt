@@ -11,16 +11,16 @@ Person = [ "Name" ::: String , "Age" ::: Double ]
 Food : Schema
 Food = [ "Name" ::: String , "Food" ::: String ]
 
-people : PINQuery Table Person 1
-people = MkPINQuery $ Table [ [ "Alice"  , 40 ]
+people : Query Table Person 1
+people = MkQuery $ Table [ [ "Alice"  , 40 ]
                             , [ "Casper" , 26 ]
                             , [ "Knut"   , 26 ]
                             , [ "Tor"    , 26 ]
                             , [ "Gismo"  ,  2 ]
                             ]
 
-foods : PINQuery Table Food 1
-foods = MkPINQuery ( Table [ [ "Casper" , "Bruschetta" ]
+foods : Query Table Food 1
+foods = MkQuery ( Table [ [ "Casper" , "Bruschetta" ]
                            , [ "Knut"   , "Prim"       ]
                            , [ "Gismo"  , "Dog food"   ]
                            ])
