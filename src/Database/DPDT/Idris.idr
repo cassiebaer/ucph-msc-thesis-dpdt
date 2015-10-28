@@ -5,7 +5,7 @@ import public Database.DPDT
 import public Database.PowerOfPi.Idris
 
 import Statistics.Distribution.Laplace
-import System.Random.CrapGen
+import public System.Random.CrapGen
 %default total
 
 ||| Clamps a value to [-1.0,+1.0]
@@ -43,3 +43,11 @@ noisyAverage exp (MkQuery q) eps = MkPrivate $ \g =>
                           noise   = samplePure 0 width (rx * (ub-lb) + lb)
                        in (trueAvg + noise,g')
 
+namespace Grouping
+
+  noisyCount : (Grouping ListRow k s c) -> (e:Epsilon) -> Private (c*e) Double
+  noisyCount (MkGrouping q) eps = MkPrivate $ \g =>
+    let (rx,g') = rndDouble g
+        noise   = samplePure 0 (1 / toFloat eps) rx
+        count   = the Double $ fromInteger $ fromNat $ length (eval q)
+     in (count + noise, g')

@@ -49,11 +49,12 @@ eval (PureFn f x)   r = f (eval x r)
 
 ----------------------------------------------------------------
 
+%assert_total
 ListRow : Schema -> Type
 ListRow s = List (Row s)
 
 GroupingMap : Type -> Schema -> Type
-GroupingMap k s = Dictionary k (List $ Row s)
+GroupingMap k s = Dictionary k (ListRow s)
 
 mkGroupingMap : Eq k => Expr s k -> ListRow s -> GroupingMap k s
 mkGroupingMap e []      = []
