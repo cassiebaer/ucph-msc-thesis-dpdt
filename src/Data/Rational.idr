@@ -35,6 +35,10 @@ infixr 7 //
 toFloat : Rational -> Float
 toFloat (x :% y) = fromInteger x / fromInteger y
 
+instance Show Rational where
+    show (x :% y) = parens (show x ++ " / " ++ show y)
+      where parens x = "(" ++ x ++ ")"
+
 instance Num Rational where
     (+) (n :% d) (n' :% d') = reduce (n*d' + n'*d) (d*d')
     (-) (n :% d) (n' :% d') = reduce (n*d' - n'*d) (d*d')
