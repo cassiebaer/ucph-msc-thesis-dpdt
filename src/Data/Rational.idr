@@ -5,35 +5,27 @@ import Data.So
 
 infixr 7 :%
 data Rational : Type where
-    (:%) : Integer -> Integer -> Rational
-
-gcd : Integer -> Integer -> Integer
-gcd 0 0 = 0
-gcd x y = gcd' (abs x) (abs y)
-  where gcd' a 0 = a
-        gcd' a b = assert_total (gcd' b (a `mod` b))
+    (:%) : Nat -> Nat -> Rational
 
 %assert_total
-reduce : Integer -> Integer -> Rational
-reduce x 0 = x :% 0
+reduce : Nat -> Nat -> Rational
+reduce x Z = x :% Z
 reduce x y = case choose (d == 0) of
                   (Left _)  => x :% y
                   (Right _) => assert_total ((x `div` d) :% (y `div` d))
-  where d : Integer
+  where d : Nat
         d = gcd x y
 
-signum : Integer -> Integer
-signum x = case compare x 0 of
-                LT => (-1)
-                EQ => 0
-                GT => 1
-
 infixr 7 //
-(//) : Integer -> Integer -> Rational
-(//) x y = reduce (x * signum y) (abs y)
+(//) : Nat -> Nat -> Rational
+(//) = reduce
 
 toFloat : Rational -> Float
-toFloat (x :% y) = fromInteger x / fromInteger y
+toFloat (x :% y) = cast x / cast y
+  where cast = fromInteger . fromNat
+
+fromNat : Nat -> Rational
+fromNat n = fromNat n // 1
 
 instance Show Rational where
     show (x :% y) = parens (show x ++ " / " ++ show y)
@@ -44,7 +36,7 @@ instance Num Rational where
     (-) (n :% d) (n' :% d') = reduce (n*d' - n'*d) (d*d')
     (*) (n :% d) (n' :% d') = reduce (n*n') (d*d')
     abs (n :% d) = abs n // d
-    fromInteger n = n // 1
+    fromInteger n = fromInteger n // 1
 
 instance Eq Rational where
     (==) (n :% d) (n' :% d') = n * d' == n' * d
