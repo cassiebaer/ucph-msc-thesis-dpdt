@@ -95,7 +95,8 @@ We are faced with a classic balancing act: how do we protect the privacy of the 
 Differential privacy is an emerging field aiming to answer this question\cite{journals/cacm/Dwork11}.
 Databases containing large amounts of personal data can be tremendously valuable for researchers looking into a variety of important questions.
 For example, epidemiologists may be able to detect and prevent the spread of disease and doctors may be able to monitor and/or analyze the long-term health trends of a population over time.
-Big Data offers us new opportunities for learning about ourselves, but the value of these databases is held under lock and key for privacy concerns.
+%TODO 3: Is "Monitor and/or" important in this sentence? Better flow without?
+Big Data offers us new opportunities for learning about ourselves, but the value of many of these databases is held under lock and key for privacy concerns.
 
 Many approaches have been devised for sharing data while respecting privacy.
 One approach, which has received significant news\footnotemark[\ref{fn:aol}] coverage\footnotemark[\ref{fn:twitter}] a few times\footnotemark[\ref{fn:netflix}] by now\footnotemark[\ref{fn:gic}], is to try to anonymize or otherwise ``fuzz'' a dataset before releasing it to the public.
@@ -167,7 +168,7 @@ We aim to build on this idea by demonstrating that a dependent type system is a 
 
 Strongly-typed programming languages are capable of statically verifying programs for type-correctness, precluding many potential sources of runtime errors: ``well-typed programs can't go wrong''.
 We extend this notion of being ``well-typed'' to include differential privacy metrics.
-Just as PINQ is embedded in the .NET languages (particularly C\#), we plan to embed our implementation within the dependently-typed, functional programming language Idris\footnote{http://idris-lang.org}.
+Just as PINQ is embedded in the .NET languages (particularly C\#), our implementation is embedded within the dependently-typed, functional programming language Idris\footnote{http://idris-lang.org}.
 This allows us to take advantage of Idris' parser and advanced type-checker, as well as the many improvements continually being made by Idris' active open-source community.
 
 Well-typed programs in our embedded language can't go wrong and also can't violate their privacy requirements.
@@ -1093,7 +1094,7 @@ Experienced functional programmers will probably recognize that \texttt{Private}
 Laplace noise requires pseudorandom number generation, so we are keeping track of a generator throughout the computation.
 
 Each aggregation is responsible for providing differential privacy.
-Our implementation provides several common aggregations, such as \texttt{noisyCount} and \texttt{noisyAverage}.
+Our implementation currently provides two common aggregations, \texttt{noisyCount} and \texttt{noisyAverage}.
 Experts will be able to write their own aggregations to provide to the public.
 
 Of course, aggregations alone are not sufficient for guaranteeing privacy.
