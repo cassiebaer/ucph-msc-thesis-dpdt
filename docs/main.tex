@@ -77,26 +77,34 @@ However, a large number of side-channel attacks that PINQ is unable to stop are 
 \chapter{Introduction}\label{sec:introduction}
 
 With each passing day, more and more of our personal information is being collected, cataloged and analyzed by an ever increasing number of interested parties.
-Their interests range from selective marketing of products and services to collecting business performance metrics and even to malicious and potentially illegal surveillance.
-We don't curate and control the data they are collecting and the data we produce often gives a better picture of who we are than any data we might try to curate and control.
-Therefore, as the producers of this data, we should be concerned with how it is being used.
+Their interests range from selective marketing to collecting business performance metrics and from publicly-funded academic research to unauthorized and potentially illegal surveillance.
+We aren't able to curate or control the data they are collecting about us.
+In fact, the ubiquity of automatic data collection probably gives them a better picture of you than they would get if you did curate and volunteer the data.
+Therefore, as the producers and descriptees of this data, we should be concerned with how it is being used.
 
-Our medical records consist of very personal information which we reasonably expect to remain private.
-Many countries even require legal privacy guarantees for systems maintaining sensitive information, e.g. the Health Insurance Portability and Acountability Act (HIPAA) in the USA.
-However, our medical records contain valuable information for researchers aiming to understand health trends in our society.
+There are many creative ways to use data and not all of them align so simply with ``good'' and ``bad''.
+Additionally, there is some information that a few trusted people (or systems) must know, but we might not necessarily want our nosy neighbor knowing.
+Publicly available data can also help researchers to discover or verify solutions for various societal problems.
 
-The benefits of ubiquitous data are not limited to medicine, either.
-``Big Data'' is a hot buzzword right now for good reason: almost every action we make in the digital world is quantified and recorded.
-Imagine the potential insights we, as a society, could discover about ourselves with unlimited access to all of our own data.
-We are faced with a classic balancing act: how do we protect the privacy of the individual while maximizing the usefulness of our data?
+Consider Alice's medical records.
+Alice's doctor should have access to this very sensitive information, but her neighbor and insurance salesman probably should not.
+Recognizing the importance of the right to privacy, some countries have imposed legal privacy requirements on systems maintaining sensitive information, such as medical records (e.g. the Health Insurance Portability and Accountability Act (HIPAA) in USA).
+However, Alice's medical records contain valuable data for researchers aiming to understand health trends in our society, but they can't access it without violating her privacy.
+
+Public health researchers would be able to monitor and analyze the long-term health trends of a population over time.
+Epidemiologists could detect infectious diseases early and prevent their spread.
+The benefits of increased data availability are not limited to public health, either.
+Databases containing large amounts of sensitive information can be tremendously valuable for researchers looking into a variety of important questions.
+
+Big data offers us an amazing opportunity for learning about us, but how do we do it without also learning about Alice (as an individual)?
+Differential privacy is an active field of research, with input from many different disciplines, that aims to answer this question\cite{journals/cacm/Dwork11}.
+The goal of differential privacy is to minimize the risk for the individual while maximizing the utility of the data.
+
+% TODO 1 : add problem statement
+% TODO 1 : maybe move contributions up here? or at least outline rest of chap.
+This thesis ...
 
 \section{Differential Privacy}\label{sec:intro-diffpriv}
-
-Differential privacy is an emerging field aiming to answer this question\cite{journals/cacm/Dwork11}.
-Databases containing large amounts of personal data can be tremendously valuable for researchers looking into a variety of important questions.
-For example, epidemiologists may be able to detect and prevent the spread of disease and doctors may be able to monitor and/or analyze the long-term health trends of a population over time.
-%TODO 3: Is "Monitor and/or" important in this sentence? Better flow without?
-Big Data offers us new opportunities for learning about ourselves, but the value of many of these databases is held under lock and key for privacy concerns.
 
 Many approaches have been devised for sharing data while respecting privacy.
 One approach, which has received significant news\footnotemark[\ref{fn:aol}] coverage\footnotemark[\ref{fn:twitter}] a few times\footnotemark[\ref{fn:netflix}] by now\footnotemark[\ref{fn:gic}], is to try to anonymize or otherwise ``fuzz'' a dataset before releasing it to the public.
