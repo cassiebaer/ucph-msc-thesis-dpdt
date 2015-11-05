@@ -10,7 +10,9 @@ namespace Attribute
 
   ||| Attribute equality is based only on their names!
   instance Eq Attribute where
-    (==) (n:::t) (n':::t') = n == n'
+    (==) (n:::_) (n':::_) with (decEq n n')
+      (==) (n:::_) (n':::_) | Yes _ = True
+      (==) (n:::_) (n':::_) | No _  = False
 
   instance Cast Attribute (Pair String Type) where
     cast (n ::: t) = (n,t)
@@ -48,6 +50,7 @@ namespace Proofs
       uninhabited Here      impossible
       uninhabited (There p) impossible
 
+  %assert_total
   decContainsKey : DecEq 'k => (ps:List ('k,'v)) -> (k:'k) -> Dec (ps `ContainsKey` k)
   decContainsKey [] k = No absurd
   decContainsKey ((a, b) :: ps) k with (decEq a k)
