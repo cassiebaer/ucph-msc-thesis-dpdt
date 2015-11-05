@@ -106,28 +106,46 @@ This thesis ...
 
 \section{Differential Privacy}\label{sec:intro-diffpriv}
 
-Many approaches have been devised for sharing data while respecting privacy.
-One approach, which has received significant news\footnotemark[\ref{fn:aol}] coverage\footnotemark[\ref{fn:twitter}] a few times\footnotemark[\ref{fn:netflix}] by now\footnotemark[\ref{fn:gic}], is to try to anonymize or otherwise ``fuzz'' a dataset before releasing it to the public.
-However, it is now evident that it is not possible to release a database that is both accurate enough to be useful and that respects the privacy of its participants\cite{journals/cacm/Dwork11}.
+Several other approaches have been attempted for sharing data under privacy constraints.
+One approach, which has received significant news\footnotemark[\ref{fn:aol}] coverage\footnotemark[\ref{fn:twitter}] a few times\footnotemark[\ref{fn:netflix}] by now\footnotemark[\ref{fn:gic}], is to anonymize or otherwise ``fuzz'' a dataset before releasing it to the public.
+However, it is evident now that it isn't possible to release a database that is both accurate enough to be useful and that respects the privacy of its participants.
+Other approaches suffer similar problems relating to privacy or are infeasible to maintain\cite{journals/cacm/Dwork11}.
 
-One of the key ideas in differential privacy is that of indistinguishability, i.e. a query against a dataset should return more-or-less the same result regardless of whether or not Alice's records are included in the data.
-If the results are indistinguishable, with or without Alice's data, then the contents of her records must be indistinguishable, too.
+Differential privacy sets itself apart from most other approaches by defining its privacy constraint differently.
+Early approaches often modeled their definition of privacy on the concept of \textit{perfect secrecy} from cryptography: could an adversary learn anything about an individual?
+This definition is too rigid: our goal is to provide access specifically so that somebody somewhere might learn something.
+\footnote{One interesting implication of this is that the adversaries are also the analysts; i.e, we must protect against legitimate users of the system.}
+Instead, differential privacy simply offers that Alice's participation in the database can affect her privacy risk by \textit{at most} some minimal amount.
 
-Indistinguishability is achieved by combining the true (distinguishable) result of a query with random noise.
-However, the addition of noise is insufficient by itself to guarantee privacy.
-A malicious data analyst could just repeat semantically equivalent queries and compute the average of the results, eventually approaching the true mean as he runs more and more queries.
-This susceptibility to repeated queries is one of the major factors preventing anonymization of a database without greatly affecting its utility.
-How can attacks like this be prevented?
+% TODO 1 : add ref to indistinguishability
+% Section~\ref{subsec:intro-almostperfectpriv} will expand on this.
 
-By imposing a hard limit on how many queries can be run against the data set.
-A \textit{privacy budget} is a value which limits the number of queries that can be run against a particular data set.
-Each query has a cost associated with it which is subtracted from the budget when it is evaluated.
-The data set is destroyed when the privacy budget is depleted.
+\subsection{Indistinguishability}\label{subsec:intro-indistinguishability}
 
-\subsection{Almost Perfect Anonymity}
-% TODO 5 : discuss "perfect secrecy" parallels?
+One of the centrals ideas driving differential privacy is that of indistinguishability, i.e. a query evaluated against a dataset should return more-or-less the same result regardless of whether Alice's records were included in the data.
+If the result of the query with Alice is indistinguishable from the result of the query without her, then the contents of Alice's records must be indistinguishable, too.
 
-Traditional privacy research has focused on preventing a malicious attacker from learning anything about a particular individual (e.g. our dear friend Alice from the cryptography community).
+Indistinguishability is achieved by combining the true (distinguishable) result of a query with enough random noise to mask Alice's participation in the database.
+However, additive noise is insufficient by itself to guarantee privacy.
+A malicious data analyst could simply repeat semantically equivalent queries and average the results.
+As the number of evaluated queries approaches infinity, the average will approach the true mean and Alice's tax records are now public.
+This susceptibility to averaging repeated queries is one of the major factors preventing database anonymization without greatly affecting its utility.
+
+One (naive) solution is to maintain a query history.
+Incoming queries can be checked against previous ones to ensure that responding will not break privacy guarantees.
+However, two syntactically different queries can be semantically equivalent and the act of refusing a query could itself be revealing.
+
+Another solution is to limit the number of queries which can be run against the dataset.
+Some queries reveal more information than others, though, so each is associated with a \textit{privacy cost}.
+A dataset then has a \textit{privacy budget}, which is a value limiting the total cost of queries that can be run against it.
+Each query evaluated reduces the privacy budget until it is eventually depleted, at which point the data should be destroyed.
+
+\subsection{Almost Perfect Privacy}\label{subsec:intro-almostperfectpriv}
+
+Early privacy research focused on preventing an adversary from learning anything about a particular individual (e.g. Alice).
+However, this definition is both impractical and unobtainable.
+%impractical because
+%unobtainable because
 However, this has proven to be nearly impossible in the presence of auxiliary information.
 Ganta et al. showed that \textit{k-anonymity} and other proposed partition-based anonymization approaches are vulnerable to composition attacks\cite{ganta2008composition}.
 A composition attack is performed on an ``anonymized'' data set by matching it with auxiliary data, such as data from the web, public records, or domain knowledge.
