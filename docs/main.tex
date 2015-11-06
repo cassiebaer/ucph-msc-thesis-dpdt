@@ -109,16 +109,19 @@ This thesis ...
 
 \section{Differential Privacy}\label{sec:intro-diffpriv}
 
-Several other approaches have been attempted for sharing data under privacy constraints.
-One approach, which has received significant news\footnotemark[\ref{fn:aol}] coverage\footnotemark[\ref{fn:twitter}] a few times\footnotemark[\ref{fn:netflix}] by now\footnotemark[\ref{fn:gic}], is to anonymize or otherwise ``fuzz'' a dataset before releasing it to the public.
-However, it is evident now that it isn't possible to release a database that is both accurate enough to be useful and that respects the privacy of its participants.
+The question of how to provide access to sensitive data is not a new one.
+Many techniques for data sharing with privacy constraints have been explored.
+They can generally be partitioned into two main approaches: \textit{interactive} (i.e. requires the participation of a ``middle man'') and \textit{non-interactive} (i.e. can be released directly to the public).
+
+One example of a non-interactive approach which has received significant news\footnotemark[\ref{fn:aol}] coverage\footnotemark[\ref{fn:twitter}] a few times\footnotemark[\ref{fn:netflix}] by now\footnotemark[\ref{fn:gic}], is to anonymize or otherwise ``fuzz'' a dataset before releasing it to the public.
+However, it is very difficult to release a database that is both useful and private.
 Other approaches suffer similar problems relating to privacy or are infeasible to maintain\cite{journals/cacm/Dwork11}.
 
-Differential privacy sets itself apart from most other approaches by defining its privacy constraint differently.
-Early approaches often modeled their definition of privacy on the concept of \textit{perfect secrecy} from cryptography: could an adversary learn anything about an individual?
-This definition is too rigid: our goal is to provide access specifically so that somebody somewhere might learn something.
+Differential privacy differentiates itself from other private data release mechanisms by defining privacy differently.
+Early approaches often modeled their definition of privacy on the concept of \textit{perfect secrecy} from cryptography: could an adversary with access to the system learn \textit{anything} about an individual?
+While this definition is appealing for simplicity, it is too rigid: we actually do want somebody somewhere to learn something.
 \footnote{One interesting implication of this is that the adversaries are also the analysts; i.e, we must protect against legitimate users of the system.}
-Instead, differential privacy simply offers that Alice's participation in the database can affect her privacy risk by \textit{at most} some minimal amount.
+Instead, differential privacy simply offers that Alice's participation in the database can increase her privacy risk by \textit{at most} some negligible amount.
 
 % TODO 1 : add ref to indistinguishability
 % Section~\ref{subsec:intro-almostperfectpriv} will expand on this.
@@ -126,22 +129,25 @@ Instead, differential privacy simply offers that Alice's participation in the da
 \subsection{Indistinguishability}\label{subsec:intro-indistinguishability}
 
 One of the centrals ideas driving differential privacy is that of indistinguishability, i.e. a query evaluated against a dataset should return more-or-less the same result regardless of whether Alice's records were included in the data.
-If the result of the query with Alice is indistinguishable from the result of the query without her, then the contents of Alice's records must be indistinguishable, too.
+If the result of the query with Alice included is indistinguishable from the result of the query without her, then the contents of Alice's records must be indistinguishable, too.
 
-Indistinguishability is achieved by combining the true (distinguishable) result of a query with enough random noise to mask Alice's participation in the database.
+Indistinguishability is typically achieved by combining the true (distinguishable) result of a query with enough random noise to mask Alice's participation in the database.
 However, additive noise is insufficient by itself to guarantee privacy.
-A malicious data analyst could simply repeat semantically equivalent queries and average the results.
-As the number of evaluated queries approaches infinity, the average will approach the true mean and Alice's tax records are now public.
-This susceptibility to averaging repeated queries is one of the major factors preventing database anonymization without greatly affecting its utility.
+An adversarial analyst could simply repeat semantically equivalent queries and average the results.
+As the number of evaluated queries approaches infinity, the average will approach the true mean and Alice's personal information is now public.
+This susceptibility to averaging repeated queries is one of the major factors preventing non-interactive database anonymization without greatly affecting its utility.
 
-One (naive) solution is to maintain a query history.
-Incoming queries can be checked against previous ones to ensure that responding will not break privacy guarantees.
-However, two syntactically different queries can be semantically equivalent and the act of refusing a query could itself be revealing.
+One interactive (and naive) solution is to maintain a query log recording every query ever evaluated against the database.
+Incoming queries can then be checked against previous ones to ensure that they can be answered without violating privacy guarantees.
+However, two syntactically different queries may be semantically equivalent.
+There is no way for a machine to know without running the query and human labor is costly and error-prone.
+Additionally, the act of refusing a query could itself be disclosive.
 
-Another solution is to limit the number of queries which can be run against the dataset.
-Some queries reveal more information than others, though, so each is associated with a \textit{privacy cost}.
-A dataset then has a \textit{privacy budget}, which is a value limiting the total cost of queries that can be run against it.
-Each query evaluated reduces the privacy budget until it is eventually depleted, at which point the data should be destroyed.
+Another (interactive) solution is to limit the number of queries which can be run against the dataset.
+However, some queries reveal more information than others, so this seems too crude.
+Instead of counting the number of queries, we associate each query with a \textit{privacy cost}.
+Then, each dataset is given a \textit{privacy budget}, which limits the total cost of queries that can be run against it.
+Each query evaluated reduces the privacy budget by its cost until it is eventually depleted, at which point the data should be destroyed.
 
 \subsection{Almost Perfect Privacy}\label{subsec:intro-almostperfectpriv}
 
