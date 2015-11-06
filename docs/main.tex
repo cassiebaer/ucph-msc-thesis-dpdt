@@ -77,49 +77,75 @@ However, a large number of side-channel attacks that PINQ is unable to stop are 
 \chapter{Introduction}\label{sec:introduction}
 
 With each passing day, more and more of our personal information is being collected, cataloged and analyzed by an ever increasing number of interested parties.
-Their interests range from selective marketing of products and services to collecting business performance metrics and even to malicious and potentially illegal surveillance.
-We don't curate and control the data they are collecting and the data we produce often gives a better picture of who we are than any data we might try to curate and control.
-Therefore, as the producers of this data, we should be concerned with how it is being used.
+Their interests range from selective marketing to collecting business performance metrics and from publicly-funded academic research to unauthorized and potentially illegal surveillance.
+We aren't able to curate or control the data they are collecting about us.
+In fact, the ubiquity of automatic data collection probably gives them a better picture of you than they would get if you did curate and volunteer the data.
+Therefore, as the producers and descriptees of this data, we should be concerned with how it is being used.
 
-Our medical records consist of very personal information which we reasonably expect to remain private.
-Many countries even require legal privacy guarantees for systems maintaining sensitive information, e.g. the Health Insurance Portability and Acountability Act (HIPAA) in the USA.
-However, our medical records contain valuable information for researchers aiming to understand health trends in our society.
+There are many creative ways to use data and not all of them align so simply with ``good'' and ``bad''.
+Additionally, there is some information that a few trusted people (or systems) must know, but we might not necessarily want our nosy neighbor knowing.
+Publicly available data can also help researchers to discover or verify solutions for various societal problems.
 
-The benefits of ubiquitous data are not limited to medicine, either.
-``Big Data'' is a hot buzzword right now for good reason: almost every action we make in the digital world is quantified and recorded.
-Imagine the potential insights we, as a society, could discover about ourselves with unlimited access to all of our own data.
-We are faced with a classic balancing act: how do we protect the privacy of the individual while maximizing the usefulness of our data?
+Consider Alice's medical records.
+Alice's doctor should have access to this very sensitive information, but her neighbor and insurance salesman probably should not.
+Recognizing the importance of the right to privacy, some countries have imposed legal privacy requirements on systems maintaining sensitive information, such as medical records (e.g. the Health Insurance Portability and Accountability Act (HIPAA) in USA).
+However, Alice's medical records contain valuable data for researchers aiming to understand health trends in our society, but they can't access it without violating her privacy.
+
+Public health researchers would be able to monitor and analyze the long-term health trends of a population over time.
+Epidemiologists could detect infectious diseases early and prevent their spread.
+The benefits of increased data availability are not limited to public health, either.
+Databases containing large amounts of sensitive information can be tremendously valuable for researchers looking into a variety of important questions.
+
+Big data offers us an amazing opportunity for learning about us, but how do we do it without also learning about Alice (as an individual)?
+Differential privacy is an active field of research, with input from many different disciplines, that aims to answer this question\cite{journals/cacm/Dwork11}.
+The goal of differential privacy is to minimize the risk for the individual while maximizing the utility of the data.
+
+% TODO 1 : add problem statement
+% TODO 1 : maybe move contributions up here? or at least outline rest of chap.
+This thesis ...
 
 \section{Differential Privacy}\label{sec:intro-diffpriv}
 
-Differential privacy is an emerging field aiming to answer this question\cite{journals/cacm/Dwork11}.
-Databases containing large amounts of personal data can be tremendously valuable for researchers looking into a variety of important questions.
-For example, epidemiologists may be able to detect and prevent the spread of disease and doctors may be able to monitor and/or analyze the long-term health trends of a population over time.
-%TODO 3: Is "Monitor and/or" important in this sentence? Better flow without?
-Big Data offers us new opportunities for learning about ourselves, but the value of many of these databases is held under lock and key for privacy concerns.
+Several other approaches have been attempted for sharing data under privacy constraints.
+One approach, which has received significant news\footnotemark[\ref{fn:aol}] coverage\footnotemark[\ref{fn:twitter}] a few times\footnotemark[\ref{fn:netflix}] by now\footnotemark[\ref{fn:gic}], is to anonymize or otherwise ``fuzz'' a dataset before releasing it to the public.
+However, it is evident now that it isn't possible to release a database that is both accurate enough to be useful and that respects the privacy of its participants.
+Other approaches suffer similar problems relating to privacy or are infeasible to maintain\cite{journals/cacm/Dwork11}.
 
-Many approaches have been devised for sharing data while respecting privacy.
-One approach, which has received significant news\footnotemark[\ref{fn:aol}] coverage\footnotemark[\ref{fn:twitter}] a few times\footnotemark[\ref{fn:netflix}] by now\footnotemark[\ref{fn:gic}], is to try to anonymize or otherwise ``fuzz'' a dataset before releasing it to the public.
-However, it is now evident that it is not possible to release a database that is both accurate enough to be useful and that respects the privacy of its participants\cite{journals/cacm/Dwork11}.
+Differential privacy sets itself apart from most other approaches by defining its privacy constraint differently.
+Early approaches often modeled their definition of privacy on the concept of \textit{perfect secrecy} from cryptography: could an adversary learn anything about an individual?
+This definition is too rigid: our goal is to provide access specifically so that somebody somewhere might learn something.
+\footnote{One interesting implication of this is that the adversaries are also the analysts; i.e, we must protect against legitimate users of the system.}
+Instead, differential privacy simply offers that Alice's participation in the database can affect her privacy risk by \textit{at most} some minimal amount.
 
-One of the key ideas in differential privacy is that of indistinguishability, i.e. a query against a dataset should return more-or-less the same result regardless of whether or not Alice's records are included in the data.
-If the results are indistinguishable, with or without Alice's data, then the contents of her records must be indistinguishable, too.
+% TODO 1 : add ref to indistinguishability
+% Section~\ref{subsec:intro-almostperfectpriv} will expand on this.
 
-Indistinguishability is achieved by combining the true (distinguishable) result of a query with random noise.
-However, the addition of noise is insufficient by itself to guarantee privacy.
-A malicious data analyst could just repeat semantically equivalent queries and compute the average of the results, eventually approaching the true mean as he runs more and more queries.
-This susceptibility to repeated queries is one of the major factors preventing anonymization of a database without greatly affecting its utility.
-How can attacks like this be prevented?
+\subsection{Indistinguishability}\label{subsec:intro-indistinguishability}
 
-By imposing a hard limit on how many queries can be run against the data set.
-A \textit{privacy budget} is a value which limits the number of queries that can be run against a particular data set.
-Each query has a cost associated with it which is subtracted from the budget when it is evaluated.
-The data set is destroyed when the privacy budget is depleted.
+One of the centrals ideas driving differential privacy is that of indistinguishability, i.e. a query evaluated against a dataset should return more-or-less the same result regardless of whether Alice's records were included in the data.
+If the result of the query with Alice is indistinguishable from the result of the query without her, then the contents of Alice's records must be indistinguishable, too.
 
-\subsection{Almost Perfect Anonymity}
-% TODO 5 : discuss "perfect secrecy" parallels?
+Indistinguishability is achieved by combining the true (distinguishable) result of a query with enough random noise to mask Alice's participation in the database.
+However, additive noise is insufficient by itself to guarantee privacy.
+A malicious data analyst could simply repeat semantically equivalent queries and average the results.
+As the number of evaluated queries approaches infinity, the average will approach the true mean and Alice's tax records are now public.
+This susceptibility to averaging repeated queries is one of the major factors preventing database anonymization without greatly affecting its utility.
 
-Traditional privacy research has focused on preventing a malicious attacker from learning anything about a particular individual (e.g. our dear friend Alice from the cryptography community).
+One (naive) solution is to maintain a query history.
+Incoming queries can be checked against previous ones to ensure that responding will not break privacy guarantees.
+However, two syntactically different queries can be semantically equivalent and the act of refusing a query could itself be revealing.
+
+Another solution is to limit the number of queries which can be run against the dataset.
+Some queries reveal more information than others, though, so each is associated with a \textit{privacy cost}.
+A dataset then has a \textit{privacy budget}, which is a value limiting the total cost of queries that can be run against it.
+Each query evaluated reduces the privacy budget until it is eventually depleted, at which point the data should be destroyed.
+
+\subsection{Almost Perfect Privacy}\label{subsec:intro-almostperfectpriv}
+
+Early privacy research focused on preventing an adversary from learning anything about a particular individual (e.g. Alice).
+However, this definition is both impractical and unobtainable.
+%impractical because
+%unobtainable because
 However, this has proven to be nearly impossible in the presence of auxiliary information.
 Ganta et al. showed that \textit{k-anonymity} and other proposed partition-based anonymization approaches are vulnerable to composition attacks\cite{ganta2008composition}.
 A composition attack is performed on an ``anonymized'' data set by matching it with auxiliary data, such as data from the web, public records, or domain knowledge.
@@ -151,7 +177,7 @@ Many algorithms and metrics have been developed by the differential privacy comm
 Each algorithm is typically bundled with some sort of proof that it meets some privacy constraints or has some other privacy-related properties.
 The burden of producing such a proof and algorithm is typically manual, and therefore error-prone.
 
-PINQ is a differential privacy framework that takes a different approach\cite{conf/sigmod/McSherry09}.
+PINQ is a differential privacy framework that takes a different approach\cite{mcsherry2010privacy}.
 It is an embedded, SQL-like \textit{domain specific language} (DSL) for the Microsoft .NET languages which guarantees differential privacy by construction.
 Users of PINQ are able to compose carefully implemented primitives to build differentially private computations.
 The composition of these primitives happens according to well-defined rules, allowing PINQ to track privacy metrics as users build complex differentially private algorithms.
@@ -253,7 +279,7 @@ However, function sensitivity can be applied much more generally and to much mor
 
 We will use $\mathbb D$ to describe the domain of all possible databases.
 Hence, a function $f : \mathbb D \rightarrow \mathbb D$ is an endomorphism for databases.
-The distance between two databases is their symmetric difference; i.e. $d_{\mathbb D}(D_1,D_2) = | D_1 \oplus D_2 |$.
+The distance between two databases is their symmetric difference; i.e. $d_{\mathbb D}(D_1,D_2) = | D_1 \ominus D_2 |$.
 
 There is a special case that turns up often in the differential privacy literature.
 We are primarily concerned with whether a particular individual's records are included in the database or not, so we often focus on adjacent databases.
@@ -393,12 +419,21 @@ LINQ is a query DSL written for the .NET languages allowing users to manipulate 
 In LINQ terminology, these operations are called transformations.
 Our work includes a fully-typed LINQ-like implementation in Idris (\texttt{Database.PowerOfPi.Idris}).
 
-PINQ's big contribution is the addition of a privacy layer around the LINQ query language.
+PINQ's primary contribution is the addition of a privacy layer around the LINQ query language.
 The majority of operations available in LINQ have also been made available in PINQ.
-However, some transformations cannot be made differentially private and have been removed.
-The word ``stability'' is commonly used when discussing sensitivity in the context of database transformations.
-Each PINQ transformation is stability-aware and knows how to compose its stability with that of others.
-Section~\ref{subsec:fn_sens} contained a proof that the filter transformation (selection) is 1-sensitive (or 1-stable).
+However, some transformations cannot be made differentially private and have been modified or removed.
+The word ``stability'' is commonly used when discussing a concept similar to function sensitivity in the context of database transformations.
+
+\begin{defn}
+A transformation $T$ is $c$-stable if for all pairs of input databases, $A$ and $B$,
+$$
+  |T(A)\ominus T(B)| \le c \times | A \ominus B |
+$$
+\end{defn}
+
+Not all transformations from the LINQ API are $c$-stable for finite values of $c$.
+In these cases, PINQ provides modified, boundable versions.
+As an example, see Section~\ref{subsec:fn_sens} for a proof that the filter transformation (selection) is 1-stable.
 Similar proofs exist for all of the other transformations provided by PINQ\cite{conf/sigmod/McSherry09}.
 
 \subsection{Aggregations}
@@ -476,7 +511,8 @@ Idris is a general purpose, pure functional programming language with dependent 
 Dependent types allow types to be predicated on values.
 This allows developers to describe many aspects of a program in the types which can be mechanically verified by the compiler.
 
-This section serves as an introduction to some of Idris' interesting language features.
+This section serves only as a brief overview to some of Idris' interesting language features.
+For a more complete introduction, see the Idris tutorial\footnote{http://docs.idris-lang.org/en/latest/tutorial/index.html}.
 We assume a basic familiarity with functional programming languages.
 First, we outline the basic capabilities of dependent types with the classic vector example.
 Then, we will move on to introduce some of Idris' features which we used in our implementation of DPDT.
