@@ -14,6 +14,9 @@
 \usepackage{amsfonts,amsthm,amsmath}
 \usepackage[margin=3.5cm]{geometry}
 \usepackage[en,nat,farve,titelside]{ku-forside}
+\usepackage[mark,missing={CONFIGURE gitinfo2 PACKAGE}]{gitinfo2}
+
+\renewcommand{\gitMark}{\gitBranch\ :\ \gitHash\ \textbullet{}\ (\gitAuthorDate)\ \textbullet{}\ \gitFirstTagDescribe}
 
 \newtheorem{defn}{Definition}[section]
 
@@ -22,7 +25,7 @@
         Casper Holmgreen and Knut Liest\o l
         % going by alphabetical order here....
 }
-\title{Differential Privacy with Dependent Types}
+\title{DPDT: Differential Privacy with Dependent Types}
 \undertitel{or: How I Learned to Stop Worrying and Love Dependent Types}
 \vejleder{Supervised by Ken Friis Larsen}
 \dato{November 11, 2015}
