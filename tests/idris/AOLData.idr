@@ -27,6 +27,6 @@ countUniqueAnonID q = do
 
 main : IO ()
 main = do
-  t <- loadTable "tests/idris/AOL_sm.txt"
+  t <- loadTable "tests/AOL_sm.txt"
   print $ evalPrivate (countUniqueAnonID t) 1238389612
   return ()
