@@ -5,9 +5,6 @@ import Statistics.Distribution.Laplace
 import Statistics.Distribution.Summary
 import System.Random.CrapGen
 
-Query : Schema -> Stability -> Type
-Query = Query ListRow
-
 Person : Schema
 Person = [ "Name" ::: String , "Age" ::: Double ]
 

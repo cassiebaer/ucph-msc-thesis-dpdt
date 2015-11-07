@@ -20,6 +20,9 @@ namespace Query
   SQLiteTable : Schema -> Type
   SQLiteTable _ = String
 
+  Query : Schema -> Type
+  Query = Query SQLiteTable
+
   commasBetween : List String -> String
   commasBetween xs = concat $ intersperse ", " xs
 

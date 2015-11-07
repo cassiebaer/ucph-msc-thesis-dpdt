@@ -8,6 +8,9 @@ import Statistics.Distribution.Laplace
 import public System.Random.CrapGen
 %default total
 
+Query : Schema -> Stability -> Type
+Query = Query ListRow
+
 ||| Clamps a value to [-1.0,+1.0]
 clamp : Double -> Double
 clamp x = if x > 1.0 then 1.0
