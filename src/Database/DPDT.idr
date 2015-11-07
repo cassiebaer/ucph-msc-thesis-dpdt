@@ -1,5 +1,6 @@
 module Database.DPDT
 
+import Data.Vect
 import Data.Rational
 import Database.PowerOfPi
 import Statistics.Distribution.Laplace
@@ -56,7 +57,7 @@ evalPrivate : Private s a -> CrapGen -> a
 evalPrivate (MkPrivate f) g = fst (f g)
 
 ||| Lifts a value into a Private computation.
-return : a -> Private 0 a
+return : a -> Private s a
 return x = MkPrivate $ \s => (x,s)
 
 ||| Sequencing primitive. Allows us to overload Idris' do-notation

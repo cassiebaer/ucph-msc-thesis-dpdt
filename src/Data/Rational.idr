@@ -1,7 +1,10 @@
 module Data.Rational
 
-import Data.So
 %default total
+
+fromDec : Lazy a -> Lazy a -> Dec b -> a
+fromDec y n (Yes _) = Force y
+fromDec y n (No  _) = Force n
 
 infixr 7 :%
 data Rational : Type where
@@ -10,11 +13,12 @@ data Rational : Type where
 %assert_total
 reduce : Nat -> Nat -> Rational
 reduce x Z = x :% Z
-reduce x y = case choose (d == 0) of
-                  (Left _)  => x :% y
-                  (Right _) => assert_total ((x `div` d) :% (y `div` d))
-  where d : Nat
-        d = gcd x y
+reduce x y = fromDec yes no (decEq d Z)
+  where
+    d : Nat
+    d = gcd x y
+    yes = x :% y
+    no  = (x `div` d) :% (y `div` d)
 
 infixr 7 //
 (//) : Nat -> Nat -> Rational
@@ -43,4 +47,11 @@ instance Eq Rational where
 
 instance Ord Rational where
     compare (n :% d) (n' :% d') = compare (n * d') (n' * d)
+
+instance DecEq Rational where
+    decEq x y = if x == y then Yes primEq else No primNotEq
+      where
+        primEq : x = y
+        primEq = believe_me (Refl {x})
+        postulate primNotEq : x = y -> Void
 
