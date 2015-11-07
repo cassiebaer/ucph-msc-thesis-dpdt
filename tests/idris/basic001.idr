@@ -2,9 +2,6 @@ module Basic001
 
 import Database.PowerOfPi.Idris
 
-Query : Schema -> Type
-Query = Query ListRow
-
 Person : Schema
 Person = [ "Name" ::: String , "Age" ::: Nat ]
 

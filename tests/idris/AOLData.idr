@@ -2,9 +2,6 @@ module Main
 
 import Database.DPDT.Idris
 
-Query : Schema -> Stability -> Type
-Query = Query ListRow
-
 AOLSchema : Schema
 AOLSchema = [ "AnonID" ::: String, "Query" ::: String ]
 

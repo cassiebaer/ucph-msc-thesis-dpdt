@@ -66,6 +66,9 @@ mkPartitionMap ks e (r::rs) with (eval e r `elem` ks)
   mkPartitionMap ks e (r::rs) | False = mkPartitionMap ks e rs
   mkPartitionMap ks e (r::rs) | True = insertWith (++) (eval e r) [r] (mkPartitionMap ks e rs)
 
+Query : Schema -> Type
+Query = Query ListRow
+
 mutual
 
   namespace Query
