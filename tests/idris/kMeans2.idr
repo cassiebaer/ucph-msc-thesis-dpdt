@@ -5,12 +5,6 @@ import Data.Floats
 import Data.Vect
 import Database.DPDT.Idris
 
-Query : Schema -> Stability -> Type
-Query = Query ListRow
-
-Grouping : Schema -> Type -> Stability -> Type
-Grouping = Grouping ListRow
-
 record Point2 where
   constructor MkPt
   x : Double
@@ -51,29 +45,16 @@ classify {n} cs p = let ds = labelVect (map (dist p) cs)
   where findMinDist : (Nat,Double) -> (Nat,Double) -> (Nat,Double)
         findMinDist (ix,v) (ix',v') = if (v < v') then (ix,v) else (ix',v')
 
-updateCenters : Vect (S n) Point2 -> Grouping SPoint2 (Fin (S n)) c -> Private c (Vect (S n) Point2)
-updateCenters cs g = sequence $ map updateCenter (labelVect cs)
-  where updateCenter : (Nat,Point2) -> Private ?ss Point2
-        updateCenter (ix,_) = do
-          let ps = lookup (fromNat ix) g
-          x <- noisyAverage (pGetter x) ps (1//10)
-          return (MkPt 1 1)
-
-
-
-
--- updateCenters cs g = map updateCenter (labelVect cs)
-  -- where updateCenter : (Nat,Point2) -> Point2
-        -- updateCenter (ix,_) = flip evalPrivate 123 $ do
-          -- let ps = lookup (fromNat ix) g
-          -- x <- noisyAverage (pGetter x) ps (1//10)
-          -- y <- noisyAverage (pGetter y) ps (1//10)
-          -- return (MkPt x y)
+-- updateCenters : Vect (S n) Point2 -> Grouping SPoint2 (Fin (S n)) c -> Private (c*(2//10)) (Vect (S n) Point2)
+-- updateCenters cs g with (labelVect cs)
+--   updateCenters cs g | ((ix, c) :: lcs) = do
+--     let ps = lookup (fromNat ix) g
+--     x <- noisyAverage (pGetter x) ps (1//10)
+--     y <- noisyAverage (pGetter y) ps (1//10)
+--     return (MkPt x y)
 
 kMeans : (k:Nat) -> (initPts:Vect (S n) Point2) -> (tbl:Query SPoint2 c) -> (eps:Epsilon) -> Private s (Vect (S n) Point2)
 --kMeans Z     centers tbl eps = return centers
 --kMeans (S k) centers tbl eps = let classifyExpr = PureFn (classify centers) (SPoint2^"p")
                                 --in ?kMeans_rhs
-                              
-
 
