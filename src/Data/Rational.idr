@@ -2,8 +2,8 @@ module Data.Rational
 
 %default total
 
-infix 7 :%
-infix 7 //
+infixl 9 :%
+infixl 9 //
 
 -- Eliminates a Dec b
 fromDec : Lazy a -> Lazy a -> Dec b -> a
@@ -42,6 +42,7 @@ instance Show Rational where
       where parens x = "(" ++ x ++ ")"
 
 ratPlus : Rational -> Rational -> Rational
+ratPlus left     (Z  :% d') = left
 ratPlus (n :% d) (n' :% d') = reduce (n*d' + n'*d) (d*d')
 
 ratMinus : Rational -> Rational -> Rational
@@ -104,4 +105,7 @@ fromNatReduces = Refl
 
 ratMultZeroLeft : (right : Rational) -> 0 * right = 0
 ratMultZeroLeft r = Refl
+
+ratPlusZeroRight : (left : Rational) -> left + 0 = left
+ratPlusZeroRight l = Refl
 

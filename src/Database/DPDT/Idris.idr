@@ -24,7 +24,7 @@ evalPrivate : Private s a -> CrapGen -> a
 evalPrivate (MkPrivate f) g = fst (f g)
 
 ||| Lifts a value into a Private computation.
-return : a -> Private s a
+return : a -> Private 0 a
 return x = MkPrivate $ \s => (x,s)
 
 ||| Sequencing primitive. Allows us to overload Idris' do-notation
@@ -95,7 +95,11 @@ namespace Grouping
 
 ------------------------------------------------------------------------------
 
-sequencingCostsIsAdditive : { p1 : Private s   a } -> { p2 : Private s' b }
-                         -> { p3 : Private s'' b } -> ( p1 >>= (\x => p2) = p3 )
-                         -> ( s + s' = s'' )
-sequencingCostsIsAdditive Refl = Refl
+returnIsFree : { p1 : Private s1 Double } -> { p2 : Private s2 Double }
+            -> do { x <- p1; return 1.0 } = p2 -> s1 = s2
+returnIsFree Refl = Refl
+
+sequencingIsAdditive : { p1 : Private s1 Double } -> { p2 : Private s2 Double }
+   -> { p3 : Private s3 (Double,Double)  }
+   -> do { x <- p1; y <- p2; return (x,y) } = p3 -> s1 + s2 = s3
+sequencingIsAdditive Refl = Refl
