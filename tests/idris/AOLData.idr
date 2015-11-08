@@ -6,7 +6,7 @@ AOLSchema : Schema
 AOLSchema = [ "AnonID" ::: String, "Query" ::: String ]
 
 parseLine : String -> Row AOLSchema
-parseLine cs = let (x::y::zs) = words cs
+parseLine cs = let (x::y::zs) = split (== ',') cs
                 in [ x , y ]
 
 loadTable : String -> IO (Query AOLSchema 1)
@@ -19,7 +19,7 @@ loadTable fname = do
 
 countUniqueAnonID : Query AOLSchema c -> Private (c*2*1) Double
 countUniqueAnonID q = do
-  let gq = groupBy (AOLSchema^"AnonID") q
+  let gq = groupBy (AOLSchema^"AnonID") q  
   noisyCount gq 1
 
 main : IO ()
