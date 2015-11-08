@@ -226,7 +226,7 @@ PINQ's differential privacy metrics are checked dynamically at runtime, whereas 
 In Chapter~\ref{sec:differential_privacy}, we cover some necessary background for understanding the basics of differential privacy.
 Chapter~\ref{sec:dependent_types_in_idris} serves as a brief tutorial to Idris with a focus on the language features we make use of in our implementation.
 Chapter~\ref{sec:function_sensitivity} combines the contents of the previous two chapters in an example implementation of function sensitivity.
-Chapter~\ref{sec:typing_the_relational_algebra} reviews the relational algebra and how we represent it using dependent types.
+Chapter~\ref{sec:RADT} reviews the relational algebra and how we represent it using dependent types.
 Chapter~\ref{sec:our_implementation} covers the differential privacy layer that we built over top of the fully-typed relational algebra.
 We evaluate our work in Chapter~\ref{sec:evaluation} and provide concluding remarks in Chapter~\ref{sec:conclusion}.
 
@@ -781,7 +781,7 @@ namespace Examples
     -- doesNotCompile = applyIfLT 2 (doubleThenAdd10 . doubleThenAdd10) 0
 \end{lstlisting}
 
-\chapter{Typing the Relational Algebra}\label{sec:typing_the_relational_algebra}
+\chapter{RADT - Typing the Relational Algebra}\label{sec:RADT}
 
 In this chapter, we review the relational algebra and show how it can be modelled in a dependently typed language.
 Our approach is based on Chapter 4 from \textit{The Power of Pi}\cite{OurySwierstra08PowerOfPi}, an excellent resource for practical examples of what dependent types are capable of.
@@ -1020,7 +1020,11 @@ namespace SQLiteBackend
     [..]
 \end{lstlisting}
 
-\chapter{Our implementation}\label{sec:our_implementation}
+
+\chapter{DPQ - Differentially Private Queries}\label{sec:DPQ}
+
+
+\chapter{DPDT - Differentially Private Programs}\label{sec:DPDT}
 
 In this chapter, we describe how we bring together the material of the previous chapters and outline our entire implementation.
 
@@ -1054,14 +1058,14 @@ data PINPartitioning : (t:Schema -> Type) -> (s:Schema) -> (k:Type) -> (c:Stabil
 \end{lstlisting}
 
 A \texttt{PINQuery t s c} describes a \texttt{c}-differentially private query with schema \texttt{s} (and backend table representation \texttt{(t s)}).
-There is only one data constructor which serves simply to wrap a \texttt{Query}, which was defined in Chapter~\ref{sec:typing_the_relational_algebra}.
+There is only one data constructor which serves simply to wrap a \texttt{Query}, which was defined in Chapter~\ref{sec:RADT}.
 This allows us to define a \texttt{Query} and assign it an arbitrary stability.
 
 Next, we provide the standard operators from the relational algebra as functions operating on \texttt{PINQuery t s c}.
 We simply unwrap the \texttt{Query} and then rewrap it in the same data constructor, but using a different type constructor.
 This is because the schema and stability could potentially change.
 We control the \textit{application programming interface} (API) that is exported, so we carefully implement the relational algebra operators with the correct stability costs.
-By unwrapping and rewrapping the \texttt{Query} trees from Chapter~\ref{sec:typing_the_relational_algebra} in our new type, we are now able to build query trees that carry privacy metrics in the type.
+By unwrapping and rewrapping the \texttt{Query} trees from Chapter~\ref{sec:RADT} in our new type, we are now able to build query trees that carry privacy metrics in the type.
 
 \begin{lstlisting}[caption={Representing privacy-aware transformations},label={lst:transformations}]
 ||| Represents stability-aware selection
@@ -1314,9 +1318,9 @@ It may be possible for us to extend the \texttt{Sensitivity} type and convince t
 \section{Differential privacy and dependent types}
 
 Nicolas Oury and Wouter Swierstra have already shown that dependent types are natural fit for fully typing the relational algebra\cite{OurySwierstra08PowerOfPi}.
-Chapter~\ref{sec:typing_the_relational_algebra} provided a brief overview of their method.
+Chapter~\ref{sec:RADT} provided a brief overview of their method.
 The goal of this thesis is to demonstrate that dependent types are also capable of typing differential privacy metrics with ease and we certainly believe this to be the case.
-Chapter~\ref{sec:function_sensitivity} showed how metrics such as function sensitivity can be tracked using dependent types and Chapter~\ref{sec:our_implementation} put it all together into a completely type-safe, PINQ-like EDSL for Idris.
+Chapter~\ref{sec:function_sensitivity} showed how metrics such as function sensitivity can be tracked using dependent types and Chapter~\ref{sec:DPQ} put it all together into a completely type-safe, PINQ-like EDSL for Idris.
 
 LINQ provides type-safety for most of the relational algebra.
 PINQ expands this safety to include privacy metrics, but it does so dynamically.
@@ -1371,7 +1375,7 @@ Idris provides several experimental language features which may provide DPDT wit
 Two examples that come to mind are Idris' \texttt{Effects} library and \textit{type providers}.
 
 Effects are an alternative to monadic actions for describing side-effects.
-Reimplementing the \texttt{Private} monad from Chapter~\ref{sec:our_implementation} using effects might be beneficial.
+Reimplementing the \texttt{Private} monad from Chapter~\ref{sec:DPDT} using effects might be beneficial.
 There may be other opportunities for implementing components as effects.
 
 Type providers allow the Idris type-system to define and predicate types on input from the outside world.
