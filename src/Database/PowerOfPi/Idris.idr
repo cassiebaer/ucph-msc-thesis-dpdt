@@ -49,7 +49,6 @@ eval (PureFn f x)   r = f (eval x r)
 
 ----------------------------------------------------------------
 
-%assert_total
 ListRow : Schema -> Type
 ListRow s = List (Row s)
 
@@ -86,17 +85,14 @@ mutual
 
   namespace Grouping
 
-    %assert_total
     eval : (q:Grouping ListRow s k) -> GroupingMap k s
     eval (MkGrouping e q) = mkGroupingMap e (eval q)
 
   namespace Partitioning
-
     eval : (q:Partitioning ListRow s k) -> GroupingMap k s
     eval (MkPartitioning ks e q) = mkPartitionMap ks e (eval q)
 
   namespace Aggregation
-
     eval : Aggregation ListRow s a -> a
     eval (MkAggregation  q f z e) = foldr f z (map (eval e) (eval q))
     eval (MkAggregationM q e)     = foldr (<+>) neutral (map (eval e) (eval q))

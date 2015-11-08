@@ -117,15 +117,15 @@ mutual
     ||| Represents selection on a Query using the given expression.
     Select  : Expr s Bool -> Query t s -> Query t s
     ||| Represents a lookup into the result of a Grouping
-    Lookup  : Eq k => k -> Grouping t s k -> Query t s
+    Lookup  : (Eq k, Show k) => k -> Grouping t s k -> Query t s
 
   ||| Represents the grouping of a query into an associative map
   data Grouping : (t:Schema -> Type) -> (s:Schema) -> (k:Type) -> Type where
-    MkGrouping : Eq k => Expr s k -> Query t s -> Grouping t s k
+    MkGrouping : (Eq k, Show k) => Expr s k -> Query t s -> Grouping t s k
 
   ||| Represents the partitioning of a query into a dictionary
   data Partitioning : (t:Schema -> Type) -> (s:Schema) -> (k:Type) -> Type where
-    MkPartitioning : Eq k => List k -> Expr s k -> Query t s -> Partitioning t s k
+    MkPartitioning : (Eq k, Show k) => List k -> Expr s k -> Query t s -> Partitioning t s k
 
 namespace Aggregations
 
