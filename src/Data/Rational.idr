@@ -30,8 +30,12 @@ toFloat : (x:Rational) -> Float
 toFloat (x :% y) = cast x / cast y
   where cast = fromInteger . fromNat
 
+implicit
 fromNat : Nat -> Rational
 fromNat n = (//) (fromNat n) (S Z)
+
+ratFromInteger : Integer -> Rational
+ratFromInteger n = fromInteger n // 1
 
 instance Show Rational where
     show (x :% y) = parens (show x ++ "//" ++ show y)
@@ -44,6 +48,7 @@ ratMinus : Rational -> Rational -> Rational
 ratMinus (n :% d) (n' :% d') = reduce (n*d' - n'*d) (d*d')
 
 ratMult : Rational -> Rational -> Rational
+ratMult (Z :% _) _          = ratFromInteger 0
 ratMult (n :% d) (n' :% d') = reduce (n*n') (d*d')
 
 ratEq : Rational -> Rational -> Bool
@@ -58,9 +63,6 @@ ratDecEq x y = if ratEq x y then Yes primEq else No primNotEq
 
 ratComp : Rational -> Rational -> Ordering
 ratComp (n :% d) (n' :% d') = compare (n * d') (n' * d)
-
-ratFromInteger : Integer -> Rational
-ratFromInteger n = fromInteger n // 1
 
 instance Num Rational where
     (+) = ratPlus
@@ -99,4 +101,7 @@ rationalsReduceWhenMultiplied = Refl
 
 fromNatReduces : Data.Rational.fromNat (S Z) = (1//1)
 fromNatReduces = Refl
+
+ratMultZeroLeft : (right : Rational) -> 0 * right = 0
+ratMultZeroLeft r = Refl
 

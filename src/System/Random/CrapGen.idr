@@ -1,4 +1,5 @@
 module System.Random.CrapGen
+import Data.Vect
 %default total
 {-
    CrapGen comes directly from Idris' own Effect.Random module.
@@ -27,6 +28,12 @@ unfoldCrapGen : CrapGen -> Stream (Float,CrapGen)
 unfoldCrapGen g = let (u,g') = rndDouble g
                  in (u,g') :: unfoldCrapGen g'
 
+||| Take exactly n items from a Stream
+take' : (n:Nat) -> Stream a -> Vect n a
+take' Z     xs        = []
+take' (S k) (x :: xs) = x :: take' k xs
+
 ||| Unfolds a CrapGen `n` times
-unfoldCrapGenN : (n:Nat) -> CrapGen -> List (Float,CrapGen)
-unfoldCrapGenN n = Stream.take n . unfoldCrapGen
+unfoldCrapGenN : (n:Nat) -> CrapGen -> Vect n (Float,CrapGen)
+unfoldCrapGenN n = take' n . unfoldCrapGen
+
