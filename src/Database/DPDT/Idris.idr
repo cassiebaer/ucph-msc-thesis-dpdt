@@ -1,6 +1,7 @@
 module Database.DPDT.Idris
 
 import public Data.Rational
+import Data.Vect
 import public Database.DPDT
 import public Database.PowerOfPi.Idris
 
@@ -28,16 +29,16 @@ return x = MkPrivate $ \s => (x,s)
 
 ||| Sequencing primitive. Allows us to overload Idris' do-notation
 (>>=) : Private s a -> (a -> Private s' b) -> Private (s + s') b
-(>>=) (MkPrivate sf) f = MkPrivate $ \st => let (x,st1)       = sf st
-                                                MkPrivate sf' = f x
-                                            in sf' st1
+(>>=) (MkPrivate sf) f = MkPrivate $ \g => let (x,g')        = sf g
+                                               MkPrivate sf' = f x
+                                            in sf' g'
 
--- sequence : Vect n (Private s a) -> Private (s * fromNat n) (Vect n a)
--- sequence [] = return []
--- sequence (p :: ps) = do
---   x <- p
---   xs <- sequence ps
---   return (x :: xs)
+sequence : Vect n (Private s a) -> Private (n * s) (Vect n a)
+sequence {s} [] = return []
+sequence {n} ps = MkPrivate $ \g =>
+  let gs = map snd (unfoldCrapGenN (S n) g)
+      vs = (map evalPrivate ps) <*> (init gs)
+   in (vs, last gs)
 
 ||| Clamps a value to [-1.0,+1.0]
 clamp : Double -> Double
@@ -91,3 +92,10 @@ namespace Grouping
         noise   = samplePure 0 (1 / toFloat eps) rx
         count   = the Double $ fromInteger $ fromNat $ length (eval q)
      in (count + noise, g')
+
+------------------------------------------------------------------------------
+
+sequencingCostsIsAdditive : { p1 : Private s   a } -> { p2 : Private s' b }
+                         -> { p3 : Private s'' b } -> ( p1 >>= (\x => p2) = p3 )
+                         -> ( s + s' = s'' )
+sequencingCostsIsAdditive Refl = Refl
