@@ -5,6 +5,7 @@ import public Database.PowerOfPi
 %default total
 
 namespace Expr
+
   ||| Evaluates an Expr to an SQLite expression
   eval : Expr s t -> String
   eval (Lit x)      = show x
@@ -15,8 +16,8 @@ namespace Expr
   eval ((^) _ nm)   = nm
   eval (x == y)     = "(" ++ eval x ++ ") == (" ++ eval y ++ ")"
   eval (x /= y)     = "(" ++ eval x ++ ") <> (" ++ eval y ++ ")"
-  eval (Couple x y) = ""
-  eval (PureFn f x) = ""
+  eval (Couple x y) = "(" ++ eval x ++ "  ,   " ++ eval y ++ ")"
+  eval (PureFn f x) = "PureFn is only available for DPDT"
 
 ----------------------------------------------------------------
 
