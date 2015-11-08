@@ -59,7 +59,10 @@ mutual
                         in  selectFromPart ++ wherePart
   
   namespace Grouping
-  
+    
+    Grouping : (Num k, Show k) => Schema -> (k:Type) -> Type
+    Grouping = Grouping SQLiteTable
+
     ||| Evaluates a Grouping, returning a MySQL group by query string.
     ||| PS: The only expression e that will work is a lookup, and the compiler
     ||| will not complain if the user chooses to write other expressions.
