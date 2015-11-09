@@ -99,7 +99,8 @@ returnIsFree : { p1 : Private s1 Double } -> { p2 : Private s2 Double }
             -> do { x <- p1; return 1.0 } = p2 -> s1 = s2
 returnIsFree Refl = Refl
 
-sequencingIsAdditive : { p1 : Private s1 Double } -> { p2 : Private s2 Double }
-   -> { p3 : Private s3 (Double,Double)  }
-   -> do { x <- p1; y <- p2; return (x,y) } = p3 -> s1 + s2 = s3
+sequencingIsAdditive : { p1 : Private s1 a } -> { p2 : Private s2 a }
+                    -> { p3 : Private s3 (a,a)  }
+                    -> do { x <- p1; y <- p2; return (x,y) } = p3 -> s1 + s2 = s3
 sequencingIsAdditive Refl = Refl
+

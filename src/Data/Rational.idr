@@ -109,3 +109,10 @@ ratMultZeroLeft r = Refl
 ratPlusZeroRight : (left : Rational) -> left + 0 = left
 ratPlusZeroRight l = Refl
 
+ratMultDistributes : { x,y,c : Rational } -> c * (x + y) = c * x + c * y
+ratMultDistributes = ?ratMultDistributes_rhs
+
+Data.Rational.ratMultDistributes_rhs = proof
+  intros
+  exact believe_me (Refl {x})
+
