@@ -60,10 +60,6 @@ updateCenters cs gr = sequence (map (updateCenter gr) (map (fromNat . fst) $ lab
       y <- noisyAverage (SPoint2^"y") ps eps
       return (MkPt x y)
 
-Main.updateCenters_cost = proof
-  intros
-  search
-
 kMeans : (k:Nat) -> (cs:Vect (S n) Point2) -> (tbl:Query SPoint2 1) -> Private ?kMeans_cost (Vect (S n) Point2)
 kMeans Z     cs tbl = return cs
 kMeans (S k) cs tbl = do
@@ -71,22 +67,15 @@ kMeans (S k) cs tbl = do
     kMeans k cs' tbl
   where classifyExpr = PureFn (classify cs) (PureFn (uncurry MkPt) (Couple (SPoint2^"x") (SPoint2^"y")))
 
-Main.kMeans_cost = proof
-  intros
-  exact 1
-
 foo : Vect 2 Point2
 foo = evalPrivate (kMeans 10 [MkPt 3 4, MkPt 5 6] points) 123
 
+---------- Proofs ----------
 
-
-------------------------------------------------------------------------------
+Main.updateCenters_cost = proof
+  intros
+  search
 
 testDist : dist (MkPt 0 0) (MkPt 0 1) = 1
 testDist = Refl
-
-
-
-
-
 
