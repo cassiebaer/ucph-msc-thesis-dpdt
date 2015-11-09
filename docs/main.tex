@@ -1114,6 +1114,27 @@ Differential privacy requires that any query response be the result of some sort
 \section{Aggregations}
 
 
+\section{Target language requirements}
+
+There are some requirements that need to be in place in the target query language in order to make a DPQ backend for it.
+
+First of all, it should obviously support the basic relational algebra operations implemented in DPQ.
+The language must have a random number generator in order to add random noise.
+In addition there are several mathematical functions that are required to sample from a Laplacian distribution.
+These required functions are listed below.
+It might also be a solution to define them yourself, but query languages are generally not intended for that, and the queries could end up fairly complex.
+
+\begin{itemize}
+    \item Natural logarithm
+    \item Natural exponential
+    \item Absolute value
+    \item Signum
+\end{itemize}
+
+In the case of SQLite, which we have implemented a DPQ backend for, it lacks both logarithm and exponential functions.
+Luckily SQLite supports extension functions, which are embedded in a shared C-library, and allows for extended functionality to the language.
+So by using this feature we are able to make a DPQ backend for SQLite referencing functions in the exension library to make up for the missing required functions.
+Similar features is availible in several other query languages.
 
 \chapter{DPDT - Differentially Private Programs}\label{sec:DPDT}
 
