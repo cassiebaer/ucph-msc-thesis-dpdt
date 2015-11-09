@@ -45,7 +45,7 @@ namespace Query
 
 namespace Grouping
 
-  Grouping : (Num k, Show k) => Schema -> Type -> Stability -> Type
+  Grouping : Schema -> Type -> Stability -> Type
   Grouping = Grouping SQLiteTable
 
   noisyCount : (Grouping s k c) -> (e:Epsilon) -> Private (c*e) String

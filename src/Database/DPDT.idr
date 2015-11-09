@@ -40,8 +40,8 @@ union (MkQuery q) (MkQuery q') = MkQuery (Union q q')
 intersect : Query b s c -> Query b s c' -> Query b s (c + c')
 intersect (MkQuery q) (MkQuery q') = MkQuery (Diff q q')
 
-groupBy : (Eq k, Show k) => Expr s k -> Query b s c -> Grouping b s k (c * 2)
+groupBy : (Eq k) => Expr s k -> Query b s c -> Grouping b s k (c * 2)
 groupBy e (MkQuery q) = MkGrouping (MkGrouping e q)
 
-lookup : (Eq k, Show k) => k -> Grouping b s k c -> Query b s c
+lookup : (Eq k) => k -> Grouping b s k c -> Query b s c
 lookup k (MkGrouping q) = MkQuery (Lookup k q)

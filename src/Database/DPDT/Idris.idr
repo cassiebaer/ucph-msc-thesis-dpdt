@@ -58,10 +58,6 @@ bounds width tally = let lb = cdf 0 width (-1 - tally)
 
 namespace Query
 
-  Query : Schema -> Stability -> Type
-  Query = Query ListRow
-
-
   noisyCount : (Query ListRow s c) -> (e:Epsilon) -> Private (c*e) Double
   noisyCount (MkQuery q) eps = MkPrivate $ \g =>
     let (rx,g') = rndDouble g
@@ -85,9 +81,6 @@ namespace Query
                          in (trueAvg + noise,g')
 
 namespace Grouping
-
-  Grouping : Schema -> (k:Type) -> Stability -> Type
-  Grouping = Grouping ListRow
 
   noisyCount : (Grouping ListRow s k c) -> (e:Epsilon) -> Private (c*e) Double
   noisyCount (MkGrouping q) eps = MkPrivate $ \g =>
