@@ -15,6 +15,9 @@ Query = Query ListRow
 Grouping : Schema -> Type -> Stability -> Type
 Grouping = Grouping ListRow
 
+mkTable : List (Row s) -> DPDT.Idris.Query s 1
+mkTable = MkQuery . Table
+
 ||| Represents a Private computation
 data Private : Sensitivity -> Type -> Type where
   MkPrivate : (CrapGen -> (a,CrapGen)) -> Private budget a

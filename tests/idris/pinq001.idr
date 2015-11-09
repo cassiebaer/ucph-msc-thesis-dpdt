@@ -1,5 +1,6 @@
 module Main
 
+import Data.Vect
 import Database.DPDT.Idris
 import Statistics.Distribution.Laplace
 import Statistics.Distribution.Summary
@@ -32,7 +33,7 @@ namespace Aggregations
                    let alices  = people `where'` isAlice
                    noisyCount alices 1
 
-  countAlicesN : Nat -> List Double
+  countAlicesN : (n:Nat) -> Vect n Double
   countAlicesN n = map (evalPrivate countAlices) (map snd $ unfoldCrapGenN n 1234567890)
 
   testCountAlices : Double
@@ -45,8 +46,10 @@ namespace Aggregations
                         z <- noisyCount alices 1
                         return ((x+y+z)/3)
 
-  testTripleCountAlice : IO ()
-  testTripleCountAlice = putSummary $ map (evalPrivate tripleCountAlice) (map snd $ unfoldCrapGenN 10000 1234567890)
+  testSequence : Private 1 (Vect 3 Double)
+  testSequence = let alices = people `where'` (Person^"Name" == Lit "Alice")
+                     p = noisyCount alices (1//3)
+                  in sequence [p,p,p]
 
   testNoisyCount : Double
   testNoisyCount = evalPrivate (do x <- noisyCount people 1
@@ -58,10 +61,25 @@ namespace Aggregations
   testNoisyAverage = evalPrivate (do avg <- noisyAverage (PureFn (/26.0) (Person^"Age")) people 1
                                      return avg) 123
 
+  testProofSearch : Query Person c -> Private ?proofSearch Double
+  testProofSearch q = do
+    x <- noisyCount q (1//10)
+    y <- noisyCount q (2//10)
+    return x
+
+  testRatReduction : { e : Epsilon } -> { q : Query Person c } -> { p : Private s Double }
+                  -> (noisyCount q e >>= Idris.return) = p -> c * e = s
+  testRatReduction Refl = Refl
+
+  testWithOpenStabilities : Eq k => Grouping Person k c -> k -> Private ?d Double
+  testWithOpenStabilities gr k = do
+    let q = lookup k gr
+    x <- noisyCount q (1//10)
+    y <- noisyCount q (2//10)
+    return (x+y)
+
 testLaplaceN : Nat -> IO ()
 --testNLaplace n = putSummary (map (samplePure 0 0.1) (map fst $ unfoldCrapGenN n 1234567890))
 testLaplaceN _ = putSummary (map (samplePure 0 1) trueRandoms)
 
-main : IO ()
-main = testTripleCountAlice
 
