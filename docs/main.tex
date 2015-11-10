@@ -450,7 +450,7 @@ See Figure~\ref{fig:indistinguishability} for a visualization of how random nois
 
 \begin{figure}
     \centering
-    \def\svgwidth{0.75  \columnwidth}
+    \def\svgwidth{0.75\linewidth}
     \input{assets/Indistinguishability.pdf_tex}
     \caption{Visualizing indistinguishability with sample PDFs from a counting query on adjacent databases $D_1$ and $D_2$ ($D_1\sim D_2$)}
     \label{fig:indistinguishability}
@@ -461,6 +461,13 @@ There are a number of reasons for this, but the main ones concern symmetry and e
 The Laplace distribution resembles a symmetric exponential distribution.
 Its diversity parameter, or ``width'', scales predictably with $\epsilon$.
 Any $c$-sensitive function can be made differentially private easily by simply scaling the diversity parameter.
+
+\begin{figure}
+    \centering
+    \includegraphics[width=0.75\linewidth]{assets/laplace_b.png}
+    \caption{The Laplace distribution centered on zero with different diversity parameters}
+    \label{fig:fn_sens}
+\end{figure}
 
 \begin{lem}
 Any $c$-sensitive function, $f : A \rightarrow \mathbb R$, can be made $\epsilon$-differentially private by adding a value sampled from the Laplace distribution centered on zero with diversity parameter $b=\frac{c}{\epsilon}$.
@@ -1211,6 +1218,15 @@ Then, it transforms them using operations from \texttt{RADT}.
 Finally, it rewraps the resulting \texttt{RADT.Query} in a \texttt{DPDT.Query} data constructor, \textit{but with a different type constructor}.
 At the data level, \texttt{DPDT.Query} isn't terribly interesting; the interesting computations happen at the type level.
 
+% TODO 1 : fix this figure and make sure it looks good. and reference it. and change the caption. and give somebody a hug.
+% \begin{figure}
+%     \centering
+%     \def\svgwidth{0.75\linewidth}
+%     \input{assets/query_wrapping.svg}
+%     \caption{Visualizing indistinguishability with sample PDFs from a counting query on adjacent databases $D_1$ and $D_2$ ($D_1\sim D_2$)}
+%     \label{fig:indistinguishability}
+% \end{figure}
+
 Dependent type signatures allow total computations to be evaluated at compile-time.
 We spent significant time fine-tuning totality in the \texttt{Data.Rational} module.
 We also spent some time implementing \texttt{projectedSchema} in a manner that is total\footnote{There are some quirks with respect to how Idris reduces terms in dependent signatures. Not all total functions reduce as expected.}.
@@ -1295,24 +1311,20 @@ Most common database systems should allow linking with custom C libraries.
 
 \chapter{DPDT - Differentially Private Programs}\label{sec:DPDT}
 
-DPQ is useful for simple statistical work that can be represented in one aggregation query, but for more complex algorithms this is not sufficient.
-DPDT is a more flexible language, in that it supports sequencing of queries, expanding the algorithm space to e.g. several machine learning algorithms.
+DPQ is useful for simple statistical queries that can be represented as one aggregation with the given expression language, but for more complex algorithms this is not sufficient.
+We distinguish \textit{queries} from \textit{algorithms} in that they do not support dependent sequencing operations (i.e. conditional branching support).
+DPDT implements sequencing for the Idris backend computation type, \texttt{Private}.
+Additionally, DPDT supports \texttt{PureFn}, allowing analysts to use many of Idris' own language features alongside DPDT.
 
-DPQ and DPDT shares much of the implementation as it uses mostly the same abstract types.
-The difference is in aggregation return types.
-
-If you recall the \texttt{Private} ADT from Section \ref{seq:DPQ_aggregations} it was just a string with an associated sensititivity.
-DPDT has its own implementation of \texttt{Private}, shown in Listing \ref{lst:mechanisms}.
-It still acts as the result type of aggregation functions, but has some extended functionality.
-It is parameterized by the aggregation function's return type, instead of just \texttt{String} as in DPQ.
-\texttt{CrapGen} is a fairly good random number generator, as the name implies, and is used in the process of adding noise.
+The structure of \texttt{Private} in DPDT with our Idris backend is just a \textit{State monad}, where the state we are threading through is a random number generator.
+The SQLite implementation of \texttt{Private} does not need this as it relies on SQLite's own pseudorandom number generator.
 
 \begin{lstlisting}[float,caption={Representing differentially private mechanisms},label={lst:mechanisms}]
 ||| Represents a differentially private computation
 ||| @ c The privacy cost of the computation
 ||| @ a The return type of the computation
 data Private : (c:Sensitivity) -> (a:Type) -> Type
-    MkPrivate : (CrapGen -> (a,CrapGen)) -> Private budget a
+    MkPrivate : (PRNG -> (a,PRNG)) -> Private cost a
 
 ||| Lifts a value into a private computation
 return : a -> Private 0 a
@@ -1328,6 +1340,14 @@ return x = MkPrivate $ \s => (x,s)
 evalPrivate : Private s a -> CrapGen -> a
 evalPrivate (MkPrivate f) g = fst (f g)
 
+||| Sequences a Vect of equally expensive private computations
+sequence : Vect n (Private s a) -> Private (n * s) (Vect n a)
+sequence {s} [] = return []
+sequence {n} ps = MkPrivate $ \g =>
+  let gs = map snd (unfoldCrapGenN (S n) g)
+      vs = (map evalPrivate ps) <*> (init gs)
+   in (vs, last gs)
+
 namespace Examples
 
     nestedAggregations : Private 3 Double
@@ -1336,57 +1356,38 @@ namespace Examples
                             return ((x+y*2)/3)
 \end{lstlisting}
 
-In addition, DPDT has functions for handling the sequencing of multiple \texttt{Private} results.
-Sequential queries are additive in cost.
-Sequencing computations in functional programming is traditionally accomplished using the infamous \texttt{Monad}.
+Sequencing two queries are additive in cost.
+Sequencing computations in functional programming is commonly accomplished using \texttt{Monads}.
 In many languages, Idris included, types implementing \texttt{Monad} instances have access to special syntactic sugar, commonly known as \texttt{do}-notation.
-\texttt{do}-notation is not magic: it just allows developers to use an alternative syntax for writing monadic code.
+\texttt{do}-notation just allows developers to use an alternate syntax for writing monadic code.
 
-We want to take advantage of this, but the type signatures required to satisfy a monad instance preclude our ability to reflect sensitivities in the types.
+We hoped to take advantage of this, but the type signatures required to satisfy a monad instance do not allow the monad type to change.
+When we sequence two \texttt{Private} computations, however, we need to produce a new one with a new cost.
 Fortunately, Idris does not actually require a \texttt{Monad} instance to overload \texttt{do}-notation.
-We just need to provide the functions \texttt{$(>>=)$} and \texttt{return}.
+It just requires that we provide the functions \texttt{$(>>=)$} and \texttt{return}.
 
-Experienced functional programmers will probably recognize that \texttt{Private} is functionally equivalent to a \texttt{State} monad instance.
+Sequencing must index \texttt{Private} correctly, just like the aggregation functions.
+Experts are able to write their own aggregations for use with DPDT.
+As long as they are using our \texttt{Private} structure, they will be able to freely mix them into sequences of pre-existing DPDT private computations.
 
-Each aggregation is responsible for providing differential privacy.
-Our implementation currently provides two common aggregations, \texttt{noisyCount} and \texttt{noisyAverage}.
-Experts will be able to write their own aggregations to provide to the public.
-
-The aggregation functions in DPDT look very similar to the ones in DPQ.
-Listing \ref{lst:DPDT_aggregations} shows DPDT's \texttt{noisyCount}.
-We can see that the return type includes what type the aggregation returns (here, and for most differentially private aggregations, a \texttt{Double}).
-The sensitivity calculations work the same as in DPQ.
-
-\begin{lstlisting}[float,caption={Representing aggregations in DPDT},label={lst:DPDT_aggregations}]
-||| Differentially private mechanism for counting the
-||| number of rows described by a query for the Idris backend
-||| @ q The query
-||| @ e User provided epsilon, accuracy parameter
-noisyCount : (q:Query ListRow s c) -> (e:Epsilon) -> Private (c*e) Double
-noisyCount (MkQuery q) eps = MkPrivate $ \g =>
-  let (rx,g') = rndDouble g
-      noise   = samplePure 0 (1 / toFloat eps) rx
-      count   = the Double $ fromInteger $ fromNat $ length (eval q)
-   in (count + noise, g')
-\end{lstlisting}
-
-Another flexibility improvement implemented for our Idris backend of DPDT is the \texttt{PureFn} expression in Listing \ref{lst:purefn}.
+In addition to sequencing, DPDT also improves on DPQ by allowing use of the \texttt{PureFn} expression data constructor.
+This allows us to use Idris in the expression language, significantly increasing the power of the toy language we outlined in Chapter~\ref{sec:RADT}.
 
 \begin{lstlisting}[float,caption={PureFn expression constructor}, label={lst:purefn}]
 PureFn : (a -> b) -> Expr s a -> Expr s b
 \end{lstlisting}
 
-\texttt{PureFn} is for lifting an Idris function into an expression, allowing for a lot of flexibility for the backends that can convert the function to the target language.
-It is actually a part of RADT's expression language, which means it is a part of DPQ as well.
-However, it is not trivial to convert an arbitrary Idris function to a query language expression (e.g. SQLite).
-Therefore, use of this functionality with the SQLite backend will just return a friendly error message.
-Luckily it is fairly easy to run an Idris function within Idris, so the DPDT Idris backend has this feature readily available.
+One important difference between DPDT and PINQ is the way they track metrics.
+Since PINQ is an online, dynamic system, it has at least one trusted runtime server (PINQ provider) tracking a global budget.
+When a query is to be evaluated, the privacy layer checks with all data sources whether its cost exceeds their budgets.
+PINQ is tracking ``remaining budget''.
 
+Our goal with DPDT is to verify all differential privacy constraints at compile-time.
+This very fundamental difference means that DPDT is unable to track ``remaining budget'', because the compiler will only run once\footnote{It may be possible to implement this using type providers.}.
+Ultimately, this limits DPDT to tracking ``total computation cost'', where a computation is defined as a single \texttt{Private} object.
 
-As described in Section \ref{sec:pinq}, in PINQ the user defines a global privacy budget for a differentially private program.
-As queries are run, the cost of the queries are subtracted from the budget, and when the budget is spent no more data access is allowed.
-We have a slightly different approach.
-In DPDT, we have no global budget, but provides the user with the total cost of the private computation in the type.
+It is also important to note that DPDT's differential privacy guarantees apply only within the context of a single \texttt{Private} object.
+Each evaluation of \texttt{evalPrivate} is equivalent to resetting the ``budget''.
 
 \chapter{Evaluation}\label{sec:evaluation}
 
