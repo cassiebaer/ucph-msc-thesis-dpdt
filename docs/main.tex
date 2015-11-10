@@ -1182,7 +1182,7 @@ Of course, we can't just return the results of any query.
 A query might just return the database contents untouched, potentially violating every single participant's privacy.
 Differential privacy requires that any query response be the result of some sort of aggregation.
 
-\section{Aggregations}
+\section{Aggregations}\label{seq:DPQ_aggregations}
 
 Aggregations are implemented as functions in DPQ.
 Listing \ref{lst:DPQ_aggregations} shows two aggregation functions for the SQLite backend.
@@ -1213,6 +1213,7 @@ noisyAverage exp (MkQuery q) eps =
 
 The result type of the aggregations is a string with an associated sensitivity cost, represented by the ADT \texttt{Private c} shown in Listing \ref{lst:DPQ_private}.
 This is the total sensitivity cost of the whole query and is calculated by multiplying the stability of the query argument and the epsilon value.
+
 
 \texttt{evalPrivate} is used to get a pure \texttt{String} from a private result.
 
@@ -1250,15 +1251,17 @@ Similar features is availible in several other query languages.
 
 \chapter{DPDT - Differentially Private Programs}\label{sec:DPDT}
 
-Additionally, the control flow of a program may be predicated on the value returned from an aggregation.
-Sequential queries are additive in cost.
-Sequencing computations in functional programming is traditionally accomplished using the infamous \texttt{Monad}.
-In many languages, Idris included, types implementing \texttt{Monad} instances have access to special syntactic sugar, commonly known as \texttt{do}-notation.
-\texttt{do}-notation is not magic: it just allows developers to use an alternative syntax for writing monadic code.
+DPQ is useful for simple statistical work that can be represented in one aggregation query, but for more complex algorithms this is not sufficient.
+DPDT is a more flexible language, in that it supports sequencing of queries, expanding the algorithm space to e.g. several machine learning algorithms.
 
-We want to take advantage of this, but the type signatures required to satisfy a monad instance preclude our ability to reflect sensitivities in the types.
-Fortunately, Idris does not actually require a \texttt{Monad} instance to overload \texttt{do}-notation.
-We just need to provide the functions \texttt{$(>>=)$} and \texttt{return}.
+DPQ and DPDT shares much of the implementation as it uses mostly the same abstract types.
+The difference is in aggregation return types.
+
+If you recall the \texttt{Private} ADT from Section \ref{seq:DPQ_aggregations} it was just a string with an associated sensititivity.
+DPDT has its own implementation of \texttt{Private}, shown in Listing \ref{lst:mechanisms}.
+It still acts as the result type of aggregation functions, but has some extended functionality.
+It is parameterized by the aggregation function's return type, instead of just \texttt{String} as in DPQ.
+\texttt{CrapGen} is a fairly good random number generator, as the name implies, and is used in the process of adding noise.
 
 \begin{lstlisting}[caption={Representing differentially private mechanisms},label={lst:mechanisms}]
 ||| Represents a differentially private computation
@@ -1289,32 +1292,57 @@ namespace Examples
                             return ((x+y*2)/3)
 \end{lstlisting}
 
+In addition, DPDT has functions for handling the sequencing of multiple \texttt{Private} results.
+Sequential queries are additive in cost.
+Sequencing computations in functional programming is traditionally accomplished using the infamous \texttt{Monad}.
+In many languages, Idris included, types implementing \texttt{Monad} instances have access to special syntactic sugar, commonly known as \texttt{do}-notation.
+\texttt{do}-notation is not magic: it just allows developers to use an alternative syntax for writing monadic code.
+
+We want to take advantage of this, but the type signatures required to satisfy a monad instance preclude our ability to reflect sensitivities in the types.
+Fortunately, Idris does not actually require a \texttt{Monad} instance to overload \texttt{do}-notation.
+We just need to provide the functions \texttt{$(>>=)$} and \texttt{return}.
+
 Experienced functional programmers will probably recognize that \texttt{Private} is functionally equivalent to a \texttt{State} monad instance.
-Laplace noise requires pseudorandom number generation, so we are keeping track of a generator throughout the computation.
 
 Each aggregation is responsible for providing differential privacy.
 Our implementation currently provides two common aggregations, \texttt{noisyCount} and \texttt{noisyAverage}.
 Experts will be able to write their own aggregations to provide to the public.
 
-Of course, aggregations alone are not sufficient for guaranteeing privacy.
-We must add Laplace noise according to the sensitivity of the \texttt{PINQuery} and a user-provided epsilon.
+The aggregation functions in DPDT look very similar to the ones in DPQ.
+Listing \ref{lst:DPDT_aggregations} shows DPDT's \texttt{noisyCount}.
+We can see that the return type includes what type the aggregation returns (here, and for most differentially private aggregations, a \texttt{Double}).
+The sensitivity calculations work the same as in DPQ.
 
-\texttt{noisyCount} is a good example of a simple aggregation.
-The user provides a \texttt{PINQuery} (which has an associated stability cost) and an arbitrary epsilon reflecting how accurate they want the result to be.
-The added noise is scaled according to the user provided epsilon while the privacy cost of the entire computation is computed in the types.
-
-\begin{lstlisting}[caption={Representing aggregations},label={lst:aggregations}]
+\begin{lstlisting}[caption={Representing aggregations in DPDT},label={lst:DPDT_aggregations}]
 ||| Differentially private mechanism for counting the
 ||| number of rows described by a query for the Idris backend
 ||| @ q The query
 ||| @ e User provided epsilon, accuracy parameter
-noisyCount : (q:PINQuery IdrisTable s c) -> (e:Epsilon) -> Private (c*e) Double
-noisyCount (MkPINQuery q) eps = MkPrivate $ \g =>
+noisyCount : (q:Query ListRow s c) -> (e:Epsilon) -> Private (c*e) Double
+noisyCount (MkQuery q) eps = MkPrivate $ \g =>
   let (rx,g') = rndDouble g
       noise   = samplePure 0 (1 / toFloat eps) rx
       count   = the Double $ fromInteger $ fromNat $ length (eval q)
    in (count + noise, g')
 \end{lstlisting}
+
+Another flexibility improvement implemented for our Idris backend of DPDT is the \texttt{PureFn} expression in Listing \ref{lst:purefn}.
+
+\begin{lstlisting}[caption={PureFn expression constructor}, label={lst:purefn}]
+PureFn : (a -> b) -> Expr s a -> Expr s b
+\end{lstlisting}
+
+\texttt{PureFn} is for lifting an Idris function into an expression, allowing for a lot of flexibility for the backends that can convert the function to the target language.
+It is actually a part of RADT's expression language, which means it is a part of DPQ as well.
+However, it is not trivial to convert an arbitrary Idris function to a query language expression (e.g. SQLite).
+Therefore, use of this functionality with the SQLite backend will just return a friendly error message.
+Luckily it is fairly easy to run an Idris function within Idris, so the DPDT Idris backend has this feature readily available.
+
+
+As described in Section \ref{sec:pinq}, in PINQ the user defines a global privacy budget for a differentially private program.
+As queries are run, the cost of the queries are subtracted from the budget, and when the budget is spent no more data access is allowed.
+We have a slightly different approach.
+In DPDT, we have no global budget, but provides the user with the total cost of the private computation in the type.
 
 \chapter{Evaluation}\label{sec:evaluation}
 
