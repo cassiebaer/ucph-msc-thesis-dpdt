@@ -86,7 +86,7 @@ However, a large number of side-channel attacks that PINQ is unable to stop are 
 \chapter{Introduction}\label{sec:introduction}
 
 With each passing day, more and more of our personal information is being collected, cataloged and analyzed by an ever increasing number of interested parties.
-Their interests range from selective marketing to collecting business performance metrics and from publicly-funded academic research to unauthorized and potentially illegal surveillance.
+Their interests range from selective marketing to collecting business performance metrics, and from publicly-funded academic research to unauthorized and potentially illegal surveillance.
 We aren't able to curate or control the data they are collecting about us.
 In fact, the ubiquity of automatic data collection probably gives them a better picture of you than they would get if you did curate and volunteer the data.
 Therefore, as the producers and descriptees of this data, we should be concerned with how it is being used.
@@ -1216,16 +1216,16 @@ Transformations in the DPQ/DPDT privacy layer can change both the schemas and st
 First, a transformation must unwrap the underlying \texttt{RADT.Query} objects.
 Then, it transforms them using operations from \texttt{RADT}.
 Finally, it rewraps the resulting \texttt{RADT.Query} in a \texttt{DPDT.Query} data constructor, \textit{but with a different type constructor}.
+This procedure is illustrated in Figure~\ref{fig:query_wrapping}.
 At the data level, \texttt{DPDT.Query} isn't terribly interesting; the interesting computations happen at the type level.
 
-% TODO 1 : fix this figure and make sure it looks good. and reference it. and change the caption. and give somebody a hug.
-% \begin{figure}
-%     \centering
-%     \def\svgwidth{0.75\linewidth}
-%     \input{assets/query_wrapping.svg}
-%     \caption{Visualizing indistinguishability with sample PDFs from a counting query on adjacent databases $D_1$ and $D_2$ ($D_1\sim D_2$)}
-%     \label{fig:indistinguishability}
-% \end{figure}
+\begin{figure}
+     \centering
+     \def\svgwidth{1\linewidth}
+     \input{assets/query_wrapping.pdf_tex}
+     \caption{DPQ/DPDT transformation procedure}
+     \label{fig:query_wrapping}
+\end{figure}
 
 Dependent type signatures allow total computations to be evaluated at compile-time.
 We spent significant time fine-tuning totality in the \texttt{Data.Rational} module.
@@ -1309,7 +1309,7 @@ This can generally be accomplished via two components: (pseudo)random uniform nu
 We implemented a basic C library with the Laplacian distribution and tested it with SQLite.
 Most common database systems should allow linking with custom C libraries.
 
-\chapter{DPDT - Differentially Private Programs}\label{sec:DPDT}
+\chapter{DPDT - Differentially Private Algorithms}\label{sec:DPDT}
 
 DPQ is useful for simple statistical queries that can be represented as one aggregation with the given expression language, but for more complex algorithms this is not sufficient.
 We distinguish \textit{queries} from \textit{algorithms} in that they do not support dependent sequencing operations (i.e. conditional branching support).
@@ -1407,7 +1407,7 @@ Here, the table of people naturally has a stability of 1 and the noisyCount a se
 Multiplied they give 2, so the sensitivity of the whole operation is 2.
 If we had defined the type of \texttt{countThemAll} to be \texttt{Private 1.9}, the program would not compile.
 
-\begin{lstlisting}[float,caption={Unit test for noisyCount},label={lst:example_DPQ_unit_test}]
+\begin{lstlisting}[caption={Unit test for noisyCount},label={lst:example_DPQ_unit_test}]
   Person : Schema
   Person = [ "Name" ::: String , "Age" ::: Nat ]
 
@@ -1444,7 +1444,7 @@ There are enough moving parts in a differentially private mechanism to warrant t
 % TODO 1 : "tell what you want to show"
 Listing~\ref{lst:example_data_people} constructs a small database in our Idris backend.
 
-\begin{lstlisting}[float,caption={Validation Data},label={lst:example_data_people}]
+\begin{lstlisting}[caption={Validation Data},label={lst:example_data_people}]
 import Database.PowerOfPi.Idris
 
 Person : Schema
