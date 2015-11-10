@@ -121,10 +121,7 @@ Differential privacy differentiates itself from other private data release mecha
 Early approaches often modeled their definition of privacy on the concept of \textit{perfect secrecy} from cryptography: could an adversary with access to the system learn \textit{anything} about an individual?
 While this definition is appealing for simplicity, it is too rigid: we actually do want somebody somewhere to learn something.
 \footnote{One interesting implication of this is that the adversaries are also the analysts; i.e, we must protect against legitimate users of the system.}
-Instead, differential privacy simply offers that Alice's participation in the database can increase her privacy risk by \textit{at most} some negligible amount.
-
-% TODO 1 : add ref to indistinguishability
-% Section~\ref{subsec:intro-almostperfectpriv} will expand on this.
+Instead, differential privacy promises that Alice's participation in the database can increase her privacy risk by \textit{at most} some negligible amount.
 
 \subsection{Indistinguishability}\label{subsec:intro-indistinguishability}
 
@@ -148,31 +145,34 @@ However, some queries reveal more information than others, so this seems too cru
 Instead of counting the number of queries, we associate each query with a \textit{privacy cost}.
 Then, each dataset is given a \textit{privacy budget}, which limits the total cost of queries that can be run against it.
 Each query evaluated reduces the privacy budget by its cost until it is eventually depleted, at which point the data should be destroyed.
+This is the fundamental idea behind differential privacy.
 
-\subsection{Almost Perfect Privacy}\label{subsec:intro-almostperfectpriv}
+\subsection{Privacy}\label{subsec:intro-almostperfectpriv}
 
-Early privacy research focused on preventing an adversary from learning anything about a particular individual (e.g. Alice).
-However, this definition is both impractical and unobtainable.
-%impractical because
-%unobtainable because
-However, this has proven to be nearly impossible in the presence of auxiliary information.
+Early privacy research focused on preventing an adversary from learning \textit{anything} about a particular individual (e.g. Alice).
+However, this goal is both impractical and impossible.
+Data are valued for the potential insights we might learn;
+we want analysts to learn something from the data!
+We just don't want them to learn anything about a particular individual in the data.
+
+However, this privacy objective is difficult to maintain in the presence of auxiliary information.
 Ganta et al. showed that \textit{k-anonymity} and other proposed partition-based anonymization approaches are vulnerable to composition attacks\cite{ganta2008composition}.
 A composition attack is performed on an ``anonymized'' data set by matching it with auxiliary data, such as data from the web, public records, or domain knowledge.
 With this technique, an attacker might be able to deduce information about Alice's records in an ``anonymized'' set.
 
 Compositions attacks are not only interesting to academics, either.
-AOL\footnote{\label{fn:aol} http://arstechnica.com/business/2006/09/7835/}, Twitter\footnote{\label{fn:twitter}http://arstechnica.com/tech-policy/2009/03/pulling-back-the-curtain-on-anonymous-twitterers/}, Netflix\footnote{\label{fn:netflix}http://arstechnica.com/tech-policy/2009/09/your-secrets-live-online-in-databases-of-ruin/}, and the Massachusetts Group Insurance Commission (GIC) database\footnote{\label{fn:gic}http://web.mit.edu/sem083/www/assignments/reidentification.html} have all suffered publicly in the wakes of linkage attacks.
+AOL\footnote{\label{fn:aol} http://arstechnica.com/business/2006/09/7835/}, Twitter\footnote{\label{fn:twitter}http://arstechnica.com/tech-policy/2009/03/pulling-back-the-curtain-on-anonymous-twitterers/}, Netflix\footnote{\label{fn:netflix}http://arstechnica.com/tech-policy/2009/09/your-secrets-live-online-in-databases-of-ruin/}, and the Massachusetts Group Insurance Commission (GIC) database\footnote{\label{fn:gic}http://web.mit.edu/sem083/www/assignments/reidentification.html} have all suffered publicly in the wakes of composition attacks.
 
-Rather than trying to prove the impossibility of a privacy breach, differential privacy guarantees that a users participation in a database can only increase their risk of a privacy breach by some negligible amount.
-This is true regardless of how much auxiliary information a would-be attacker knows or might learn in the future.
+Rather than trying to prove that an adversary cannot learn anything about an individual, differential privacy guarantees that the inclusion of an individual's records in a dataset will barely affect the adversary's ability to learn something about them.
+Analysts can run differentially private algorithms against sensitive datasets knowing that no individuals' privacy will be compromised.
+This is true regardless of how much auxiliary information a would-be attacker knows or \textit{might learn in the future}\cite{journals/cacm/Dwork11}.
+These properties encourage honest participation during data collection.
 
-Analysts are able to run differentially private algorithms against private data knowing that no individuals' privacy can be compromised.
-Suddenly, many of the Big Data databases which would otherwise be off limits can be made available to researchers.
-Each individuals participation in the database has a negligible effect on their risk of a privacy breach, so honest participation follows as a direct consequence.
+\subsection{Example: Randomized Response}
 
-In fact, a classic example of differentially private thinking is randomized response.
-Randomized response is a technique originally proposed in 1965 for encouraging survey respondents to answer potentially embarassing or legally complicated questions honestly\cite{warner1965randomized}.
-By introducing an element of randomness, participants are given plausible deniability regardless of how they respond.
+A classic example of differentially private thinking is randomized response.
+Randomized response is a technique originally proposed for encouraging survey respondents to answer potentially embarassing or legally complicated questions honestly\cite{warner1965randomized}.
+The element of randomness inherent in each response gives every participant plausibile deniability.
 
 After reading the question, participants are instructed to flip a coin.
 If the coin yields ``tails,'' the participant responds ``Yes''.
@@ -182,29 +182,49 @@ Thus, if researchers using randomized response find that 70\% of participants ad
 
 \subsection{Algorithms and Metrics}
 
-Many algorithms and metrics have been developed by the differential privacy community.
-Each algorithm is typically bundled with some sort of proof that it meets some privacy constraints or has some other privacy-related properties.
-The burden of producing such a proof and algorithm is typically manual, and therefore error-prone.
+Many differentially private algorithms and metrics have been developed by the research community.
+Each algorithm is typically bundled with a proof that it meets some privacy constraints or has some other privacy-related properties.
+The burden of producing such proofs and implementing the algorithms is typically manual, costly and error-prone.
 
-PINQ is a differential privacy framework that takes a different approach\cite{mcsherry2010privacy}.
-It is an embedded, SQL-like \textit{domain specific language} (DSL) for the Microsoft .NET languages which guarantees differential privacy by construction.
-Users of PINQ are able to compose carefully implemented primitives to build differentially private computations.
-The composition of these primitives happens according to well-defined rules, allowing PINQ to track privacy metrics as users build complex differentially private algorithms.
-A trusted runtime-system tracks and rejects queries whose cost exceed the remaining privacy budget.
+However, there is a subset of differential privacy for which metrics can be described and composed according to well-defined rules.
+A few implementations exist that try to capitalize on this to reduce programmer burden.
+PINQ\cite{mcsherry2010privacy} is a differential privacy framework implemented and embedded in C\#.
+It is a SQL-like, \textit{embedded domain specific language} (EDSL) for describing differentially private queries.
+Each query primitive is carefully implemented to be differentially private.
+PINQ provides functions for manipulating and combining queries with the guarantee that the resulting queries are also differentially private.
+Any query built using PINQ is differentially private \textit{by construction}.
 
-PINQ and its trusted system manage the budget at runtime.
-An analyst has no way of knowing whether a query will be accepted without manually tracking their budget.
-Reed and Pierce solve this by building a strongly-typed programming language which represents query costs in the types\cite{conf/icfp/ReedP10}.
-We aim to build on this idea by demonstrating that a dependent type system is a natural fit for capturing differential privacy requirements.
+PINQ is implemented as a simple ``privacy layer'' wrapping Microsoft's LINQ framework.
+LINQ is a very popular query EDSL for the \texttt{.NET} family of languages, providing a feature-rich API for manipulating SQL queries directly in the host language.
+PINQ is able to work with any backend data source that LINQ is able to.
+Unfortunately, many LINQ functions cannot be made differentially private, thus PINQ is only able to provide a modified subset of LINQ's API.
+
+A source of data must instantiate a LINQ provider before it can be accessed through the EDSL.
+It describes the underlying data representation and how LINQ's generic functions can interact with it.
+Similarly, PINQ requires a PINQ provider.
+Fortunately, the only additional requirement is that it tracks a global privacy budget so it is trivial to extend any LINQ provider for use with PINQ.
+
+The PINQ EDSL essentially uses a PINQ provider as a trusted runtime system for tracking the remaining privacy budget and rejecting queries which cost too much.
+One disadvantage of this is that queries are only rejected at runtime.
+Reed and Pierce proposed tracking the privacy metrics in a language's type system with Fuzz\cite{conf/icfp/ReedP10} and Gaboardi et al. improved on it's limitations in DFuzz\cite{conf/popl/GaboardiHHNP13} using linear dependent types.
+These approaches allow for machine-verifiable differential privacy at compile-time.
+
+We aim to build on this idea by demonstrating that dependent types are a great environment for describing and enforcing differential privacy requirements.
 
 \section{Dependent Types}\label{sec:intro-deptyps}
 % TODO 1 : add more about what dep.typ.s are
 % TODO 1 : add problem statement / hypothesis
+% TODO 1 : cite TT paper (mlitt)
 
-Strongly-typed programming languages are capable of statically verifying programs for type-correctness, precluding many potential sources of runtime errors: ``well-typed programs can't go wrong''.
-We extend this notion of being ``well-typed'' to include differential privacy metrics.
-Just as PINQ is embedded in the .NET languages (particularly C\#), our implementation is embedded within the dependently-typed, functional programming language Idris\footnote{http://idris-lang.org}.
-This allows us to take advantage of Idris' parser and advanced type-checker, as well as the many improvements continually being made by Idris' active open-source community.
+% Originally limited to a handful of academic proof assistants, dependently-typed languages have a come a long way since Per Martin-L\"of presented his intuitionistic type theory (TT)\cite{mlitt}.
+% General purpose, practical programming languages such as Agda\footnote{http://wiki.portal.chalmers.se/agda/pmwiki.php} and Idris are under active development.
+% We show that dependent types are a natural fit for describing and verifying differential privacy constraints.
+
+Programs written in strongly-typed programming languages can be statically verified for type-correctness.
+This precludes many potential sources of runtime errors: ``well-typed programs can't go wrong''.
+We extend this notion of ``well-typedness'' to include differential privacy metrics in a prototype query EDSL, \textit{Differential Privacy with Dependent Types} (DPDT).
+Just as PINQ is embedded in C\#, DPDT is embedded within the dependently-typed, functional programming language Idris\footnote{http://idris-lang.org}.
+This allows DPDT to take advantage of Idris' parser and advanced type-checker, as well as the many improvements continually being made by Idris' active open-source community.
 
 Well-typed programs in our embedded language can't go wrong and also can't violate their privacy requirements.
 Formal proofs for type-correct algorithms written in our language are unnecessary - the program itself is the proof.
@@ -212,16 +232,19 @@ Thus, all type-correct programs must respect expected privacy constraints.
 
 \section{Contributions}
 
-This paper describes a prototype implementation of an \textit{embedded domain specific language} (EDSL), \texttt{DPDT}, for describing differentially private computations using dependent types.
-Originally limited to a handful of academic proof assistants, dependently-typed languages have a come a long way since Per Martin-L\"of presented his intuitionistic type theory (TT)\cite{mlitt}.
-General purpose, practical programming languages such as Agda\footnote{http://wiki.portal.chalmers.se/agda/pmwiki.php} and Idris are under active development.
-We show that dependent types are a natural fit for describing and verifying differential privacy constraints.
-
-We implemented a fully-typed abstract language for describing the relational algebra; and we developed a simple in-memory Idris database backend for it.
-Our main contribution is the layering of differential privacy metrics into the types over top of the fully-typed relational algebra.
-PINQ's differential privacy metrics are checked dynamically at runtime, whereas our privacy layer leverages the power of dependent types to verify that privacy constraints are not violated \textit{at compile time}.
+This thesis describes prototype implementations of two \textit{domain specific languages} (DSLs), \texttt{DPQ} and \texttt{DPDT}, for describing differentially private queries and computations, respectively, using dependent types.
+Like PINQ, they are built overtop of a less restrictive (prototype) query language, \texttt{RADT}.
+\texttt{RADT} provides a fully-typed abstract language for describing the relational algebra (which SQL is based on).
+We provide two primitive backends for working with \texttt{RADT}: an in-memory database for Idris and compilation to SQLite query strings.
+Our main contribution is the layering of differential privacy metrics into the types of RADT.
+\texttt{DPQ} provides functions for building and manipulating differentially private queries.
+\texttt{DPDT} goes a step further by embedding \texttt{DPQ} in Idris, allowing users to interact with differentially private queries and host language features (almost) seamlessly.
+PINQ's privacy layer verifies that privacy metrics are not violated at runtime.
+\texttt{DPDT} leverages the power of dependent types to mechanically verify differential privacy at compile time.
 
 \paragraph{Outline}
+
+% TODO 1 : check that all refs here are resolved and that all chapters are accounted for
 
 In Chapter~\ref{sec:differential_privacy}, we cover some necessary background for understanding the basics of differential privacy.
 Chapter~\ref{sec:dependent_types_in_idris} serves as a brief tutorial to Idris with a focus on the language features we make use of in our implementation.
@@ -277,7 +300,7 @@ See Figure~\ref{fig:fn_sens} for a visualization of function sensitivity on $\ma
 
 \begin{figure}
     \centering
-    \def\svgwidth{\columnwidth}
+    \def\svgwidth{0.5\columnwidth}
     \input{assets/RealDistances.pdf_tex}
     \caption{Visualizing function sensitivity on $\mathbb{R}$}
     \label{fig:fn_sens}
@@ -395,7 +418,7 @@ See Figure~\ref{fig:indistinguishability} for a visualization of indistinguishab
 
 \begin{figure}
     \centering
-    \def\svgwidth{\columnwidth}
+    \def\svgwidth{0.75\columnwidth}
     \input{assets/Indistinguishability.pdf_tex}
     \caption{Visualizing indistinguishability with sample PDFs from a counting query on $D_1$ and $D_2$, where $D_1\sim D_2$}
     \label{fig:indistinguishability}
