@@ -784,6 +784,7 @@ namespace Examples
 \chapter{RADT - Typing the Relational Algebra}\label{sec:RADT}
 
 In this chapter, we review the relational algebra and show how it can be modelled in a dependently typed language.
+We first introduce the relational algebra, after which we describe the implementation of our type-safe relational algebra, RADT (Relational Algebra with Dependent Types).
 Our approach is based on Chapter 4 from \textit{The Power of Pi}\cite{OurySwierstra08PowerOfPi}, an excellent resource for practical examples of what dependent types are capable of.
 
 The relational algebra describes semantics for modelling and querying data in relational databases (e.g. MySQL\footnote{https://www.mysql.com/}).
@@ -836,7 +837,7 @@ The ability to capture schemas directly in the types and to manipulate them yiel
 
 \section{Relational Algebra in Idris}
 
-This section will briefly outline a basic implementation of the relational algebra in Idris.
+This section will outline the implementation of RADT, our relational algebra EDSL in Idris. 
 We begin by defining some simple algebraic datatypes (ADTs) for keeping the types clear.
 We then define a toy expression language before moving on to the query language.
 
@@ -1023,70 +1024,80 @@ namespace SQLiteBackend
 
 \chapter{DPQ - Differentially Private Queries}\label{sec:DPQ}
 
+In this chapter we describe how we bring together the material of the previous chapters and outline the implementation of DPQ.
+DPQ is an abbreviation for Differentially Private Queries and is a language for compiling differentially private string queries for query languages. 
 
-\chapter{DPDT - Differentially Private Programs}\label{sec:DPDT}
+The language is built as a layer on top of our relational algebra, RADT, described in the previous chapter.
+Our goal is to leverage the Idris type-checker to statically verify differential privacy constraints in single queries.
 
-In this chapter, we describe how we bring together the material of the previous chapters and outline our entire implementation.
+\section{Transformations}
 
-Our goal is to leverage Idris' type-checker to statically verify differential privacy constraints.
-We create new types to capture the necessities.
-We will focus on \texttt{PINQuery} because the other two have similar implementations, but are case-specific.
+The first building block in the formation of DPQ was to add the stability metric to RADT's relational algebra operations, or transformations as they are refered to in the differential privacy literature.
+
+New types are created to capture the necessities as shown in Listing \ref{lst:pinqueries}.
+Notice that the types are similar to the ones in RADT.
+They are now also indexed by a \texttt{Stability} (type synonym for \texttt{Rational}) to capture the stability of a query.
+As Idris supports name overloading we have decided to keep the names the same as in RADT.
+To avoid confusion these type names will be prefixed with their respective language name throughout this report (e.g., \texttt{RADT.Query}, \texttt{DPQ.Query}).
+It should be pointed out that DPQ and DPDT, described in the next chapter, share these data types.
+Therefore, both \texttt{DPQ.Query} and \texttt{DPDT.Query} refer to \texttt{Query} from Listing \ref{lst:pinqueries}.
 
 \begin{lstlisting}[caption={Representing privacy-aware queries},label={lst:pinqueries}]
 ||| Represents an abstract, stability-aware query
 ||| @ t A function yielding a base table representation given a schema
 ||| @ s The schema of the query
 ||| @ c The stability of the query
-data PINQuery : (t:Schema -> Type) -> (s:Schema) -> (c:Stability) -> Type where
-    MkPINQuery : Query t s -> PINQuery t s c
+data Query : (t:Schema -> Type) -> (s:Schema) -> (c:Stability) -> Type where
+    MkQuery : Query t s -> Query t s c
 
 ||| Represents an abstract, stability-aware grouping
 ||| @ t A function yielding a base table representation given a schema
 ||| @ s The schema of the query
 ||| @ k The type of the grouping key
 ||| @ c The stability of the query
-data PINGrouping : (t:Schema -> Type) -> (s:Schema) -> (k:Type) -> (c:Stability) -> Type where
-    MkPINGrouping : Grouping t s k -> PINGrouping t s k c
+data Grouping : (t:Schema -> Type) -> (s:Schema) -> (k:Type) -> (c:Stability) -> Type where
+    MkGrouping : Grouping t s k -> Grouping t s k c
 
 ||| Represents an abstract, stability-aware partitioning
 ||| @ t A function yielding a base table representation given a schema
 ||| @ s The schema of the query
 ||| @ k The type of the partitioning key
 ||| @ c The stability of the query
-data PINPartitioning : (t:Schema -> Type) -> (s:Schema) -> (k:Type) -> (c:Stability) -> Type where
-    MkPINPartitioning : Partitioning t s k -> PINPartitioning t s k c
+data Partitioning : (t:Schema -> Type) -> (s:Schema) -> (k:Type) -> (c:Stability) -> Type where
+    MkPartitioning : Partitioning t s k -> Partitioning t s k c
 \end{lstlisting}
 
-A \texttt{PINQuery t s c} describes a \texttt{c}-differentially private query with schema \texttt{s} (and backend table representation \texttt{(t s)}).
-There is only one data constructor which serves simply to wrap a \texttt{Query}, which was defined in Chapter~\ref{sec:RADT}.
-This allows us to define a \texttt{Query} and assign it an arbitrary stability.
+We will focus on \texttt{DPQ.Query} because \texttt{DPQ.Grouping} and \texttt{DPQ.Partitioning} have similar implementations, but are case-specific.
+A \texttt{DPQ.Query t s c} describes a \texttt{c}-differentially private query with schema \texttt{s} (and backend table representation \texttt{(t s)}).
+There is only one data constructor which serves simply to wrap a \texttt{RADT.Query}.
+This allows us to define a \texttt{RADT.Query} and assign it an arbitrary stability.
 
-Next, we provide the standard operators from the relational algebra as functions operating on \texttt{PINQuery t s c}.
-We simply unwrap the \texttt{Query} and then rewrap it in the same data constructor, but using a different type constructor.
+Next, we provide the standard operators from the relational algebra as functions operating on \texttt{DPQ.Query t s c}.
+We simply unwrap the \texttt{RADT.Query} and then rewrap it in the same \texttt{DPQ.Query} data constructor, but using a different type constructor.
 This is because the schema and stability could potentially change.
 We control the \textit{application programming interface} (API) that is exported, so we carefully implement the relational algebra operators with the correct stability costs.
-By unwrapping and rewrapping the \texttt{Query} trees from Chapter~\ref{sec:RADT} in our new type, we are now able to build query trees that carry privacy metrics in the type.
+By unwrapping and rewrapping the \texttt{RADT.Query} trees from Chapter~\ref{sec:RADT} in our new type, we are now able to build query trees that carry privacy metrics in the type.
 
 \begin{lstlisting}[caption={Representing privacy-aware transformations},label={lst:transformations}]
 ||| Represents stability-aware selection
-where' : PINQuery b s c -> Expr s Bool -> PINQuery b s c
-where' (MkPINQuery q) e = MkPINQuery (Select e q)
+where' : Query b s c -> Expr s Bool -> Query b s c
+where' (MkQuery q) e = MkQuery (Select e q)
 
 ||| Represents stability-aware projection
-select : PINQuery b s c -> (f:String -> Maybe  String) -> PINQuery b (projectedSchema f s) c
-select (MkPINQuery q) f = MkPINQuery (Projection f q)
+select : Query b s c -> (f:String -> Maybe  String) -> Query b (projectedSchema f s) c
+select (MkQuery q) f = MkQuery (Projection f q)
 
 ||| Represents stability-aware union
-union : PINQuery b s c -> PINQuery b s c' -> PINQuery b s (c + c')
-union (MkPINQuery q) (MkPINQuery q') = MkPINQuery (Union q q')
+union : Query b s c -> Query b s c' -> Query b s (c + c')
+union (MkQuery q) (MkQuery q') = MkQuery (Union q q')
 
 ||| Represents stability-aware intersection
-intersect : PINQuery b s c -> PINQuery b s c' -> PINQuery b s (c + c')
-intersect (MkPINQuery q) (MkPINQuery q') = MkPINQuery (Diff q q')
+intersect : Query b s c -> Query b s c' -> Query b s (c + c')
+intersect (MkQuery q) (MkQuery q') = MkQuery (Diff q q')
 
 ||| Represents stability-aware grouping
-groupBy : Eq k => Expr s k -> PINQuery b s c -> PINGrouping b s k (c * 2)
-groupBy e (MkPINQuery q) = MkPINGrouping (GroupBy e q)
+groupBy : Eq k => Expr s k -> Query b s c -> Grouping b s k (c * 2)
+groupBy e (MkQuery q) = MkGrouping (GroupBy e q)
 \end{lstlisting}
 
 Recall from Section~\ref{subsec:fn_sens} that \texttt{where'} is a 1-sensitive function.
@@ -1098,7 +1109,34 @@ Notice how this can be precisely specified in Idris.
 
 Of course, we can't just return the results of any query.
 A query might just return the database contents untouched, potentially violating every single participant's privacy.
-Differential privacy essentially requires that any query response be the result of some sort of aggregation.
+Differential privacy requires that any query response be the result of some sort of aggregation.
+
+\section{Aggregations}
+
+
+\section{Target language requirements}
+
+There are some requirements that need to be in place in the target query language in order to make a DPQ backend for it.
+
+First of all, it should obviously support the basic relational algebra operations implemented in DPQ.
+The language must have a random number generator in order to add random noise.
+In addition there are several mathematical functions that are required to sample from a Laplacian distribution.
+These required functions are listed below.
+It might also be a solution to define them yourself, but query languages are generally not intended for that, and the queries could end up fairly complex.
+
+\begin{itemize}
+    \item Natural logarithm
+    \item Natural exponential
+    \item Absolute value
+    \item Signum
+\end{itemize}
+
+In the case of SQLite, which we have implemented a DPQ backend for, it lacks both logarithm and exponential functions.
+Luckily SQLite supports extension functions, which are embedded in a shared C-library, and allows for extended functionality to the language.
+So by using this feature we are able to make a DPQ backend for SQLite referencing functions in the exension library to make up for the missing required functions.
+Similar features is availible in several other query languages.
+
+\chapter{DPDT - Differentially Private Programs}\label{sec:DPDT}
 
 Additionally, the control flow of a program may be predicated on the value returned from an aggregation.
 Sequential queries are additive in cost.
