@@ -1252,20 +1252,20 @@ There is not much magic happening in the implementation of the functions, except
 
 noisyCount : (Query s c) -> (e:Epsilon) -> Private (c*e)
 noisyCount  (MkQuery q) eps  =
-     let noise = "samplePure(0, " ++ show (1 / toFloat eps) ++ ")"
-     in MkPrivate $ "SELECT (COUNT(*) + " ++ noise ++ ") FROM (" ++ eval q ++ ")"
+  let noise = "samplePure(0, " ++ show (1 / toFloat eps) ++ ")"
+  in MkPrivate $ "SELECT (COUNT(*) + " ++ noise ++ ") FROM (" ++ eval q ++ ")"
 
 noisyAverage : Expr s Double -> Query s c -> (e:Epsilon) -> Private (c*e)
 noisyAverage exp (MkQuery q) eps =
-     let expStr   = eval exp
-         clampLT  = "CASE WHEN " ++ expStr ++ " < -1 THEN -1 ELSE " ++ expStr ++ " END"
-         clamp    = "CASE WHEN " ++ expStr ++ " > 1 THEN 1 ELSE ("  ++ clampLT ++ ") END"
-         width    = show $ 2 / toFloat eps
-         noisyAvg = "noisyAverage(AVG(ClampedValues), " ++ width ++ ")"
-         isEmpty  = "CASE WHEN COUNT(*) == 0 THEN " ++ rndVar ++ " ELSE " ++ noisyAvg ++ " END"
-         select   = "SELECT (" ++ isEmpty ++ ") "
-         from     = "FROM (SELECT (" ++ clamp ++ ") AS ClampedValues FROM (" ++ eval q ++ "))"
-     in  MkPrivate $ select ++ from
+  let expStr   = eval exp
+    clampLT  = "CASE WHEN " ++ expStr ++ " < -1 THEN -1 ELSE " ++ expStr ++" END"
+    clamp    = "CASE WHEN " ++ expStr ++ " > 1 THEN 1 ELSE "  ++ clampLT ++" END"
+    width    = show $ 2 / toFloat eps
+    noisyAvg = "noisyAverage(AVG(ClampedValues), " ++ width ++ ")"
+    isEmpty  = "CASE WHEN COUNT(*) == 0 THEN " ++ rndVar ++ " ELSE " ++ noisyAvg ++ "END"
+    select   = "SELECT (" ++ isEmpty ++ ") "
+    from     = "FROM (SELECT (" ++ clamp ++ ") AS ClampedValues FROM (" ++ eval q ++ "))"
+  in  MkPrivate $ select ++ from
 
 \end{lstlisting}
 
@@ -1446,7 +1446,11 @@ Testing has included running a query multiple times, taking the average, and che
 This test ensures that the query compilation and the extension functions are reasonably correct.
 A data provider should of course not grant a budget that allows this much learning from a database, as it would at least put one participant at risk.
 
-\section{DPDT verification}
+\section{DPDT}
+
+In this section we verified implementation of DPDT and how it compares to PINQ.
+
+\subsection{Verification}
 
 We begin by verifying the behavior of DPDT with simple queries.
 There are enough moving parts in a differentially private mechanism to warrant this.
@@ -1526,7 +1530,7 @@ In fact, \texttt{tripleCountAlice} and \texttt{tripleCountAlice'} are functional
 They are asking for the same thing at the same privacy cost; therefore, their representative PDFs will be equal.
 The analyst is limited by the privacy budget.
 
-\section{Standing on the shoulders of giants}
+\subsection{Standing on the shoulders of giants}
 
 One of LINQ's key features is that it is embedded within the .NET languages.
 This means that developers have access to much more than the LINQ DSL when writing applications; they are able to use all of the features of the host language.
@@ -1593,9 +1597,10 @@ It may be possible for us to extend the \texttt{Sensitivity} type and convince t
 \section{Differential privacy and dependent types}
 
 Nicolas Oury and Wouter Swierstra have already shown that dependent types are natural fit for fully typing the relational algebra\cite{OurySwierstra08PowerOfPi}.
-Chapter~\ref{sec:RADT} provided a brief overview of their method.
-The goal of this thesis is to demonstrate that dependent types are also capable of typing differential privacy metrics with ease and we certainly believe this to be the case.
-Chapter~\ref{sec:function_sensitivity} showed how metrics such as function sensitivity can be tracked using dependent types and Chapter~\ref{sec:DPQ} put it all together into a completely type-safe, PINQ-like EDSL for Idris.
+Chapter~\ref{sec:RADT} provided an overview of their method in our implementation of RADT.
+The goal of this thesis is to demonstrate that dependent types are also capable of typing differential privacy metrics and we certainly believe this to be the case.
+Chapter~\ref{sec:function_sensitivity} showed how metrics such as function sensitivity can be tracked using dependent types.
+Chapter~\ref{sec:DPQ} put the previous chapter together into a completely type-safe Idris EDSL for compiling single queries, Chapter~\ref{sec:DPDT} added sequencing to that, resulting in a PINQ-like language.
 
 LINQ provides type-safety for most of the relational algebra.
 PINQ expands this safety to include privacy metrics, but it does so dynamically.
@@ -1619,7 +1624,7 @@ Dependent type systems have benefitted from decades of research and come a long 
 Languages like Agda\footnote{http://wiki.portal.chalmers.se/agda/pmwiki.php}, and more recently, Idris, provide the power of dependent types in a practical setting, allowing critical concepts, such as differential privacy constraints, to be recorded and mechanically verified at compile time.
 
 We believe that in spite of the limitations outlined above, dependent types are capable of representing differential privacy metrics.
-DPDT is an EDSL prototype demonstrating exactly this point.
+DPQ and DPDT are EDSL prototypes demonstrating exactly this point.
 Some of the limitations described above can probably be lifted with more work (e.g. recursive descent geometric series costs), but some are impossible (e.g. dynamic termination with equal cost iterations).
 
 \section{Future work}\label{sec:future_work}
