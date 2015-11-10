@@ -18,7 +18,10 @@
 
 \renewcommand{\gitMark}{\gitBranch\ :\ \gitHash\ \textbullet{}\ (\gitAuthorDate)\ \textbullet{}\ \gitFirstTagDescribe}
 
-\newtheorem{defn}{Definition}[section]
+\newtheorem{defn}{Definition}[chapter]
+\newtheorem{thm}[defn]{Theorem}
+\newtheorem{cor}[defn]{Corollary}
+\newtheorem{lem}[defn]{Lemma}
 
 \opgave{M.Sc. Thesis}
 \forfatter{
@@ -121,10 +124,7 @@ Differential privacy differentiates itself from other private data release mecha
 Early approaches often modeled their definition of privacy on the concept of \textit{perfect secrecy} from cryptography: could an adversary with access to the system learn \textit{anything} about an individual?
 While this definition is appealing for simplicity, it is too rigid: we actually do want somebody somewhere to learn something.
 \footnote{One interesting implication of this is that the adversaries are also the analysts; i.e, we must protect against legitimate users of the system.}
-Instead, differential privacy simply offers that Alice's participation in the database can increase her privacy risk by \textit{at most} some negligible amount.
-
-% TODO 1 : add ref to indistinguishability
-% Section~\ref{subsec:intro-almostperfectpriv} will expand on this.
+Instead, differential privacy promises that Alice's participation in the database can increase her privacy risk by \textit{at most} some negligible amount.
 
 \subsection{Indistinguishability}\label{subsec:intro-indistinguishability}
 
@@ -148,31 +148,34 @@ However, some queries reveal more information than others, so this seems too cru
 Instead of counting the number of queries, we associate each query with a \textit{privacy cost}.
 Then, each dataset is given a \textit{privacy budget}, which limits the total cost of queries that can be run against it.
 Each query evaluated reduces the privacy budget by its cost until it is eventually depleted, at which point the data should be destroyed.
+This is the fundamental idea behind differential privacy.
 
-\subsection{Almost Perfect Privacy}\label{subsec:intro-almostperfectpriv}
+\subsection{Privacy}\label{subsec:intro-almostperfectpriv}
 
-Early privacy research focused on preventing an adversary from learning anything about a particular individual (e.g. Alice).
-However, this definition is both impractical and unobtainable.
-%impractical because
-%unobtainable because
-However, this has proven to be nearly impossible in the presence of auxiliary information.
+Early privacy research focused on preventing an adversary from learning \textit{anything} about a particular individual (e.g. Alice).
+However, this goal is both impractical and impossible.
+Data are valued for the potential insights we might learn;
+we want analysts to learn something from the data!
+We just don't want them to learn anything about a particular individual in the data.
+
+However, this privacy objective is difficult to maintain in the presence of auxiliary information.
 Ganta et al. showed that \textit{k-anonymity} and other proposed partition-based anonymization approaches are vulnerable to composition attacks\cite{ganta2008composition}.
 A composition attack is performed on an ``anonymized'' data set by matching it with auxiliary data, such as data from the web, public records, or domain knowledge.
 With this technique, an attacker might be able to deduce information about Alice's records in an ``anonymized'' set.
 
 Compositions attacks are not only interesting to academics, either.
-AOL\footnote{\label{fn:aol} http://arstechnica.com/business/2006/09/7835/}, Twitter\footnote{\label{fn:twitter}http://arstechnica.com/tech-policy/2009/03/pulling-back-the-curtain-on-anonymous-twitterers/}, Netflix\footnote{\label{fn:netflix}http://arstechnica.com/tech-policy/2009/09/your-secrets-live-online-in-databases-of-ruin/}, and the Massachusetts Group Insurance Commission (GIC) database\footnote{\label{fn:gic}http://web.mit.edu/sem083/www/assignments/reidentification.html} have all suffered publicly in the wakes of linkage attacks.
+AOL\footnote{\label{fn:aol} http://arstechnica.com/business/2006/09/7835/}, Twitter\footnote{\label{fn:twitter}http://arstechnica.com/tech-policy/2009/03/pulling-back-the-curtain-on-anonymous-twitterers/}, Netflix\footnote{\label{fn:netflix}http://arstechnica.com/tech-policy/2009/09/your-secrets-live-online-in-databases-of-ruin/}, and the Massachusetts Group Insurance Commission (GIC) database\footnote{\label{fn:gic}http://web.mit.edu/sem083/www/assignments/reidentification.html} have all suffered publicly in the wakes of composition attacks.
 
-Rather than trying to prove the impossibility of a privacy breach, differential privacy guarantees that a users participation in a database can only increase their risk of a privacy breach by some negligible amount.
-This is true regardless of how much auxiliary information a would-be attacker knows or might learn in the future.
+Rather than trying to prove that an adversary cannot learn anything about an individual, differential privacy guarantees that the inclusion of an individual's records in a dataset will barely affect the adversary's ability to learn something about them.
+Analysts can run differentially private algorithms against sensitive datasets knowing that no individuals' privacy will be compromised.
+This is true regardless of how much auxiliary information a would-be attacker knows or \textit{might learn in the future}\cite{journals/cacm/Dwork11}.
+These properties encourage honest participation during data collection.
 
-Analysts are able to run differentially private algorithms against private data knowing that no individuals' privacy can be compromised.
-Suddenly, many of the Big Data databases which would otherwise be off limits can be made available to researchers.
-Each individuals participation in the database has a negligible effect on their risk of a privacy breach, so honest participation follows as a direct consequence.
+\subsection{Example: Randomized Response}
 
-In fact, a classic example of differentially private thinking is randomized response.
-Randomized response is a technique originally proposed in 1965 for encouraging survey respondents to answer potentially embarassing or legally complicated questions honestly\cite{warner1965randomized}.
-By introducing an element of randomness, participants are given plausible deniability regardless of how they respond.
+A classic example of differentially private thinking is randomized response.
+Randomized response is a technique originally proposed for encouraging survey respondents to answer potentially embarassing or legally complicated questions honestly\cite{warner1965randomized}.
+The element of randomness inherent in each response gives every participant plausibile deniability.
 
 After reading the question, participants are instructed to flip a coin.
 If the coin yields ``tails,'' the participant responds ``Yes''.
@@ -182,29 +185,49 @@ Thus, if researchers using randomized response find that 70\% of participants ad
 
 \subsection{Algorithms and Metrics}
 
-Many algorithms and metrics have been developed by the differential privacy community.
-Each algorithm is typically bundled with some sort of proof that it meets some privacy constraints or has some other privacy-related properties.
-The burden of producing such a proof and algorithm is typically manual, and therefore error-prone.
+Many differentially private algorithms and metrics have been developed by the research community.
+Each algorithm is typically bundled with a proof that it meets some privacy constraints or has some other privacy-related properties.
+The burden of producing such proofs and implementing the algorithms is typically manual, costly and error-prone.
 
-PINQ is a differential privacy framework that takes a different approach\cite{mcsherry2010privacy}.
-It is an embedded, SQL-like \textit{domain specific language} (DSL) for the Microsoft .NET languages which guarantees differential privacy by construction.
-Users of PINQ are able to compose carefully implemented primitives to build differentially private computations.
-The composition of these primitives happens according to well-defined rules, allowing PINQ to track privacy metrics as users build complex differentially private algorithms.
-A trusted runtime-system tracks and rejects queries whose cost exceed the remaining privacy budget.
+However, there is a subset of differential privacy for which metrics can be described and composed according to well-defined rules.
+A few implementations exist that try to capitalize on this to reduce programmer burden.
+PINQ\cite{mcsherry2010privacy} is a differential privacy framework implemented and embedded in C\#.
+It is a SQL-like, \textit{embedded domain specific language} (EDSL) for describing differentially private queries.
+Each query primitive is carefully implemented to be differentially private.
+PINQ provides functions for manipulating and combining queries with the guarantee that the resulting queries are also differentially private.
+Any query built using PINQ is differentially private \textit{by construction}.
 
-PINQ and its trusted system manage the budget at runtime.
-An analyst has no way of knowing whether a query will be accepted without manually tracking their budget.
-Reed and Pierce solve this by building a strongly-typed programming language which represents query costs in the types\cite{conf/icfp/ReedP10}.
-We aim to build on this idea by demonstrating that a dependent type system is a natural fit for capturing differential privacy requirements.
+PINQ is implemented as a simple ``privacy layer'' wrapping Microsoft's LINQ framework.
+LINQ is a very popular query EDSL for the \texttt{.NET} family of languages, providing a feature-rich API for manipulating SQL queries directly in the host language.
+PINQ is able to work with any backend data source that LINQ is able to.
+Unfortunately, many LINQ functions cannot be made differentially private, thus PINQ is only able to provide a modified subset of LINQ's API.
+
+A source of data must instantiate a LINQ provider before it can be accessed through the EDSL.
+It describes the underlying data representation and how LINQ's generic functions can interact with it.
+Similarly, PINQ requires a PINQ provider.
+Fortunately, the only additional requirement is that it tracks a global privacy budget so it is trivial to extend any LINQ provider for use with PINQ.
+
+The PINQ EDSL essentially uses a PINQ provider as a trusted runtime system for tracking the remaining privacy budget and rejecting queries which cost too much.
+One disadvantage of this is that queries are only rejected at runtime.
+Reed and Pierce proposed tracking the privacy metrics in a language's type system with Fuzz\cite{conf/icfp/ReedP10} and Gaboardi et al. improved on it's limitations in DFuzz\cite{conf/popl/GaboardiHHNP13} using linear dependent types.
+These approaches allow for machine-verifiable differential privacy at compile-time.
+
+We aim to build on this idea by demonstrating that dependent types are a great environment for describing and enforcing differential privacy requirements.
 
 \section{Dependent Types}\label{sec:intro-deptyps}
 % TODO 1 : add more about what dep.typ.s are
 % TODO 1 : add problem statement / hypothesis
+% TODO 1 : cite TT paper (mlitt)
 
-Strongly-typed programming languages are capable of statically verifying programs for type-correctness, precluding many potential sources of runtime errors: ``well-typed programs can't go wrong''.
-We extend this notion of being ``well-typed'' to include differential privacy metrics.
-Just as PINQ is embedded in the .NET languages (particularly C\#), our implementation is embedded within the dependently-typed, functional programming language Idris\footnote{http://idris-lang.org}.
-This allows us to take advantage of Idris' parser and advanced type-checker, as well as the many improvements continually being made by Idris' active open-source community.
+% Originally limited to a handful of academic proof assistants, dependently-typed languages have a come a long way since Per Martin-L\"of presented his intuitionistic type theory (TT)\cite{mlitt}.
+% General purpose, practical programming languages such as Agda\footnote{http://wiki.portal.chalmers.se/agda/pmwiki.php} and Idris are under active development.
+% We show that dependent types are a natural fit for describing and verifying differential privacy constraints.
+
+Programs written in strongly-typed programming languages can be statically verified for type-correctness.
+This precludes many potential sources of runtime errors: ``well-typed programs can't go wrong''.
+We extend this notion of ``well-typedness'' to include differential privacy metrics in a prototype query EDSL, \textit{Differential Privacy with Dependent Types} (DPDT).
+Just as PINQ is embedded in C\#, DPDT is embedded within the dependently-typed, functional programming language Idris\footnote{http://idris-lang.org}.
+This allows DPDT to take advantage of Idris' parser and advanced type-checker, as well as the many improvements continually being made by Idris' active open-source community.
 
 Well-typed programs in our embedded language can't go wrong and also can't violate their privacy requirements.
 Formal proofs for type-correct algorithms written in our language are unnecessary - the program itself is the proof.
@@ -212,16 +235,19 @@ Thus, all type-correct programs must respect expected privacy constraints.
 
 \section{Contributions}
 
-This paper describes a prototype implementation of an \textit{embedded domain specific language} (EDSL), \texttt{DPDT}, for describing differentially private computations using dependent types.
-Originally limited to a handful of academic proof assistants, dependently-typed languages have a come a long way since Per Martin-L\"of presented his intuitionistic type theory (TT)\cite{mlitt}.
-General purpose, practical programming languages such as Agda\footnote{http://wiki.portal.chalmers.se/agda/pmwiki.php} and Idris are under active development.
-We show that dependent types are a natural fit for describing and verifying differential privacy constraints.
-
-We implemented a fully-typed abstract language for describing the relational algebra; and we developed a simple in-memory Idris database backend for it.
-Our main contribution is the layering of differential privacy metrics into the types over top of the fully-typed relational algebra.
-PINQ's differential privacy metrics are checked dynamically at runtime, whereas our privacy layer leverages the power of dependent types to verify that privacy constraints are not violated \textit{at compile time}.
+This thesis describes prototype implementations of two \textit{domain specific languages} (DSLs), \texttt{DPQ} and \texttt{DPDT}, for describing differentially private queries and computations, respectively, using dependent types.
+Like PINQ, they are built overtop of a less restrictive (prototype) query language, \texttt{RADT}.
+\texttt{RADT} provides a fully-typed abstract language for describing the relational algebra (which SQL is based on).
+We provide two primitive backends for working with \texttt{RADT}: an in-memory database for Idris and compilation to SQLite query strings.
+Our main contribution is the layering of differential privacy metrics into the types of RADT.
+\texttt{DPQ} provides functions for building and manipulating differentially private queries.
+\texttt{DPDT} goes a step further by embedding \texttt{DPQ} in Idris, allowing users to interact with differentially private queries and host language features (almost) seamlessly.
+PINQ's privacy layer verifies that privacy metrics are not violated at runtime.
+\texttt{DPDT} leverages the power of dependent types to mechanically verify differential privacy at compile time.
 
 \paragraph{Outline}
+
+% TODO 1 : check that all refs here are resolved and that all chapters are accounted for
 
 In Chapter~\ref{sec:differential_privacy}, we cover some necessary background for understanding the basics of differential privacy.
 Chapter~\ref{sec:dependent_types_in_idris} serves as a brief tutorial to Idris with a focus on the language features we make use of in our implementation.
@@ -232,60 +258,70 @@ We evaluate our work in Chapter~\ref{sec:evaluation} and provide concluding rema
 
 \chapter{Differential Privacy}\label{sec:differential_privacy}
 
-In this chapter, we will focus on specific ideas from the differential privacy literature as it relates to the implementation of our language, DPDT.
-In particular, we will discuss function sensitivity, which is a relative measure of how much a function can magnify the distances between collections of objects; and indistinguishability, which is the key idea which quantifies what it means for a computation to be differentially private.
-Finally, we describe PINQ, the framework that allows users to build differentially private computations by construction.
+In this chapter, we describe fundamental concepts from the differential privacy literature as it relates to the implementation of our language, DPDT.
+In particular, we will discuss function sensitivity, which is a relative measure of how much a function can magnify the distances between collections of objects; and indistinguishability, which is the key property necessary for a computation to be differentially private.
+Finally, we give a brief outline of PINQ's moving parts, since they served as the primary motivation for DPDT.
 
 \section{Function Sensitivity}\label{subsec:fn_sens}
 
-Function sensitivity is an important concept from the differential privacy literature.
+Function sensitivity is a metric that plays a key role in much of the differential privacy literature.
 We can make assertions about an entire program if we understand the sensitivities of the functions with which it is composed.
-Sensitivity is a key part in making our type system work.
+Sensitivity is a key component for making DPDT's type system work.
 
-Function sensitivity captures the idea of how relatively ``far'' a function can magnify the distances between pairs of objects.
-We say that a function is $c$-sensitive if, for all pairs of inputs, the distance between the outputs does not exceed $c$ times the original distance between the inputs.
+Function sensitivity describes how relatively ``far'' a function can magnify the distances between pairs of objects.
+We say that a function is $c$-sensitive if, for all possible pairs of inputs, the distance between the outputs does not exceed $c$ times the original distance between the inputs.
 
-\begin{defn}\label{def:csens}
-  A function, $f : \mathbb A \rightarrow \mathbb A$, is $c$-sensitive if
-  $$\forall x,y.\; d_{\mathbb A}(f(x),f(y)) \le c \times d_{\mathbb A}(x,y)$$
-\end{defn}
+\begin{thm}\label{thm:csens}
+  Given a distance function, $d_{\mathbb A} : \mathbb A \rightarrow \mathbb A \rightarrow \mathbb R$, and a function, $f : \mathbb A \rightarrow \mathbb A$, we say that $f$ is $c$-sensitive if
+  $$\forall x,y\in\mathbb A.\; d_{\mathbb A}(f(x),f(y)) \le c \times d_{\mathbb A}(x,y)$$
+\end{thm}
 
-For a concrete example, let us turn our attention to the domain of real numbers.
-We will take the distance function to be the absolute value norm; i.e. $d_\mathbb{R}(x,y) = |x - y|$.
-Obviously, the function $f_{id}(x)=x$ cannot magnify distances at all.
+\begin{samepage}
+For a concrete example, consider the domain of real numbers.
+We take the distance function to be the absolute value norm; i.e. $d_\mathbb{R}(x,y) = |x - y|$.
+Obviously, the function $f_{id}(x)=x$ cannot magnify distances at all (see Figure~\ref{fig:fn_sens}).
+\begin{cor}
+$f_{id} : \mathbb A \rightarrow \mathbb A$ is 1-sensitive.
+\end{cor}
+\begin{proof}
 For any two real numbers, their difference will equal the difference between them after applying $f_{id}$.
-
+\nopagebreak
 \[
   \forall x,y.\; d_\mathbb{R}(f_{id}(x),f_{id}(y)) = d_\mathbb{R}(x,y)
 \]
+\end{proof}
+\end{samepage}
 
 We say $f_{id}$ is 1-sensitive because distances can't be magnified at all.
 Another example of a 1-sensitive function is $f_{1/2}(x) = x/2$; in fact, $f_{1/2}$ is also $\frac{1}{2}$-sensitive.
 
-\begin{defn}\label{def:clessthancprime}
+\begin{lem}\label{lem:clessthancprime}
   A function that is $c$-sensitive is also $c'$-sensitive for all $c < c'$.
-\end{defn}
+\end{lem}
+% TODO 3 : add proof?
 
-Similarly, consider the case where $f_{+10}(x) = x + 10$.
+Similarly, consider the case where $f_{+2}(x) = x + 2$.
 Clearly, it doesn't matter which $x$ and $y$ you sample; the distance $d_{\mathbb R}(x,y)$ will always equal $d_{\mathbb R}(f(x),f(y))$.
-Therefore, $f_{+10}$ is a 1-sensitive function.
-Now consider the case of $f_{\times 2+10}(x) = 2x + 10$.
+Therefore, $f_{+2}$ is also a 1-sensitive function.
+Now consider the case of $f_{\times 2}(x) = 2x$.
 Distances between input and output objects can now be doubled (but no more), so it is a 2-sensitive function.
+
 Intuitively, when dealing with linear functions on $\mathbb R$ and the absolute value norm, the largest linear coefficient will dictate the c-sensitivity.
-Higher order polynomials are necessarily $\infty$-sensitive.
-See Figure~\ref{fig:fn_sens} for a visualization of function sensitivity on $\mathbb R$.
+Higher order polynomials are necessarily $\infty$-sensitive; i.e. there is no finite bound.
+See Figure~\ref{fig:fn_sens} for a visualization of function sensitivity on $\mathbb R$ with $f_id$, $f_{+2}$, $f_{\times 2}$.
 
 \begin{figure}
     \centering
-    \def\svgwidth{\columnwidth}
+    \def\svgwidth{0.5\columnwidth}
     \input{assets/RealDistances.pdf_tex}
     \caption{Visualizing function sensitivity on $\mathbb{R}$}
     \label{fig:fn_sens}
 \end{figure}
 
 Simple functions on $\mathbb R$ and one dimensional distance functions are not particularly interesting.
-However, function sensitivity can be applied much more generally and to much more interesting domains, such as databases containing sensitive information (e.g. Alice's tax records or health information).
+However, function sensitivity can be applied much more generally to much more interesting domains, such as databases containing sensitive information (e.g. Alice's tax records or health information).
 
+We define a database simply as a multiset of rows.
 We will use $\mathbb D$ to describe the domain of all possible databases.
 Hence, a function $f : \mathbb D \rightarrow \mathbb D$ is an endomorphism for databases.
 The distance between two databases is their symmetric difference; i.e. $d_{\mathbb D}(D_1,D_2) = | D_1 \ominus D_2 |$.
@@ -299,17 +335,23 @@ We say that two databases are adjacent if they differ by exactly one row.
   We say that $D_1$ and $D_2$ are adjacent.
 \end{defn}
 
-Despite the domain change, function sensitivity behaves exactly as outlined before.
-Consider a database endomorphism, $filter_p : \mathbb D \rightarrow \mathbb D$, which filters rows according to some pre-specified predicate, $p$.
+Despite the domain change, function sensitivity behaves exactly as outlined in Theorem~\ref{thm:csens}.
+Consider a database endomorphism, $filter_p : \mathbb D \rightarrow \mathbb D$, which filters rows according to some pre-specified predicate, $p : Row \rightarrow Bool$.
 $filter_p$ is a 1-sensitive function because it is impossible for it to magnify the distances between databases.
 
+\begin{cor}\label{cor:filterp_1sens}
+$filter_p : \mathbb D \rightarrow \mathbb D$ is 1-sensitive.
+\end{cor}
+
+\begin{proof}
 For all pairs of databases, $D_1$ and $D_2$, the distance between them is $d_{in} = d_{\mathbb D}(D_1,D_2)$.
 The distance $d_{out} = d_{\mathbb D}(filter_p(D_1),filter_p(D_2))$ cannot exceed $d_{in}$.
-$filter_p$ will only remove rows from a database, or leave them unchanged, so we have only to consider the three possible cases of removal.
+$filter_p$ will only remove rows from a database, or leave them unchanged, so we have only to consider the four possible cases of removal.
 There are three main cases to consider:
 \begin{enumerate}
   \item the filter removes a row that is in both of the databases,
-  \item the filter removes a row that is in exactly one of the databases, and
+  \item the filter removes a row that is in the first database,
+  \item the filter removes a row that is in the second database, and
   \item the filter removes a row that is in neither of the databases (does nothing).
 \end{enumerate}
 
@@ -318,11 +360,14 @@ Because the row is included in both of the input databases, their symmetric diff
 The row is in neither of the output databases, so their symmetric difference is also unaffected.
 Therefore, after the removal of the one row, $d_{out} = d_{in}$.
 
-\paragraph{Case: the filter removes a row that is in exactly one of the databases.}
+\paragraph{Case: the filter removes a row that is in the left database.}
 The symmetric difference of the input databases is affected by this row, because it is in one, but not the other.
 Therefore, this row is contributing to the distance between the input databases.
 Its removal will bring the output databases closer together.
 Therefore, $d_{out} < d_{in}$.
+
+\paragraph{Case: the filter removes a row that is in the right database.}
+This case is symmetric to the previous case.
 
 \paragraph{Case: the filter removes a row that is in neither of the databases.}
 This is nearly the same as the first case.
@@ -332,21 +377,28 @@ The output distance is equal to the input distance: $d_{out} = d_{in}$.
 In all cases, $d_{out}$ is either less than or equal to $d_{in}$ after the removal of one row, so we conclude that the removal of any single row will either result in the distance between databases shrinking or remaining unchanged.
 Then it follows that the removal of another row isn't going to increase the distance.
 Generalizing this to the removal of $n$ rows, we conclude that $d_{out} \le d_{in}$ regardless of how many rows are removed from either database.
-Thus, we can fix $c=1$ and conclude that filtering is a 1-sensitive function.
+Thus, we can fix $c=1$ and conclude that $filter_p$ is a 1-sensitive function.
+\end{proof}
 
-Similar proofs exist for the other relational algebra operators.
-Proofs like these provide the basic building blocks used by PINQ and DPDT.
-The real power of PINQ and DPDT, however, comes from the ability to freely combine these building blocks without having to manually consider sensitivities.
+Similar proofs exist for establishing the sensitivities of other relational algebra operators.
+Proofs like these provide the basic building blocks used in PINQ and DPDT.
+The real power of PINQ and DPDT, however, comes from the ability to freely manipulate these building blocks with sensitivity-aware operations.
 
-Consider two functions, $f : \mathbb A \rightarrow \mathbb A$ and $g : \mathbb A \rightarrow \mathbb A$, with sensitivities $c$ and $c'$, respectively.
+Consider two functions, $f : \mathbb B \rightarrow \mathbb C$ and $g : \mathbb A \rightarrow \mathbb B$, with sensitivities $c$ and $c'$, respectively.
 What is the sensitivity of the function resulting from their composition, $k = f . g$?
 Function sensitivities compose multiplicatively; i.e. $k$ is $(c\times c')$-sensitive.
 Sensitivity represents the largest factor by which the distances between pairs of objects can be increased, so it follows that the composition of sensitivities is multiplicative.
 
-\section{Indistinguishability}\label{sec:dp_indistinguishability}
+\begin{lem}
+  For all pairs of functions, $f : \mathbb B \rightarrow \mathbb C$ and $g : \mathbb A \rightarrow \mathbb B$, with sensitivities $c$ and $c'$, respectively, the composition $k = f . g$ yields a function $k : \mathbb A \rightarrow \mathbb C$ with sensitivity $c*c'$.
+\end{lem}
 
-Indistinguishability is the key idea that distinguishes differential privacy from similar approaches in privacy research.
-If an attacker is unable to determine whether Alice's data even exists in the database, he will be unable to determine the contents of her data.
+\section{Indistinguishability}
+
+Indistinguishability is the key idea that distinguishes differential privacy from similar approaches to privacy research.
+Simply put, we require that an adversary be unable to determine anything about the input based on the output.
+Consider two adjacent databases: one \textit{with} and one \textit{without} Alice's records.
+If an adversary is unable to determine whether Alice's data even exists in the database, he will be unable to determine the contents of her data.
 A query is said to be differentially private if it satisfies this property.
 
 We turn to randomness to achieve this kind of behavior.
@@ -361,18 +413,18 @@ Now consider a randomized query, or mechanism, $\mathcal M : \mathbb D \rightarr
 We say that such a query is $\epsilon$-differentially-private if the inclusion of Alice's data increases her privacy risk by at most $e^\epsilon$.
 
 \begin{defn}\label{def:diffpriv}
-  A randomized mechanism, $\mathcal{M} : \mathbb D \rightarrow A$, is $\epsilon$-differentially-private if, for all databases $D_1 \sim D_2$, and all $S \in A$,
-  $$Pr[\mathcal M(D_1)\in S] \le e^\epsilon \times Pr[\mathcal M(D_2)\in S]$$
+  A randomized mechanism, $\mathcal{M} : \mathbb D \rightarrow A$, is $\epsilon$-differentially-private if, for all adjacent databases $D_1 \sim D_2$, and all $S \in A$,
+  $$\forall D_1, D_2 \in \mathbb D \colon D_1\sim D_2\ldotp\forall S\in A\ldotp Pr[\mathcal M(D_1)\in S] \le e^\epsilon \times Pr[\mathcal M(D_2)\in S]$$
 \end{defn}
 
 There are a few restrictions on mechanisms in the context of sensitive databases.
-Obviously, there are limits to the types of data that queries are allowed to return.
+Obviously, there are limits to the types of data that queries can safely be returned.
 We can't allow entire tables (computed or otherwise) to be returned, because they will potentially contain the sensitive rows we are trying to protect.
 Additionally, queries should not be allowed to return data directly from any particular row.
 
 In fact, queries must be restricted to aggregation operations.
 This may seem limiting, but in practice is not so.
-Certainly, entire classes of queries and algorithms are precluded by this necessity, but the vast majority of statistical research is performed using aggregations over tables, not querying for the information pertaining to particular individuals.
+Certainly, entire classes of queries and algorithms are precluded by this necessity, but the vast majority of statistical research is performed using aggregations over tables, not querying for information pertaining to particular individuals.
 
 An additional constraint emerges from the previous one: the data type returned by the aggregation must be a semigroup; i.e. it must have an associative binary operator for folding new values into the aggregate.
 This is the case because the order in which rows are considered should have no bearing on the resulting value; otherwise, an attacker may be able to learn something about the ordering of individuals.
@@ -380,24 +432,24 @@ This is the case because the order in which rows are considered should have no b
 Aggregations alone, however, are not capable of protecting privacy.
 Consider a database consisting of all patients who have ever been treated at the \textit{ABC ABortion Clinic}.
 Alice is one of those patients.
-Regardless of what Alice's records actually contain, her mere presence in that database could have serious consequences for her private life if the wrong people found out.
+Regardless of what Alice's records actually contain, her mere presence in that database could have serious consequences for her private life.
 Consider the result of the following query: \textit{How many people named Alice are in the database?}
 One.
 That is a valid aggregation and Alice is now in trouble.
 
-So how could we have saved Alice?
-The final requirement is randomness.
+How could we have protected Alice?
+This is where randomness comes into play.
 When we run an aggregation, we need to randomize the output to satisfy indistinguishability.
 If not, an attacker can draft clever aggregations to deduce private information about particular individuals.
-Noising a result before returning it gives database participants plausible deniability.
+Adding random noise to a result before returning it gives database participants (and non-participants) plausible deniability against such aggregation attacks.
 The aggregation function from earlier will no longer be enough to determine whether any records in the database are related to Alice.
-See Figure~\ref{fig:indistinguishability} for a visualization of indistinguishability.
+See Figure~\ref{fig:indistinguishability} for a visualization of how random noise leads to indistinguishability.
 
 \begin{figure}
     \centering
-    \def\svgwidth{\columnwidth}
+    \def\svgwidth{0.75  \columnwidth}
     \input{assets/Indistinguishability.pdf_tex}
-    \caption{Visualizing indistinguishability with sample PDFs from a counting query on $D_1$ and $D_2$, where $D_1\sim D_2$}
+    \caption{Visualizing indistinguishability with sample PDFs from a counting query on adjacent databases $D_1$ and $D_2$ ($D_1\sim D_2$)}
     \label{fig:indistinguishability}
 \end{figure}
 
@@ -405,67 +457,88 @@ The differential privacy community has largely settled on using the Laplace dist
 There are a number of reasons for this, but the main ones concern symmetry and ease of scaling.
 The Laplace distribution resembles a symmetric exponential distribution.
 Its diversity parameter, or ``width'', scales predictably with $\epsilon$.
-In fact, any $c$-sensitive function can be made differentially private easily.
+Any $c$-sensitive function can be made differentially private easily by simply scaling the diversity parameter.
 
-\begin{defn}
-Any $c$-sensitive function can be made $\epsilon$-differentially private by adding a value sampled from the Laplace distribution centered on zero with diversity parameter $b=\frac{c}{\epsilon}$.
-\end{defn}
+\begin{lem}
+Any $c$-sensitive function, $f : A \rightarrow \mathbb R$, can be made $\epsilon$-differentially private by adding a value sampled from the Laplace distribution centered on zero with diversity parameter $b=\frac{c}{\epsilon}$.
+\end{lem}
 
 Noise sampled from the Laplace distribution scaled according to $b=c/\epsilon$ is sufficient to mask private information while still providing accurate results.
 
+% TODO 1 : rename this section?
 \section{PINQ}\label{sec:pinq}
 
-This section provides a brief overview of PINQ, the framework that originally inspired DPDT.
-PINQ is a privacy layer built over top of the .NET integrated query language, LINQ.
-It provides carefully implemented, differentially-private primitives and the ability to compose arbitrarily complex algorithms from them without violating differential privacy.
+This section provides a brief overview of PINQ and its key components.
+PINQ provides differentially-private primitives and operators for composing them into arbitrarily complex, but still differentially private algorithms.
+It is layered on top of LINQ, a query EDSL for the .NET family of languages.
 There are two main components to PINQ: transformations and aggregations.
-Each PINQ server will keep track of its own privacy budget and reject queries whose costs exceed the remaining budget.
-Once a data source's budget has been consumed entirely, it is impossible to query it again through the PINQ interface.
+Each PINQ server is responsible for maintaining its own privacy budget and rejecting queries whose costs exceed what remains of it.
+After a data source's budget has been consumed entirely, it is impossible to query it again through the PINQ interface.
 
 \subsection{Transformations}
 
-LINQ is a query DSL written for the .NET languages allowing users to manipulate data with relational algebra operators directly in the host language.
-In LINQ terminology, these operations are called transformations.
-Our work includes a fully-typed LINQ-like implementation in Idris (\texttt{Database.PowerOfPi.Idris}).
+LINQ allows users to manipulate data with relational algebra operators directly in the host language.
+In LINQ/PINQ terminology, these operations are called transformations.
+Our work includes a fully-typed LINQ-like EDSL for Idris which we call RADT. (see \texttt{Database.RADT.Idris}).
 
-PINQ's primary contribution is the addition of a privacy layer around the LINQ query language.
-The majority of operations available in LINQ have also been made available in PINQ.
-However, some transformations cannot be made differentially private and have been modified or removed.
-The word ``stability'' is commonly used when discussing a concept similar to function sensitivity in the context of database transformations.
+PINQ adds a privacy layer around the LINQ query language.
+It verifies that query costs do not exceed data source budgets before handing queries off to LINQ for processing.
+Many of LINQ's transformations have been made available in PINQ, but some cannot be made differentially private and have been modified or removed.
+The word ``stability'' is commonly used when discussing function sensitivity in the context of database transformations.
 
-\begin{defn}
-A transformation $T$ is $c$-stable if for all pairs of input databases, $A$ and $B$,
+\begin{cor}[Transformation stability]
+A transformation $T$ is $c$-stable if, for all possible pairs of input databases,
 $$
-  |T(A)\ominus T(B)| \le c \times | A \ominus B |
+  \forall D_1,D_2\in\mathbb D\ldotp |T(D_1)\ominus T(D_2)| \le c \times | D_1 \ominus D_2 |
 $$
-\end{defn}
+\end{cor}
 
-Not all transformations from the LINQ API are $c$-stable for finite values of $c$.
-In these cases, PINQ provides modified, boundable versions.
-As an example, see Section~\ref{subsec:fn_sens} for a proof that the filter transformation (selection) is 1-stable.
+See Corrolary~\ref{cor:filterp_1sens} for a proof that $filter_p : \mathbb D \rightarrow \mathbb D$ is 1-stable (sensitive).
 Similar proofs exist for all of the other transformations provided by PINQ\cite{conf/sigmod/McSherry09}.
+Not all transformations from the LINQ API are $c$-stable for finite values of $c$, preventing them from being usable in differentially private computations.
+They have been removed in the PINQ API.
+When possible, PINQ provides modified, boundable versions with altered, but still useful semantics.
 
 \subsection{Aggregations}
 
-As shown earlier, the only safe way to return data from a sensitive database is to require that it be an aggregation.
-PINQ ensures that the only data being released to analysts comes from its carefully implemented aggregation mechanisms.
-Each aggregation is proven to be $\epsilon$-differentially private.
-$\epsilon$ is an argument provided by the user for fine-tuning the accuracy of the result.
-The larger $\epsilon$ is, the more accurate the result will be.
-However, the cost of running the aggregation scales directly with $\epsilon$ and is subtracted from the remaining privacy budget.
-The total cost of a query is the product of the transformation stability and $\epsilon$.
+The only safe way to return information from a sensitive database is to require that it be the result of an aggregation.
+PINQ ensures that the only information being released to analysts comes from its carefully implemented aggregation mechanisms.
+After evaluating a query with the underlying LINQ provider, every PINQ aggregation will take care to add random noise scaled according a user provided argument: $\epsilon$.
 
-The simplest of PINQ's aggregation mechanisms is \texttt{noisyCount}, which returns the number of rows described by the given query plus just enough noise to mask the true response.
-\texttt{noisyCount} is a 1-stable operation.
-Consider two databases which differ by exactly one row, $D_1 \sim D_2$.
-Because we know the databases differ by only one row, the distance between the inputs is $d_{in} = d_{\mathbb D}(D_1,D_2)=1$.
-From this, we know that the true counts (before adding noise) of the two databases must differ by one; i.e. $d_{out} = d_{\mathbb R}(count(D_1),count(D_2))=1$.
-The distances are the same so we can fix $c=1$ and conclude that \texttt{noisyCount} is a 1-sensitive function.
-\texttt{noisyCount} is made $\epsilon$-differentially private by adding Laplacian noise scaled according to $b=1/\epsilon$.
+Every aggregation provided by PINQ (and DPDT) is proven to be $\epsilon$-differentially private.
+$\epsilon$ allows analysts to fine-tune how they wish to use their allotted privacy budget.
+The larger $\epsilon$ is, the more accurate the result will be because the width of the noise distribution scales inversely with $\epsilon$.
+However, the cost of evaluating the aggregation scales directly with $\epsilon$ and must be subtracted from the remaining privacy budget.
+The total cost of evaluating an aggregation is the product of $\epsilon$ and the stability of the query we run it against.
+
+The simplest of PINQ's aggregation mechanisms is \texttt{noisyCount}, which simply returns the number of rows contained within the given query plus random noise.
+A differentially private aggregation is just another function, but it consists of two distinct components: 1) the ``true'' aggregation function and 2) the random noise to be added.
+The sensitivity is then the product of the ``true'' sensitivity and $\epsilon$.
+The true counting function is 1-sensitive.
+
+\begin{cor}[$trueCount$ sensitivity]
+trueCount is a 1-sensitive function.
+\end{cor}
+\begin{proof}
+Consider two databases differing by exactly one row ($D_1 \sim D_2$).
+We know the databases differ by only one row, so the distance between the inputs is by definition 1; i.e.
+
+$$d_{in} = d_{\mathbb D}(D_1,D_2)=1$$
+
+The true counts must also then also differ by one; i.e.
+
+$$d_{out} = d_{\mathbb R}(trueCount(D_1),trueCount(D_2))=1$$
+
+Because $d_{in} = d_{out}$, we fix $c=1$ and conclude that \texttt{trueCount} is a 1-sensitive function.
+\end{proof}
+
+\begin{cor}
+$trueCount$ can be made $\epsilon$-differentially private by adding noise sampled from a Laplacian distribution with $\mu = 0$ and diversity parameter $b=1/\epsilon$.
+\end{cor}
 
 Another aggregation mechanism PINQ provides is \texttt{noisyAverage}.
-This aggregation adds a unique challenge with regards to function sensitivity.
-Let us assume that we have an expression function, $r : \texttt{Row} \rightarrow \mathbb R$.
+This aggregation poses a unique challenge with respect to function sensitivity.
+Assume the existence of an expression function, $r : \texttt{Row} \rightarrow \mathbb R$.
 $r$ yields a numeric value for each row and we want the average value resulting from all of the rows contained in the query.
 Let $f : \mathbb D \rightarrow \mathbb R$ be the aggregation function which maps $r$ onto all rows and reduces them to their average (i.e. $f = \texttt{average . map r}$).
 What is $f$'s sensitivity?
@@ -475,11 +548,15 @@ They differ by exactly one row.
 How much of an effect can that one differing row have on the distance between the output averages?
 It is impossible to say with the information we have now.
 
-Imagine a database, $D_1$, containing the ages of bachelors students at a particular university.
+\begin{cor}[$trueAverage$ sensitivity]
+  $trueAverage$ is $\infty$-sensitive.
+\end{cor}
+\begin{proof}
+Imagine a database, $D_1$, containing the ages of bachelors students at a fancy private university, \textit{AB University} (ABU).
 In the United States, their ages will most likely range from 18 to 22.
 For illustrative purposes, let us assume that $trueAverage(D_1) = 20$.
 Alice, who just turned 40 and is tired of how frequently her private data is accidentally made public, has decided to go back to college to study differential privacy.
-How will Alice's participation in the database affect $trueAverage(D_2)$, where $D_2$ is $D_1$ plus her records?
+How will Alice's participation in the database affect $trueAverage(D_2)$, where $D_2$ is $D_1$ plus Alice's records?
 
 It depends on how many students already attend the college.
 Let's say it is a small college of just one prior student.
@@ -491,122 +568,108 @@ And we had to assume that we already knew Alice's age to even get this far!
 In reality, we will have no idea what outlier values $r$ might yield.
 We are unable to quantify the effect of that one row on the aggregate.
 Thus, we must conclude that $trueAverage$ is $\infty$-sensitive.
+\end{proof}
 
 PINQ solves this by forcing \texttt{noisyAverage} to clamp values coming from $r$ to the range $[-1,+1]$.
 In doing so, PINQ is able to conclude that no row is able to affect the aggregate by more than 2.
-Then we can add noise scaled according to $2/\epsilon$.
+It can then be made $\epsilon$-differentially private by adding noise scaled according to $2/\epsilon$.
 
 What if $trueAverage(D) + Lap(2/\epsilon)$ falls outside of $[-1,+1]$?
+For very small values of $\epsilon$, the Laplacian distribution is very wide and it is unlikely that the noised result will fall within $[-1,+1]$.
 PINQ solves this by generating new noise values over and over again until the constraint is satisfied.
-We improve on this behavior by noting that the Laplace cumulative distribution function (CDF), which is used to sample from the Laplace distribution, is invertible.
-We usually use a uniform random variable sampled from the interval $[0,1)$ to draw indiscriminately from the Laplace distribution.
-Our implementation computes the subinterval for the uniform random variable that guarantees the constraint will be met; i.e. whereas we normally would sample $x \in X=[0,1)$, we might restrict our uniform variable to $X=[0.33,0.75)$ because we know that the noise generated at these bounds will satisfy the original constraint.
+DPDT improves on this behavior by noting that the Laplace cumulative distribution function (CDF), which is used to sample from the Laplace distribution, is invertible.
+Where it might typically draw a uniform random variable from the interval $[0,1)$, DPDT instead computes the subinterval for the uniform random variable that guarantees the constraint will be met; e.g. whereas we normally might sample $x \in X=[0,1)$, we can restrict the uniform variable to draw from $X=[0.33,0.75)$ because we know that the noise generated at these bounds will satisfy the original constraint.
+See Figure~\ref{fig:lapcdf} for a visualization of constrained sampling.
 
 \begin{figure}
     \centering
     \def\svgwidth{\columnwidth}
     \input{assets/LaplaceCDF.pdf_tex}
     \caption{Visualizing constrained sampling from the Laplace distribution (as in \lstinline{noisyAverage})}
+    \label{fig:lapcdf}
 \end{figure}
 
-Of course, the decision to clamp values to the interval $[-1,+1]$ will require analysts to pre-process their data.
+Of course, the decision to clamp values to the interval $[-1,+1]$ will require analysts to pre-process the data before aggregating.
 This will require users to explicitly express their assumptions regarding the range of possible values that $r$ could return.
-If we wanted to compute the average age of the college students from before, we might draft a function translating the interval $[18,22]$ to $[-1,+1]$.
-Then, if we get a response of $0.5$, we can translate that back to $21$.
+For example, as analysts, if we wanted to compute the average age of the bachelors students at ABU, we might draft a function translating the interval $[18,22]$ (our assumption about their age ranges) to $[-1,+1]$.
+Of course, if Alice starts attending ABU as a forty year old, she will be counted in this particular query as a 22 year old.
 
 \chapter{Dependent Types in Idris}\label{sec:dependent_types_in_idris}
 
 Idris is a general purpose, pure functional programming language with dependent types.
-Dependent types allow types to be predicated on values.
-This allows developers to describe many aspects of a program in the types which can be mechanically verified by the compiler.
+Dependent type systems allow types to be predicated on values.
+This powerful feature allows developers to assert many aspects of a program in the types which can then be mechanically verified by the compiler.
 
-This section serves only as a brief overview to some of Idris' interesting language features.
+This section serves as a very brief introduction to dependent types and overview of some of Idris' many interesting language features.
 For a more complete introduction, see the Idris tutorial\footnote{http://docs.idris-lang.org/en/latest/tutorial/index.html}.
-We assume a basic familiarity with functional programming languages.
-First, we outline the basic capabilities of dependent types with the classic vector example.
-Then, we will move on to introduce some of Idris' features which we used in our implementation of DPDT.
+The reader is assumed to have a basic familiarity with functional programming languages.
 
-The classic dependent types example is the move from traditional \texttt{cons}-lists to vectors.
-A vector is a list-like type that is \textit{indexed} by a natural number representing its length; i.e. the type of a vector is determined in part by the number of elements it contains.
-Additionally, like lists, vectors are \textit{parameterized} by their element type.
-One consequence of this is that \texttt{Vect 3 a} and \texttt{Vect 5 a} are \textit{different} types.
+We begin with the ``Hello World'' example of dependent types: upgrading the regular \texttt{List a} type to \texttt{Vect n a}.
+They share the exact same data representation, but their types are very different.
+We then give a brief overview of some Idris language features we make use of in our implementation of DPDT.
 
-\begin{lstlisting}[caption={Vector Example},label={lst:vector_example}]
-||| Represents a vector indexed by its length
-data Vect : (length:Nat) -> (itemType:Type) -> Type
-\end{lstlisting}
+\section{Example: Hello Vect}
 
-As illustrated in Listing~\ref{lst:vector_example}, types are first class values in Idris.
-The type of types is \texttt{Type} and we can directly access and manipulate \texttt{Type}s like any other value.
-Without even knowing the underlying data representation of \texttt{Vect}, we can now discuss dependent type signatures of various vector functions.
-How should the type signature of \texttt{append} look?
-If we append two vectors, with lengths $n$ and $m$, respectively, the resulting vector should have length $n+m$.
-See Listing~\ref{lst:vector_ops_example} for an example of this and others.
+Just as every introduction to programming tutorial begins with printing ``Hello World'' to the console, introductory dependent types tutorials begin with \texttt{Vect}.
+Consider the definition of \texttt{List} in Listing~\ref{lst:lstdef}.
+It is \textit{parameterized} by the type of the contained elements (e.g. \texttt{List Double}).
+Now consider the (incomplete) definition of \texttt{head}.
+It is impossible to satisfy the right-hand side of the first pattern.
 
-\begin{lstlisting}[caption={Vector Operations Example},label={lst:vector_ops_example}]
-append  : Vect n a -> Vect m a -> Vect (n + m) a
-reverse : Vect n a -> Vect n a
-take    : (n : Nat) -> Vect (n + m) a -> Vect n a
-\end{lstlisting}
-
-Notice how the signature of \texttt{append} clearly describes the input and output types.
-Not only is it useful for users to see descriptive type signatures like these, but it helps to prevent many developer errors.
-The type-checker will verify that \texttt{append}'s implementation does indeed return a vector of length $n+m$.
-Proper use of dependent types can reduce or even eliminate the need for unit testing.
-
-\section{Construction}
-
-\begin{lstlisting}[caption={Nat definition},label={lst:nats_example}]
-||| Represents the natural numbers
-data Nat = Z | S Nat
-\end{lstlisting}
-
-Data types are constructed using a syntax similar to that of Haskell\footnote{https://www.haskell.org/}.
-The data type above represents natural numbers recursively.
-There are two constructors, \lstinline{Z} and \lstinline{S Nat}.
-\lstinline{Z} constructs a zero and \lstinline{S n} constructs the successor of $n$.
-
-\begin{lstlisting}[caption={List and Vect definitions},label={lst:vect_example_def}]
-data List : Type -> Type where
+\begin{lstlisting}[caption={List Definition},label={lst:listdef}]
+data List : (elt : Type) -> Type where
   Nil  : List a
   (::) : a -> List a -> List a
 
-data Vect : Nat -> Type -> Type where
+head : List a -> a
+head []        = ?head_rhs_empty
+head (x :: xs) = x
+\end{lstlisting}
+
+If a developer were to evaluate the expression \texttt{head []}, it would immediately trigger a runtime exception.
+Dependent types allow developers to express assumptions or expectations about functions.
+Listing~\ref{lst:vectdef} demonstrates the same \texttt{head} function, but using \texttt{Vect}s instead.
+Notice how the definition of \texttt{Vect} is \textit{indexed} by its length and how the type signature of \texttt{(::)} builds the length index constructively with the \texttt{S} data constructor from \texttt{Nat}.
+The type signature of \texttt{head} is able to pattern match on that index.
+\texttt{Vect (S n) a} can be loosely interpreted as a list of \textit{at least} one element of type \texttt{a}.
+\texttt{Vect n a} and \texttt{Vect m a} are not just lists of different lengths, \textit{they are completely different types}.
+
+\begin{lstlisting}[caption={Vect Definition},label={lst:vectdef}]
+data Nat : Type where
+  Z : Nat
+  S : Nat -> Nat
+
+data Vect : (len : Nat) -> ( elt : Type) -> Type where
   Nil  : Vect Z a
   (::) : a -> Vect k a -> Vect (S k) a
+
+head : Vect (S n) a -> a
+head (x :: xs) = x
 \end{lstlisting}
 
-Listing~\ref{lst:vect_example_def} contains definitions for \texttt{List}s and \texttt{Vect}s.
-Notice how the type signature of \texttt{(::)} for \texttt{Vect} builds the length index with the \texttt{S} data constructor from \texttt{Nat}.
-The type signature can loosely be interpreted as ``when you add an element to a vector of length k, the resulting type is a vector of length (k+1)''.
+Types are first-class values in Idris.
+This means that we can directly manipulate types with as any other term.
+Functions can take types as arguments and return types as values.
+In fact, dependent type signatures allow for very complex behavior, such as allowing functions to have branching return types (e.g. \texttt{foo : if cond then a else b} is a function returning a value of type \texttt{a} when \texttt{cond} is true.)
+Consider the type signatures of \texttt{appendL} and \texttt{appendV} in Listing~\ref{lst:vector_ops_example} to see how useful this can be.
+Not only is the type signature of \texttt{appendV} much more descriptive, but Idris is able to verify at compile time that whatever value is returned \textit{must} have length $n + m$.
+This can be enormously helpful for reducing developer errors.
+Proper use of dependent types can reduce or even eliminate the need for unit testing.
 
-\section{Operator sections}
-
-In addition to named functions, Idris has support for anonymous functions.
-Anonymous functions, also called lambda abstractions, can be used to provide the implementation of a function on the fly, without having to make a named one.
-
-\begin{lstlisting}[caption={Anonymous functions Example},label={lst:anon_fns}]
--- Anonymous id fn
-\x => x
-
--- Anonymous integer add fn
-\x, y => x + y
+\begin{lstlisting}[caption={Vector Operations Example},label={lst:vector_ops_example}]
+appendL : List a -> List a -> List a
+appendV : Vect n a -> Vect m a -> Vect (n + m) a
 \end{lstlisting}
-
-Idris also provides constructs for writing anonymous functions more compactly, namely operator sections.
-$(*2)$ is a operator section that simply multiplies a numeric value by 2.
-It expands to \lstinline{\x => x * 2}, and can be passed into functions and applied to a numeric argument.
 
 \section{Monadic sequencing and do-notation}
 
-In functional programming, a monad is a structure that abstracts computation in some way.
+A monad is an abstract structure that represents some sort of computation.
 Monads must support two operations: lifting pure elements ``into'' the computation and sequencing two monadic computations.
-How these operations are implemented is monad-specific, but the abstraction they provide is powerful.
+Each of these operations is implemented differently by each concrete monad instance, but their type signatures alone allow for powerful abstraction.
 
-One example of a monad instance is the state monad.
-Pure functional languages don't directly support global state or mutable variables.
-However, state can be represented in such languages by threading the state through a series of function calls.
-Functions cannot directly modify the state because it is immutable, but they can modify a local copy of it before passing it on to the next function call.
+The \texttt{State} monad is an instance of a monad.
+Pure functional languages don't support mutable state, but it can be represented functionally by threading it through a sequence of function calls.
+See Listing~\ref{lst:state_example} for an example of threading state with pure functions.
 
 \begin{lstlisting}[caption={Threading state through function calls, no monad},label={lst:state_example}]
 ||| State holding one integer
@@ -626,9 +689,9 @@ namespace Examples
   -- foo == 15
 \end{lstlisting}
 
-The burden of threading state around is left to the developer.
-Monads allow us to abstract unnecessary details like that away, allowing developers to focus on more important things.
-Specifically, monad instances are automatically provided with an alternative syntax for writing monadic code called \texttt{do}-notation.
+The burden of handling the state is left to the developer.
+Monads allow us to abstract unnecessary details like that away, allowing developers to focus on \textit{what} the computations are doing rather than how.
+Another benefit is that Idris provides monad instances with an alternative syntax for writing monadic code called \texttt{do}-notation.
 Idris will simply desugar \texttt{do}-notation syntax to regular function calls.
 
 \begin{lstlisting}[caption={Threading state through function calls with do-notation},label={lst:threading_state_do_notation}]
@@ -653,51 +716,52 @@ namespace Examples
 \end{lstlisting}
 
 The \texttt{do}-notation allows us to get the state out of the monad context and update it locally before passing it on to the next computation in the sequence.
-Idris gives \texttt{do}-notation to any types overloading the \texttt{return} and $(>>=)$ functions.
+Idris even allows \texttt{do}-notation for any types overloading the \texttt{return} and $(>>=)$ functions, even if they aren't instances of the \texttt{Monad} typeclass.
+
+In fact, our implementation makes use of this feature.
+Monadic sequencing does not allow for the monadic type to change, but we are indexing our computations with their costs.
+Every time a private computation is sequenced, the costs must be updated.
+But that requires returning a new type, which prevents us from aligning with the monad class.
 
 \section{Implicit arguments and automatic proof search}
 
-Even though Idris' type checker is rather powerful, there are still correct types that can not be validated by the type checker alone.
-The \lstinline{head} function on a list is an example of such a type.
-\lstinline{head} returns the first element of the list, but what if that list is empty?
-\texttt{List}s do not provide type safety for these kinds of operations by themselves.
-The Idris type-checker will require a proof that the list is empty.
-The type signature of \texttt{head} in Listing~\ref{lst:head_example} shows two arguments: the first is the list and the second is the proof that the list even has a head element.
+Even though Idris' type checker is rather powerful, there are still correct programs that can not be validated by the type checker alone.
+The \texttt{List} \lstinline{head} function from earlier is a great example.
+The Idris type-checker will not allow us to implement \texttt{head} for \texttt{List}s until we provide it with a proof that the list is not empty.
+The type signature of \texttt{head} in Listing~\ref{lst:head_example} shows two arguments: the first is the list and the second is a proof that the list has a head element to return.
 
 \begin{lstlisting}[caption={Taking the head of a list},label={lst:head_example}]
 head : (xs : List a) -> (isCons xs = True) -> a
 head (x :: xs) Refl = x
-\end{lstlisting}
 
-Don't worry too much about the proof is constructed for now.
-For proofs which are easily machine-checkable, Idris allows us to mark them as implicit arguments.
-The compiler will automatically search for and provide the correct proof if possible so the developer doesn't have to.
-In the event that it is unable to find a sufficient proof, the compiler will abort compilation with a descriptive error message.
-
-\begin{lstlisting}[caption={Automatic proof derivation},label={lst:auto_proof_example}]
 head : (xs : List a) -> { auto p : isCons xs = True } -> a
 head (x :: xs) = x
 \end{lstlisting}
 
-Implicit arguments are declared using curly braces and the \texttt{auto} keyword.
-Alternative proof search methods are available, but are outside the scope of this paper.
-The compiler will complain if it is unable to find a proof automatically, requiring one to be manually provided by the developer.
+For proofs which are easily machine-checkable, Idris allows us to mark them as implicit arguments.
+The compiler will automatically search for and provide the correct proof if possible.
+In the event that it isn't able to find a sufficient proof, the compiler will abort compilation with a descriptive error message.
+
+Implicit arguments are declared using curly braces.
+Adding the \texttt{auto} keyword tells Idris to do a proof search for the required term.
+It is possible to specify proof search tactics, but that is rarely necessary.
 
 \chapter{Function Sensitivity in Idris}\label{sec:function_sensitivity}
 
-This chapter demonstrate how we use dependent types to model function sensitivity in Idris.
+This chapter demonstrates how we use dependent types to model function sensitivity in Idris.
 
-Modelling function sensitivity with dependent types is straight-forward.
-Recall that function sensitivity is a metric describing how much a function can amplify the distances between pairs of objects.
+Recall from Theorem~\ref{thm:csens} that function sensitivity describes how much a function can amplify the distances between pairs of objects.
 
 $$ \forall x,y.\; d(f(x),f(y)) \le c \times d(x,y) $$
 
-We want to reflect the sensitivity of a function in its type, so we will need to index the type on some numeric value.
-To keep the examples in this chapter simple, we will use \texttt{Float} to represent sensitivity, but our implementation actually uses an implementation of \texttt{Rational}s similar to that in Haskell's \texttt{Data.Ratio}.
+\section{Sensitive Function Definition}
+
+We want the type of a sensitive function to describe its sensitivity similarly to how the type of \texttt{Vect} describes its length.
+To keep the examples in this chapter simple, we will use \texttt{Float} to represent sensitivity, but DPDT actually uses an abstract representation of \texttt{Rational}s.
 
 Listing~\ref{lst:rep_sens_fns} defines a type constructor indexed by the sensitivity and parameterized by its input and output types.
 It has just one data constructor which is used for wrapping native Idris functions.
-A \texttt{SensitiveFunction s a b} is a function with sensitivity \texttt{s} mapping from \texttt{a} to \texttt{b}.
+A \texttt{SensitiveFunction s a b} is a function with sensitivity \texttt{s} mapping tokens from \texttt{a} to \texttt{b}.
 
 \begin{lstlisting}[caption={Representing sensitive functions},label={lst:rep_sens_fns}]
 ||| Represents a sensitive function
@@ -721,11 +785,14 @@ namespace Examples
 
 Notice the \texttt{cheat} example above.
 It is possible to define sensitive functions which intentionally misrepresent their sensitivities.
-Our focus here is not on the verification of a function's sensitivity, but rather on the interaction between sensitivity and the type system under operations such as function composition or application.
+Our focus here is not on the verification of a function's sensitivity, but rather on the interaction between sensitivity and the type system under operations such as function composition and application.
+
+\section{Function composition and application}
+
 Unrestricted application is as simple as unwrapping the function and applying it to an argument.
-Function composition returns a new type indexed by the combined sensitivies of the underlying functions.
-This is done simply by wrapping the composed functions in a new data constructor and letting the types work out the rest.
-See Listing~\ref{lst:sens_fns_ops}.
+Function composition returns a new type indexed by the combined sensitivities of the underlying functions.
+This is done simply by wrapping the composed functions in a new data constructor and computing a new sensitivity index.
+Listing~\ref{lst:sens_fns_ops} shows sensitive function composition and unrestricted application.
 
 \begin{lstlisting}[caption={Sensitive function operations},label={lst:sens_fns_ops}]
 ||| Applies a sensitive function to an input
@@ -741,7 +808,7 @@ apply (MkSensitiveFunction f) x = f x
 (.) (MkSensitiveFunction g) (MkSensitiveFunction f) = MkSensitiveFunction (g . f)
 \end{lstlisting}
 
-Now we are able to compose sensitive functions and Idris' type-checker will understand the resulting sensitivities.
+Now Idris' type-checker understands how sensitive functions compose and it can verify assertions about it.
 See Listing~\ref{lst:composition_examples} for examples of how the type-checker verifies sensitivities.
 
 \begin{lstlisting}[caption={Examples of Sensitive Function Composition},label={lst:composition_examples}]
@@ -753,16 +820,20 @@ doSomeMath = add10 . doubleThenAdd10
 
 doSomeMath2 : SensitiveFunction ?sens Float Float
 doSomeMath2 = add10 . doubleThenAdd10
+
+Main.sens = proof { intros; search }
 \end{lstlisting}
 
-One unfortunate consequence of having such a powerful type-system is that all top-level names must have an associated type declaration.
-This means that despite the fact that the type-system is capable of computing the costs, we must still explicitly provide the function sensitivity in the type declaration (as in the \texttt{doSomeMath} signature above).
-Because the computation is decidable, users will be able to ask Idris for help through its interactive proof search feature.
+One unfortunate consequence of having such a powerful type-system is that type inference is not possible.
+All top-level names must be associated with a type declaration.
+This means that despite the type-system being capable of computing the sensitivities, we must still explicitly provide the type, which includes the sensitivity (as in the \texttt{doSomeMath} signature above).
+Fortunately, because the computation is decidable (we spent a lot of time with Idris' totality checker and our \texttt{Data.Rational} implementation), users are able to ask Idris for help through its interactive proof search feature.
 Asking Idris to find a proof of the hole \texttt{?sens} yields \texttt{fromInteger 2}.
+Alternatively, proof tactics can be provided directly in the code (see Listing~\ref{lst:composition_examples}, Line 10).
 
 Listing~\ref{lst:sens_app} demonstrates an alternative application function for sensitive functions.
-This one checks whether a function's sensitivity exceeds the provided value.
-However, this check occurs \textit{at compile time}, not dynamically.
+This one checks whether a function's sensitivity is below the provided value.
+Note that this check occurs \textit{at compile time}.
 
 \begin{lstlisting}[caption={Sensitivity-aware function application},label={lst:sens_app}]
 ||| Applies a sensitive function to an input, if its sensitivity does not exceed z
@@ -837,7 +908,7 @@ The ability to capture schemas directly in the types and to manipulate them yiel
 
 \section{Relational Algebra in Idris}
 
-This section will outline the implementation of RADT, our relational algebra EDSL in Idris. 
+This section will outline the implementation of RADT, our relational algebra EDSL in Idris.
 We begin by defining some simple algebraic datatypes (ADTs) for keeping the types clear.
 We then define a toy expression language before moving on to the query language.
 
@@ -1025,7 +1096,7 @@ namespace SQLiteBackend
 \chapter{DPQ - Differentially Private Queries}\label{sec:DPQ}
 
 In this chapter we describe how we bring together the material of the previous chapters and outline the implementation of DPQ.
-DPQ is an abbreviation for Differentially Private Queries and is a language for compiling differentially private string queries for query languages. 
+DPQ is an abbreviation for Differentially Private Queries and is a language for compiling differentially private string queries for query languages.
 
 The language is built as a layer on top of our relational algebra, RADT, described in the previous chapter.
 Our goal is to leverage the Idris type-checker to statically verify differential privacy constraints in single queries.
@@ -1127,7 +1198,7 @@ noisyCount  (MkQuery q) eps  =
      in MkPrivate $ "SELECT (COUNT(*) + " ++ noise ++ ") FROM (" ++ eval q ++ ")"
 
 noisyAverage : Expr s Double -> Query s c -> (e:Epsilon) -> Private (c*e)
-noisyAverage exp (MkQuery q) eps = 
+noisyAverage exp (MkQuery q) eps =
      let expStr   = eval exp
          clampLT  = "CASE WHEN " ++ expStr ++ " < -1 THEN -1 ELSE " ++ expStr ++ " END"
          clamp    = "CASE WHEN " ++ expStr ++ " > 1 THEN 1 ELSE ("  ++ clampLT ++ ") END"
