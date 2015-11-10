@@ -36,6 +36,7 @@ return x = MkPrivate $ \s => (x,s)
                                                MkPrivate sf' = f x
                                             in sf' g'
 
+||| Sequences a Vect of equally expensive private computations
 sequence : Vect n (Private s a) -> Private (n * s) (Vect n a)
 sequence {s} [] = return []
 sequence {n} ps = MkPrivate $ \g =>
