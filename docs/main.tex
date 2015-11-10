@@ -465,6 +465,7 @@ Any $c$-sensitive function, $f : A \rightarrow \mathbb R$, can be made $\epsilon
 
 Noise sampled from the Laplace distribution scaled according to $b=c/\epsilon$ is sufficient to mask private information while still providing accurate results.
 
+% TODO 1 : rename this section?
 \section{PINQ}\label{sec:pinq}
 
 This section provides a brief overview of PINQ and its key components.
@@ -596,96 +597,79 @@ Of course, if Alice starts attending ABU as a forty year old, she will be counte
 \chapter{Dependent Types in Idris}\label{sec:dependent_types_in_idris}
 
 Idris is a general purpose, pure functional programming language with dependent types.
-Dependent types allow types to be predicated on values.
-This allows developers to describe many aspects of a program in the types which can be mechanically verified by the compiler.
+Dependent type systems allow types to be predicated on values.
+This powerful feature allows developers to assert many aspects of a program in the types which can then be mechanically verified by the compiler.
 
-This section serves only as a brief overview to some of Idris' interesting language features.
+This section serves as a very brief introduction to dependent types and overview of some of Idris' many interesting language features.
 For a more complete introduction, see the Idris tutorial\footnote{http://docs.idris-lang.org/en/latest/tutorial/index.html}.
-We assume a basic familiarity with functional programming languages.
-First, we outline the basic capabilities of dependent types with the classic vector example.
-Then, we will move on to introduce some of Idris' features which we used in our implementation of DPDT.
+The reader is assumed to have a basic familiarity with functional programming languages.
 
-The classic dependent types example is the move from traditional \texttt{cons}-lists to vectors.
-A vector is a list-like type that is \textit{indexed} by a natural number representing its length; i.e. the type of a vector is determined in part by the number of elements it contains.
-Additionally, like lists, vectors are \textit{parameterized} by their element type.
-One consequence of this is that \texttt{Vect 3 a} and \texttt{Vect 5 a} are \textit{different} types.
+We begin with the ``Hello World'' example of dependent types: upgrading the regular \texttt{List a} type to \texttt{Vect n a}.
+They share the exact same data representation, but their types are very different.
+We then give a brief overview of some Idris language features we make use of in our implementation of DPDT.
 
-\begin{lstlisting}[caption={Vector Example},label={lst:vector_example}]
-||| Represents a vector indexed by its length
-data Vect : (length:Nat) -> (itemType:Type) -> Type
-\end{lstlisting}
+\section{Example: Hello Vect}
 
-As illustrated in Listing~\ref{lst:vector_example}, types are first class values in Idris.
-The type of types is \texttt{Type} and we can directly access and manipulate \texttt{Type}s like any other value.
-Without even knowing the underlying data representation of \texttt{Vect}, we can now discuss dependent type signatures of various vector functions.
-How should the type signature of \texttt{append} look?
-If we append two vectors, with lengths $n$ and $m$, respectively, the resulting vector should have length $n+m$.
-See Listing~\ref{lst:vector_ops_example} for an example of this and others.
+Just as every introduction to programming tutorial begins with printing ``Hello World'' to the console, introductory dependent types tutorials begin with \texttt{Vect}.
+Consider the definition of \texttt{List} in Listing~\ref{lst:lstdef}.
+It is \textit{parameterized} by the type of the contained elements (e.g. \texttt{List Double}).
+Now consider the (incomplete) definition of \texttt{head}.
+It is impossible to satisfy the right-hand side of the first pattern.
 
-\begin{lstlisting}[caption={Vector Operations Example},label={lst:vector_ops_example}]
-append  : Vect n a -> Vect m a -> Vect (n + m) a
-reverse : Vect n a -> Vect n a
-take    : (n : Nat) -> Vect (n + m) a -> Vect n a
-\end{lstlisting}
-
-Notice how the signature of \texttt{append} clearly describes the input and output types.
-Not only is it useful for users to see descriptive type signatures like these, but it helps to prevent many developer errors.
-The type-checker will verify that \texttt{append}'s implementation does indeed return a vector of length $n+m$.
-Proper use of dependent types can reduce or even eliminate the need for unit testing.
-
-\section{Construction}
-
-\begin{lstlisting}[caption={Nat definition},label={lst:nats_example}]
-||| Represents the natural numbers
-data Nat = Z | S Nat
-\end{lstlisting}
-
-Data types are constructed using a syntax similar to that of Haskell\footnote{https://www.haskell.org/}.
-The data type above represents natural numbers recursively.
-There are two constructors, \lstinline{Z} and \lstinline{S Nat}.
-\lstinline{Z} constructs a zero and \lstinline{S n} constructs the successor of $n$.
-
-\begin{lstlisting}[caption={List and Vect definitions},label={lst:vect_example_def}]
-data List : Type -> Type where
+\begin{lstlisting}[caption={List Definition},label={lst:listdef}]
+data List : (elt : Type) -> Type where
   Nil  : List a
   (::) : a -> List a -> List a
 
-data Vect : Nat -> Type -> Type where
+head : List a -> a
+head []        = ?head_rhs_empty
+head (x :: xs) = x
+\end{lstlisting}
+
+If a developer were to evaluate the expression \texttt{head []}, it would immediately trigger a runtime exception.
+Dependent types allow developers to express assumptions or expectations about functions.
+Listing~\ref{lst:vectdef} demonstrates the same \texttt{head} function, but using \texttt{Vect}s instead.
+Notice how the definition of \texttt{Vect} is \textit{indexed} by its length and how the type signature of \texttt{(::)} builds the length index constructively with the \texttt{S} data constructor from \texttt{Nat}.
+The type signature of \texttt{head} is able to pattern match on that index.
+\texttt{Vect (S n) a} can be loosely interpreted as a list of \textit{at least} one element of type \texttt{a}.
+\texttt{Vect n a} and \texttt{Vect m a} are not just lists of different lengths, \textit{they are completely different types}.
+
+\begin{lstlisting}[caption={Vect Definition},label={lst:vectdef}]
+data Nat : Type where
+  Z : Nat
+  S : Nat -> Nat
+
+data Vect : (len : Nat) -> ( elt : Type) -> Type where
   Nil  : Vect Z a
   (::) : a -> Vect k a -> Vect (S k) a
+
+head : Vect (S n) a -> a
+head (x :: xs) = x
 \end{lstlisting}
 
-Listing~\ref{lst:vect_example_def} contains definitions for \texttt{List}s and \texttt{Vect}s.
-Notice how the type signature of \texttt{(::)} for \texttt{Vect} builds the length index with the \texttt{S} data constructor from \texttt{Nat}.
-The type signature can loosely be interpreted as ``when you add an element to a vector of length k, the resulting type is a vector of length (k+1)''.
+Types are first-class values in Idris.
+This means that we can directly manipulate types with as any other term.
+Functions can take types as arguments and return types as values.
+In fact, dependent type signatures allow for very complex behavior, such as allowing functions to have branching return types (e.g. \texttt{foo : if cond then a else b} is a function returning a value of type \texttt{a} when \texttt{cond} is true.)
+Consider the type signatures of \texttt{appendL} and \texttt{appendV} in Listing~\ref{lst:vector_ops_example} to see how useful this can be.
+Not only is the type signature of \texttt{appendV} much more descriptive, but Idris is able to verify at compile time that whatever value is returned \textit{must} have length $n + m$.
+This can be enormously helpful for reducing developer errors.
+Proper use of dependent types can reduce or even eliminate the need for unit testing.
 
-\section{Operator sections}
-
-In addition to named functions, Idris has support for anonymous functions.
-Anonymous functions, also called lambda abstractions, can be used to provide the implementation of a function on the fly, without having to make a named one.
-
-\begin{lstlisting}[caption={Anonymous functions Example},label={lst:anon_fns}]
--- Anonymous id fn
-\x => x
-
--- Anonymous integer add fn
-\x, y => x + y
+\begin{lstlisting}[caption={Vector Operations Example},label={lst:vector_ops_example}]
+appendL : List a -> List a -> List a
+appendV : Vect n a -> Vect m a -> Vect (n + m) a
 \end{lstlisting}
-
-Idris also provides constructs for writing anonymous functions more compactly, namely operator sections.
-$(*2)$ is a operator section that simply multiplies a numeric value by 2.
-It expands to \lstinline{\x => x * 2}, and can be passed into functions and applied to a numeric argument.
 
 \section{Monadic sequencing and do-notation}
 
-In functional programming, a monad is a structure that abstracts computation in some way.
+A monad is an abstract structure that represents some sort of computation.
 Monads must support two operations: lifting pure elements ``into'' the computation and sequencing two monadic computations.
-How these operations are implemented is monad-specific, but the abstraction they provide is powerful.
+Each of these operations is implemented differently by each concrete monad instance, but their type signatures alone allow for powerful abstraction.
 
-One example of a monad instance is the state monad.
-Pure functional languages don't directly support global state or mutable variables.
-However, state can be represented in such languages by threading the state through a series of function calls.
-Functions cannot directly modify the state because it is immutable, but they can modify a local copy of it before passing it on to the next function call.
+The \texttt{State} monad is an instance of a monad.
+Pure functional languages don't support mutable state, but it can be represented functionally by threading it through a sequence of function calls.
+See Listing~\ref{lst:state_example} for an example of threading state with pure functions.
 
 \begin{lstlisting}[caption={Threading state through function calls, no monad},label={lst:state_example}]
 ||| State holding one integer
@@ -705,9 +689,9 @@ namespace Examples
   -- foo == 15
 \end{lstlisting}
 
-The burden of threading state around is left to the developer.
-Monads allow us to abstract unnecessary details like that away, allowing developers to focus on more important things.
-Specifically, monad instances are automatically provided with an alternative syntax for writing monadic code called \texttt{do}-notation.
+The burden of handling the state is left to the developer.
+Monads allow us to abstract unnecessary details like that away, allowing developers to focus on \textit{what} the computations are doing rather than how.
+Another benefit is that Idris provides monad instances with an alternative syntax for writing monadic code called \texttt{do}-notation.
 Idris will simply desugar \texttt{do}-notation syntax to regular function calls.
 
 \begin{lstlisting}[caption={Threading state through function calls with do-notation},label={lst:threading_state_do_notation}]
@@ -732,35 +716,35 @@ namespace Examples
 \end{lstlisting}
 
 The \texttt{do}-notation allows us to get the state out of the monad context and update it locally before passing it on to the next computation in the sequence.
-Idris gives \texttt{do}-notation to any types overloading the \texttt{return} and $(>>=)$ functions.
+Idris even allows \texttt{do}-notation for any types overloading the \texttt{return} and $(>>=)$ functions, even if they aren't instances of the \texttt{Monad} typeclass.
+
+In fact, our implementation makes use of this feature.
+Monadic sequencing does not allow for the monadic type to change, but we are indexing our computations with their costs.
+Every time a private computation is sequenced, the costs must be updated.
+But that requires returning a new type, which prevents us from aligning with the monad class.
 
 \section{Implicit arguments and automatic proof search}
 
-Even though Idris' type checker is rather powerful, there are still correct types that can not be validated by the type checker alone.
-The \lstinline{head} function on a list is an example of such a type.
-\lstinline{head} returns the first element of the list, but what if that list is empty?
-\texttt{List}s do not provide type safety for these kinds of operations by themselves.
-The Idris type-checker will require a proof that the list is empty.
-The type signature of \texttt{head} in Listing~\ref{lst:head_example} shows two arguments: the first is the list and the second is the proof that the list even has a head element.
+Even though Idris' type checker is rather powerful, there are still correct programs that can not be validated by the type checker alone.
+The \texttt{List} \lstinline{head} function from earlier is a great example.
+The Idris type-checker will not allow us to implement \texttt{head} for \texttt{List}s until we provide it with a proof that the list is not empty.
+The type signature of \texttt{head} in Listing~\ref{lst:head_example} shows two arguments: the first is the list and the second is a proof that the list has a head element to return.
 
 \begin{lstlisting}[caption={Taking the head of a list},label={lst:head_example}]
 head : (xs : List a) -> (isCons xs = True) -> a
 head (x :: xs) Refl = x
-\end{lstlisting}
 
-Don't worry too much about the proof is constructed for now.
-For proofs which are easily machine-checkable, Idris allows us to mark them as implicit arguments.
-The compiler will automatically search for and provide the correct proof if possible so the developer doesn't have to.
-In the event that it is unable to find a sufficient proof, the compiler will abort compilation with a descriptive error message.
-
-\begin{lstlisting}[caption={Automatic proof derivation},label={lst:auto_proof_example}]
 head : (xs : List a) -> { auto p : isCons xs = True } -> a
 head (x :: xs) = x
 \end{lstlisting}
 
-Implicit arguments are declared using curly braces and the \texttt{auto} keyword.
-Alternative proof search methods are available, but are outside the scope of this paper.
-The compiler will complain if it is unable to find a proof automatically, requiring one to be manually provided by the developer.
+For proofs which are easily machine-checkable, Idris allows us to mark them as implicit arguments.
+The compiler will automatically search for and provide the correct proof if possible.
+In the event that it isn't able to find a sufficient proof, the compiler will abort compilation with a descriptive error message.
+
+Implicit arguments are declared using curly braces.
+Adding the \texttt{auto} keyword tells Idris to do a proof search for the required term.
+It is possible to specify proof search tactics, but that is rarely necessary.
 
 \chapter{Function Sensitivity in Idris}\label{sec:function_sensitivity}
 
