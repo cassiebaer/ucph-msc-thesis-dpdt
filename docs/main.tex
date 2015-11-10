@@ -622,7 +622,7 @@ It is \textit{parameterized} by the type of the contained elements (e.g. \texttt
 Now consider the (incomplete) definition of \texttt{head}.
 It is impossible to satisfy the right-hand side of the first pattern.
 
-\begin{lstlisting}[caption={List Definition},label={lst:listdef}]
+\begin{lstlisting}[float,caption={List Definition},label={lst:listdef}]
 data List : (elt : Type) -> Type where
   Nil  : List a
   (::) : a -> List a -> List a
@@ -640,7 +640,7 @@ The type signature of \texttt{head} is able to pattern match on that index.
 \texttt{Vect (S n) a} can be loosely interpreted as a list of \textit{at least} one element of type \texttt{a}.
 \texttt{Vect n a} and \texttt{Vect m a} are not just lists of different lengths, \textit{they are completely different types}.
 
-\begin{lstlisting}[caption={Vect Definition},label={lst:vectdef}]
+\begin{lstlisting}[float,caption={Vect Definition},label={lst:vectdef}]
 data Nat : Type where
   Z : Nat
   S : Nat -> Nat
@@ -662,7 +662,7 @@ Not only is the type signature of \texttt{appendV} much more descriptive, but Id
 This can be enormously helpful for reducing developer errors.
 Proper use of dependent types can reduce or even eliminate the need for unit testing.
 
-\begin{lstlisting}[caption={Vector Operations Example},label={lst:vector_ops_example}]
+\begin{lstlisting}[float,caption={Vector Operations Example},label={lst:vector_ops_example}]
 appendL : List a -> List a -> List a
 appendV : Vect n a -> Vect m a -> Vect (n + m) a
 \end{lstlisting}
@@ -677,7 +677,7 @@ The \texttt{State} monad is an instance of a monad.
 Pure functional languages don't support mutable state, but it can be represented functionally by threading it through a sequence of function calls.
 See Listing~\ref{lst:state_example} for an example of threading state with pure functions.
 
-\begin{lstlisting}[caption={Threading state through function calls, no monad},label={lst:state_example}]
+\begin{lstlisting}[float,caption={Threading state through function calls, no monad},label={lst:state_example}]
 ||| State holding one integer
 data MyState = MkState Int
 
@@ -700,7 +700,7 @@ Monads allow us to abstract unnecessary details like that away, allowing develop
 Another benefit is that Idris provides monad instances with an alternative syntax for writing monadic code called \texttt{do}-notation.
 Idris will simply desugar \texttt{do}-notation syntax to regular function calls.
 
-\begin{lstlisting}[caption={Threading state through function calls with do-notation},label={lst:threading_state_do_notation}]
+\begin{lstlisting}[float,caption={Threading state through function calls with do-notation},label={lst:threading_state_do_notation}]
 get       : State s s
 put       : s -> State s ()
 modify    : (s -> s) -> State s ()
@@ -736,7 +736,7 @@ The \texttt{List} \lstinline{head} function from earlier is a great example.
 The Idris type-checker will not allow us to implement \texttt{head} for \texttt{List}s until we provide it with a proof that the list is not empty.
 The type signature of \texttt{head} in Listing~\ref{lst:head_example} shows two arguments: the first is the list and the second is a proof that the list has a head element to return.
 
-\begin{lstlisting}[caption={Taking the head of a list},label={lst:head_example}]
+\begin{lstlisting}[float,caption={Taking the head of a list},label={lst:head_example}]
 head : (xs : List a) -> (isCons xs = True) -> a
 head (x :: xs) Refl = x
 
@@ -769,7 +769,7 @@ Listing~\ref{lst:rep_sens_fns} defines a type constructor indexed by the sensiti
 It has just one data constructor which is used for wrapping native Idris functions.
 A \texttt{SensitiveFunction s a b} is a function with sensitivity \texttt{s} mapping tokens from \texttt{a} to \texttt{b}.
 
-\begin{lstlisting}[caption={Representing sensitive functions},label={lst:rep_sens_fns}]
+\begin{lstlisting}[float,caption={Representing sensitive functions},label={lst:rep_sens_fns}]
 ||| Represents a sensitive function
 ||| @ c The sensitivity of the function
 ||| @ a The input type of the function
@@ -800,7 +800,7 @@ Function composition returns a new type indexed by the combined sensitivities of
 This is done simply by wrapping the composed functions in a new data constructor and computing a new sensitivity index.
 Listing~\ref{lst:sens_fns_ops} shows sensitive function composition and unrestricted application.
 
-\begin{lstlisting}[caption={Sensitive function operations},label={lst:sens_fns_ops}]
+\begin{lstlisting}[float,caption={Sensitive function operations},label={lst:sens_fns_ops}]
 ||| Applies a sensitive function to an input
 ||| @ f The sensitive function to be applied
 ||| @ x The input
@@ -817,7 +817,7 @@ apply (MkSensitiveFunction f) x = f x
 Now Idris' type-checker understands how sensitive functions compose and it can verify assertions about it.
 See Listing~\ref{lst:composition_examples} for examples of how the type-checker verifies sensitivities.
 
-\begin{lstlisting}[caption={Examples of Sensitive Function Composition},label={lst:composition_examples}]
+\begin{lstlisting}[float,caption={Examples of Sensitive Function Composition},label={lst:composition_examples}]
 doSomeMath : SensitiveFunction 2 Float Float
 doSomeMath = add10 . doubleThenAdd10
 
@@ -841,7 +841,7 @@ Listing~\ref{lst:sens_app} demonstrates an alternative application function for 
 This one checks whether a function's sensitivity is below the provided value.
 Note that this check occurs \textit{at compile time}.
 
-\begin{lstlisting}[caption={Sensitivity-aware function application},label={lst:sens_app}]
+\begin{lstlisting}[float,caption={Sensitivity-aware function application},label={lst:sens_app}]
 ||| Applies a sensitive function to an input, if its sensitivity does not exceed z
 ||| @ z The max sensitivity allowed
 ||| @ f The sensitive function to be applied
@@ -1174,7 +1174,7 @@ To avoid confusion these type names will be prefixed with their respective langu
 It should be pointed out that DPQ and DPDT, described in the next chapter, share these data types.
 Therefore, both \texttt{DPQ.Query} and \texttt{DPDT.Query} refer to \texttt{Query} from Listing \ref{lst:pinqueries}.
 
-\begin{lstlisting}[caption={Representing privacy-aware queries},label={lst:pinqueries}]
+\begin{lstlisting}[float,caption={Representing privacy-aware queries},label={lst:pinqueries}]
 ||| Represents an abstract, stability-aware query
 ||| @ t A function yielding a base table representation given a schema
 ||| @ s The schema of the query
@@ -1210,7 +1210,7 @@ This is because the schema and stability could potentially change.
 We control the \textit{application programming interface} (API) that is exported, so we carefully implement the relational algebra operators with the correct stability costs.
 By unwrapping and rewrapping the \texttt{RADT.Query} trees from Chapter~\ref{sec:RADT} in our new type, we are now able to build query trees that carry privacy metrics in the type.
 
-\begin{lstlisting}[caption={Representing privacy-aware transformations},label={lst:transformations}]
+\begin{lstlisting}[float,caption={Representing privacy-aware transformations},label={lst:transformations}]
 ||| Represents stability-aware selection
 where' : Query b s c -> Expr s Bool -> Query b s c
 where' (MkQuery q) e = MkQuery (Select e q)
@@ -1251,7 +1251,7 @@ All aggregation functions must have at least two arguments: a \texttt{DPQ.Query}
 The aggregation is ran over the query, and the epsilon value decides the width of the noise distribution.
 There is not much magic happening in the implementation of the functions, except for the sometimes convoluted SQL.
 
-\begin{lstlisting}[caption={Noisy aggregations}, label={lst:DPQ_aggregations}]
+\begin{lstlisting}[float,caption={Noisy aggregations}, label={lst:DPQ_aggregations}]
 
 noisyCount : (Query s c) -> (e:Epsilon) -> Private (c*e)
 noisyCount  (MkQuery q) eps  =
@@ -1278,7 +1278,7 @@ This is the total sensitivity cost of the whole query and is calculated by multi
 
 \texttt{evalPrivate} is used to get a pure \texttt{String} from a private result.
 
-\begin{lstlisting}[caption={Aggregation result ADT},label={lst:DPQ_private}]
+\begin{lstlisting}[float,caption={Aggregation result ADT},label={lst:DPQ_private}]
 
 data Private : Sensitivity -> Type where
   MkPrivate : String -> Private budget
@@ -1324,7 +1324,7 @@ It still acts as the result type of aggregation functions, but has some extended
 It is parameterized by the aggregation function's return type, instead of just \texttt{String} as in DPQ.
 \texttt{CrapGen} is a fairly good random number generator, as the name implies, and is used in the process of adding noise.
 
-\begin{lstlisting}[caption={Representing differentially private mechanisms},label={lst:mechanisms}]
+\begin{lstlisting}[float,caption={Representing differentially private mechanisms},label={lst:mechanisms}]
 ||| Represents a differentially private computation
 ||| @ c The privacy cost of the computation
 ||| @ a The return type of the computation
@@ -1374,7 +1374,7 @@ Listing \ref{lst:DPDT_aggregations} shows DPDT's \texttt{noisyCount}.
 We can see that the return type includes what type the aggregation returns (here, and for most differentially private aggregations, a \texttt{Double}).
 The sensitivity calculations work the same as in DPQ.
 
-\begin{lstlisting}[caption={Representing aggregations in DPDT},label={lst:DPDT_aggregations}]
+\begin{lstlisting}[float,caption={Representing aggregations in DPDT},label={lst:DPDT_aggregations}]
 ||| Differentially private mechanism for counting the
 ||| number of rows described by a query for the Idris backend
 ||| @ q The query
@@ -1389,7 +1389,7 @@ noisyCount (MkQuery q) eps = MkPrivate $ \g =>
 
 Another flexibility improvement implemented for our Idris backend of DPDT is the \texttt{PureFn} expression in Listing \ref{lst:purefn}.
 
-\begin{lstlisting}[caption={PureFn expression constructor}, label={lst:purefn}]
+\begin{lstlisting}[float,caption={PureFn expression constructor}, label={lst:purefn}]
 PureFn : (a -> b) -> Expr s a -> Expr s b
 \end{lstlisting}
 
@@ -1423,7 +1423,7 @@ Here, the table of people naturally has a stability of 1 and the noisyCount a se
 Multiplied they give 2, so the sensitivity of the whole operation is 2.
 If we had defined the type of \texttt{countThemAll} to be \texttt{Private 1.9}, the program would not compile.
 
-\begin{lstlisting}[caption={Unit test for noisyCount},label={lst:example_DPQ_unit_test}]
+\begin{lstlisting}[float,caption={Unit test for noisyCount},label={lst:example_DPQ_unit_test}]
   Person : Schema
   Person = [ "Name" ::: String , "Age" ::: Nat ]
 
@@ -1456,7 +1456,7 @@ There are enough moving parts in a differentially private mechanism to warrant t
 % TODO 1 : "tell what you want to show"
 Listing~\ref{lst:example_data_people} constructs a small database in our Idris backend.
 
-\begin{lstlisting}[caption={Validation Data},label={lst:example_data_people}]
+\begin{lstlisting}[float,caption={Validation Data},label={lst:example_data_people}]
 import Database.PowerOfPi.Idris
 
 Person : Schema
@@ -1475,7 +1475,7 @@ Let us consider some primitive queries and their responses.
 First, we will try to determine whether Alice's records are included in the database.
 This simple example demonstrates several components of our implementation: the expression language, a transformation, and a differentially private mechanism: \texttt{noisyCount}.
 
-\begin{lstlisting}[caption={Counting Alices},label={lst:counting_alices}]
+\begin{lstlisting}[float,caption={Counting Alices},label={lst:counting_alices}]
 countAlices : Private 1 Double
 countAlices = do let isAlice = Person^"Name" == Lit "Alice"
                  let alices  = people `where'` isAlice
@@ -1502,7 +1502,7 @@ Of course, the analyst could try to sample multiple times, averaging the results
 DPDT allows this, but the type system ensures that the cost of the query increases accordingly.
 Listing~\ref{lst:nested_aggrs} contains an example of how a malicious analyst might try to average a few queries.
 
-\begin{lstlisting}[caption={Counting Alices (revisited)},label={lst:nested_aggrs}]
+\begin{lstlisting}[float,caption={Counting Alices (revisited)},label={lst:nested_aggrs}]
 alices : PINQuery IdrisTable Person 1
 alices = people `where'` (Person^"Name" == Lit "Alice")
 
@@ -1543,7 +1543,7 @@ Idris, on the other hand, provides \textit{referential transparency}; i.e. an ex
 This may seem unimportant, but side effecting functions can compromise differential privacy in spectacular ways.
 Consider the result of the following expression.
 
-\begin{lstlisting}[caption={Example side-channel attack}]
+\begin{lstlisting}[float,caption={Example side-channel attack}]
 patients.Select(p => if p.Name == "Alice" {
                         beep();
                      };
@@ -1673,7 +1673,7 @@ Idris syntax extensions consist of two components: reserved keywords and non-ter
 Keywords help anchor the parser around the non-terminals, which are captured and usable on the right hand side of a custom syntax declaration.
 Listing~\ref{lst:syntax_extensions} contains two examples of syntax rules.
 
-\begin{lstlisting}[caption={Extending Idris' syntax},label={lst:syntax_extensions}]
+\begin{lstlisting}[float,caption={Extending Idris' syntax},label={lst:syntax_extensions}]
 -- Definition
 syntax select [f] from [q] = select q f
 syntax select [f] from [q] where [e] = select (where q e) f
