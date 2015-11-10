@@ -15,21 +15,20 @@ Point = [ "x" ::: Float , "y" ::: Float ]
 data ClassifiedPoint : (k:Nat) -> Type where
   MkClassifiedPoint : (pt:(Float, Float)) -> (cl:Fin k)  -> ClassifiedPoint k
 
-
 ||| Table of points
 points : Query ListRow Point 1
 points = MkQuery $ Table [ [ 0  , 0   ]
-                            , [ 0.2, 0   ]
-                            , [ 0.2 ,0.1 ]
-                            , [ 0.5 , 0.5 ]
-                            , [ 0.9 , 0.5 ]
-                            , [ 0.8 , 0.7 ]
-                            , [ -0.8 , -0.7 ]
-                            , [ -1   , -0.7 ]
-                            , [ -0.8 , -0.5 ]
-                            , [ -0.8 , -0.9 ]
-                            , [ -0.3 , -0.2 ]
-                            ]
+                         , [ 0.2, 0   ]
+                         , [ 0.2 ,0.1 ]
+                         , [ 0.5 , 0.5 ]
+                         , [ 0.9 , 0.5 ]
+                         , [ 0.8 , 0.7 ]
+                         , [ -0.8 , -0.7 ]
+                         , [ -1   , -0.7 ]
+                         , [ -0.8 , -0.5 ]
+                         , [ -0.8 , -0.9 ]
+                         , [ -0.3 , -0.2 ]
+                         ]
 
 ||| Distance between two points using the Pythagorean theorem
 dist : (Float,Float) -> (Float,Float) -> Float

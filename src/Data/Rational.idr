@@ -1,50 +1,118 @@
 module Data.Rational
 
-import Data.So
 %default total
 
-infixr 7 :%
+infixl 9 :%
+infixl 9 //
+
+-- Eliminates a Dec b
+fromDec : Lazy a -> Lazy a -> Dec b -> a
+fromDec y n (Yes _) = y
+fromDec y n (No  _) = n
+
 data Rational : Type where
-    (:%) : Integer -> Integer -> Rational
+  (:%) : Nat -> (y:Nat) -> Rational
 
-gcd : Integer -> Integer -> Integer
-gcd 0 0 = 0
-gcd x y = gcd' (abs x) (abs y)
-  where gcd' a 0 = a
-        gcd' a b = assert_total (gcd' b (a `mod` b))
+reduce : Nat -> (y:Nat) -> Rational
+reduce x Z = x :% Z
+reduce x y = let d = gcd x y
+              in fromDec (x :% y)
+                         ((divNatNZ x d gcdIsNotZ) :% (divNatNZ y d gcdIsNotZ))
+                         (decEq d Z)
+  where
+    gcdIsNotZ : {x,y : Nat} -> Not (gcd x y = Z)
+    gcdIsNotZ Refl impossible
 
-%assert_total
-reduce : Integer -> Integer -> Rational
-reduce x 0 = x :% 0
-reduce x y = case choose (d == 0) of
-                  (Left _)  => x :% y
-                  (Right _) => assert_total ((x `div` d) :% (y `div` d))
-  where d : Integer
-        d = gcd x y
+(//) : Nat -> (y:Nat) -> Rational
+(//) = reduce
 
-signum : Integer -> Integer
-signum x = case compare x 0 of
-                LT => (-1)
-                EQ => 0
-                GT => 1
+toFloat : (x:Rational) -> Float
+toFloat (x :% y) = cast x / cast y
+  where cast = fromInteger . fromNat
 
-infixr 7 //
-(//) : Integer -> Integer -> Rational
-(//) x y = reduce (x * signum y) (abs y)
+implicit
+fromNat : Nat -> Rational
+fromNat n = (//) (fromNat n) (S Z)
 
-toFloat : Rational -> Float
-toFloat (x :% y) = fromInteger x / fromInteger y
+ratFromInteger : Integer -> Rational
+ratFromInteger n = fromInteger n // 1
+
+instance Show Rational where
+    show (x :% y) = parens (show x ++ "//" ++ show y)
+      where parens x = "(" ++ x ++ ")"
+
+ratPlus : Rational -> Rational -> Rational
+ratPlus left     (Z  :% d') = left
+ratPlus (n :% d) (n' :% d') = reduce (n*d' + n'*d) (d*d')
+
+ratMinus : Rational -> Rational -> Rational
+ratMinus (n :% d) (n' :% d') = reduce (n*d' - n'*d) (d*d')
+
+ratMult : Rational -> Rational -> Rational
+ratMult (Z :% _) _          = ratFromInteger 0
+ratMult (n :% d) (n' :% d') = reduce (n*n') (d*d')
+
+ratEq : Rational -> Rational -> Bool
+ratEq (n :% d) (n' :% d') = n * d' == n' * d
+
+ratDecEq : (x:Rational) -> (y:Rational) -> Dec (x = y)
+ratDecEq x y = if ratEq x y then Yes primEq else No primNotEq
+  where
+    primEq : x = y
+    primEq = believe_me (Refl {x})
+    postulate primNotEq : x = y -> Void
+
+ratComp : Rational -> Rational -> Ordering
+ratComp (n :% d) (n' :% d') = compare (n * d') (n' * d)
 
 instance Num Rational where
-    (+) (n :% d) (n' :% d') = reduce (n*d' + n'*d) (d*d')
-    (-) (n :% d) (n' :% d') = reduce (n*d' - n'*d) (d*d')
-    (*) (n :% d) (n' :% d') = reduce (n*n') (d*d')
-    abs (n :% d) = abs n // d
-    fromInteger n = n // 1
+    (+) = ratPlus
+    (-) = ratMinus
+    (*) = ratMult
+    abs = id -- Our rationals can only be positive.
+    fromInteger = ratFromInteger
 
 instance Eq Rational where
-    (==) (n :% d) (n' :% d') = n * d' == n' * d
+    (==) = ratEq
 
 instance Ord Rational where
-    compare (n :% d) (n' :% d') = compare (n * d') (n' * d)
+    compare = ratComp
+
+instance DecEq Rational where
+    decEq = ratDecEq
+
+------------------------------------------------------------------------------
+-- Rationals Properties
+
+fromDec_reduces : (d:Dec b) -> fromDec Z Z d = Z
+fromDec_reduces (Yes _) = Refl
+fromDec_reduces (No  _) = Refl
+
+rationalsReduce : (4//8) = 1//2
+rationalsReduce = Refl
+
+rationalsReduceWhenAdded : (1//4) + (1//2) = (3//4)
+rationalsReduceWhenAdded = Refl
+
+rationalsReduceWhenSubtracted : (1//2) - (1//4) = (1//4)
+rationalsReduceWhenSubtracted = Refl
+
+rationalsReduceWhenMultiplied : (1//2) * 2 = 1
+rationalsReduceWhenMultiplied = Refl
+
+fromNatReduces : Data.Rational.fromNat (S Z) = (1//1)
+fromNatReduces = Refl
+
+ratMultZeroLeft : (right : Rational) -> 0 * right = 0
+ratMultZeroLeft r = Refl
+
+ratPlusZeroRight : (left : Rational) -> left + 0 = left
+ratPlusZeroRight l = Refl
+
+ratMultDistributes : { x,y,c : Rational } -> c * (x + y) = c * x + c * y
+ratMultDistributes = ?ratMultDistributes_rhs
+
+Data.Rational.ratMultDistributes_rhs = proof
+  intros
+  exact believe_me (Refl {x})
 

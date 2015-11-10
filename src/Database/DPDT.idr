@@ -1,5 +1,6 @@
 module Database.DPDT
 
+import Data.Vect
 import Data.Rational
 import Database.PowerOfPi
 import Statistics.Distribution.Laplace
@@ -39,28 +40,8 @@ union (MkQuery q) (MkQuery q') = MkQuery (Union q q')
 intersect : Query b s c -> Query b s c' -> Query b s (c + c')
 intersect (MkQuery q) (MkQuery q') = MkQuery (Diff q q')
 
-groupBy : (Eq k, Show k) => Expr s k -> Query b s c -> Grouping b s k (c * 2)
+groupBy : (Eq k) => Expr s k -> Query b s c -> Grouping b s k (c * 2)
 groupBy e (MkQuery q) = MkGrouping (MkGrouping e q)
 
-lookup : (Eq k, Show k) => k -> Grouping b s k c -> Query b s c
+lookup : (Eq k) => k -> Grouping b s k c -> Query b s c
 lookup k (MkGrouping q) = MkQuery (Lookup k q)
-
-----------------------------------------------------------------
-
-||| Represents a Private computation
-data Private : Sensitivity -> Type -> Type where
-  MkPrivate : (CrapGen -> (a,CrapGen)) -> Private budget a
-
-||| Evaluates a Private computation
-evalPrivate : Private s a -> CrapGen -> a
-evalPrivate (MkPrivate f) g = fst (f g)
-
-||| Lifts a value into a Private computation.
-return : a -> Private 0 a
-return x = MkPrivate $ \s => (x,s)
-
-||| Sequencing primitive. Allows us to overload Idris' do-notation
-(>>=) : Private s a -> (a -> Private s' b) -> Private (s + s') b
-(>>=) (MkPrivate sf) f = MkPrivate $ \st => let (x,st1)       = sf st
-                                                MkPrivate sf' = f x
-                                            in sf' st1

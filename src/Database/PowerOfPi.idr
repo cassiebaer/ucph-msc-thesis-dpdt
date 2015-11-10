@@ -10,7 +10,9 @@ namespace Attribute
 
   ||| Attribute equality is based only on their names!
   instance Eq Attribute where
-    (==) (n:::t) (n':::t') = n == n'
+    (==) (n:::_) (n':::_) with (decEq n n')
+      (==) (n:::_) (n':::_) | Yes _ = True
+      (==) (n:::_) (n':::_) | No _  = False
 
   instance Cast Attribute (Pair String Type) where
     cast (n ::: t) = (n,t)
@@ -48,6 +50,7 @@ namespace Proofs
       uninhabited Here      impossible
       uninhabited (There p) impossible
 
+  %assert_total
   decContainsKey : DecEq 'k => (ps:List ('k,'v)) -> (k:'k) -> Dec (ps `ContainsKey` k)
   decContainsKey [] k = No absurd
   decContainsKey ((a, b) :: ps) k with (decEq a k)
@@ -89,7 +92,7 @@ data Expr : (s:Schema) -> (t:Type) -> Type where
   (*) : Num t  => Expr s t -> Expr s t -> Expr s t
   (==): Eq t   => Expr s t -> Expr s t -> Expr s Bool
   (/=): Eq t   => Expr s t -> Expr s t -> Expr s Bool
-  Lit : Show t => (val:t) -> Expr s t
+  Lit : t -> Expr s t
   Couple : Expr s t -> Expr s t' -> Expr s $ Pair t t'
   PureFn : (a -> b) -> Expr s a -> Expr s b
 
@@ -117,15 +120,15 @@ mutual
     ||| Represents selection on a Query using the given expression.
     Select  : Expr s Bool -> Query t s -> Query t s
     ||| Represents a lookup into the result of a Grouping
-    Lookup  : (Eq k, Show k) => k -> Grouping t s k -> Query t s
+    Lookup  : (Eq k) => k -> Grouping t s k -> Query t s
 
   ||| Represents the grouping of a query into an associative map
   data Grouping : (t:Schema -> Type) -> (s:Schema) -> (k:Type) -> Type where
-    MkGrouping : (Eq k, Show k) => Expr s k -> Query t s -> Grouping t s k
+    MkGrouping : (Eq k) => Expr s k -> Query t s -> Grouping t s k
 
   ||| Represents the partitioning of a query into a dictionary
   data Partitioning : (t:Schema -> Type) -> (s:Schema) -> (k:Type) -> Type where
-    MkPartitioning : (Eq k, Show k) => List k -> Expr s k -> Query t s -> Partitioning t s k
+    MkPartitioning : (Eq k) => List k -> Expr s k -> Query t s -> Partitioning t s k
 
 namespace Aggregations
 
