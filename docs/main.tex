@@ -1153,23 +1153,26 @@ namespace SQLiteBackend
 
 \chapter{DPQ - Differentially Private Queries}\label{sec:DPQ}
 
-In this chapter we describe how we bring together the material of the previous chapters and outline the implementation of DPQ.
-DPQ is an abbreviation for Differentially Private Queries and is a language for compiling differentially private string queries for query languages.
+This chapter describes \textit{Differentially Private Queries} (DPQ), a restricted subset of the DPDT language.
+DPQ is just a simple privacy layer wrapped around our implementation of RADT, as described in Chapter~\ref{sec:RADT}.
+Sequencing is the primary primitive distinguishing DPQ from DPDT.
+Because of this, DPQ is only capable of verifying differential privacy for single queries.
+Chapter~\ref{sec:DPDT} builds on this chapter to arrive at our final prototype: DPDT.
 
-The language is built as a layer on top of our relational algebra, RADT, described in the previous chapter.
 Our goal is to leverage the Idris type-checker to statically verify differential privacy constraints in single queries.
+We begin by embedding differential privacy metrics into the types as described in Chapter~\ref{sec:function_sensitivity}.
+Next, we demonstrate how these sensitivity-indexed types interact with transformations and aggregations.
+Finally, we briefly describe the requirements for implementing DPQ-capable backends.
 
-\section{Transformations}
+\section{Sensitive types}
 
-The first building block in the formation of DPQ was to add the stability metric to RADT's relational algebra operations, or transformations as they are refered to in the differential privacy literature.
+First, we want to wrap our RADT types with new types indexed by their sensitivities.
+Listing~\ref{lst:pinqueries} shows how this can be done.
+The new types read almost exactly as before, except they are indexed by \texttt{Stability} (type synonym for \texttt{Rational}).
 
-New types are created to capture the necessities as shown in Listing \ref{lst:pinqueries}.
-Notice that the types are similar to the ones in RADT.
-They are now also indexed by a \texttt{Stability} (type synonym for \texttt{Rational}) to capture the stability of a query.
-As Idris supports name overloading we have decided to keep the names the same as in RADT.
-To avoid confusion these type names will be prefixed with their respective language name throughout this report (e.g., \texttt{RADT.Query}, \texttt{DPQ.Query}).
-It should be pointed out that DPQ and DPDT, described in the next chapter, share these data types.
-Therefore, both \texttt{DPQ.Query} and \texttt{DPDT.Query} refer to \texttt{Query} from Listing \ref{lst:pinqueries}.
+Idris allows name overloading in cases where the correct function can be uniquely identified by the types.
+Thanks to this, we don't have to rename our new, sensitive types.
+However, to help with reader comprehension, these type names can be prefixed with their respective language when it might be ambiguous (e.g. \texttt{RADT.Query}, \texttt{DPDT.Query}).
 
 \begin{lstlisting}[float,caption={Representing privacy-aware queries},label={lst:pinqueries}]
 ||| Represents an abstract, stability-aware query
@@ -1196,16 +1199,21 @@ data Partitioning : (t:Schema -> Type) -> (s:Schema) -> (k:Type) -> (c:Stability
     MkPartitioning : Partitioning t s k -> Partitioning t s k c
 \end{lstlisting}
 
-We will focus on \texttt{DPQ.Query} because \texttt{DPQ.Grouping} and \texttt{DPQ.Partitioning} have similar implementations, but are case-specific.
-A \texttt{DPQ.Query t s c} describes a \texttt{c}-differentially private query with schema \texttt{s} (and backend table representation \texttt{(t s)}).
-There is only one data constructor which serves simply to wrap a \texttt{RADT.Query}.
-This allows us to define a \texttt{RADT.Query} and assign it an arbitrary stability.
+We will focus on \texttt{DPDT.Query} because \texttt{DPDT.Grouping} and \texttt{DPDT.Partitioning} have similar implementations, but are case-specific.
+A \texttt{DPDT.Query t s c} describes a \texttt{c}-differentially private query with schema \texttt{s} (and backend table representation \texttt{(t s)}).
+There is only one data constructor which serves simply to wrap an existing \texttt{RADT.Query}.
 
-Next, we provide the standard operators from the relational algebra as functions operating on \texttt{DPQ.Query t s c}.
-We simply unwrap the \texttt{RADT.Query} and then rewrap it in the same \texttt{DPQ.Query} data constructor, but using a different type constructor.
-This is because the schema and stability could potentially change.
-We control the \textit{application programming interface} (API) that is exported, so we carefully implement the relational algebra operators with the correct stability costs.
-By unwrapping and rewrapping the \texttt{RADT.Query} trees from Chapter~\ref{sec:RADT} in our new type, we are now able to build query trees that carry privacy metrics in the type.
+\section{Transformations}
+
+Transformations in the DPQ/DPDT privacy layer can change both the schemas and stabilities of queries, but are trivially easy to implement.
+First, a transformation must unwrap the underlying \texttt{RADT.Query} objects.
+Then, it transforms them using operations from \texttt{RADT}.
+Finally, it rewraps the resulting \texttt{RADT.Query} in a \texttt{DPDT.Query} data constructor, \textit{but with a different type constructor}.
+At the data level, \texttt{DPDT.Query} isn't terribly interesting; the interesting computations happen at the type level.
+
+Dependent type signatures allow total computations to be evaluated at compile-time.
+We spent significant time fine-tuning totality in the \texttt{Data.Rational} module.
+We also spent some time implementing \texttt{projectedSchema} in a manner that is total\footnote{There are some quirks with respect to how Idris reduces terms in dependent signatures. Not all total functions reduce as expected.}.
 
 \begin{lstlisting}[float,caption={Representing privacy-aware transformations},label={lst:transformations}]
 ||| Represents stability-aware selection
@@ -1229,83 +1237,61 @@ groupBy : Eq k => Expr s k -> Query b s c -> Grouping b s k (c * 2)
 groupBy e (MkQuery q) = MkGrouping (GroupBy e q)
 \end{lstlisting}
 
-Recall from Section~\ref{subsec:fn_sens} that \texttt{where'} is a 1-sensitive function.
-Notice how its type declaration reflects that.
-The \texttt{c} parameter remains unchanged through the rewrapping.
+Recall from Corollary~\ref{cor:filterp_1sens} that $filter_p$ is 1-sensitive.
+In trying to align our implementation with SQL and PINQ naming conventions, $filter_p$ is known as \texttt{where'} in our implementation.
+Notice how the type signature of \texttt{where'} reflects that.
+The stability index, \texttt{c}, remains unchanged through the rewrapping ($c * 1 = c$).
+\texttt{union} is a binary transformation that costs the sum of the costs of its operands.
+Notice how this too can be precisely specified in Idris.
 
-\texttt{union}, however, costs the sum of the costs of the operands.
-Notice how this can be precisely specified in Idris.
+\section{Aggregations}\label{seq:DPQ_aggregations}
 
 Of course, we can't just return the results of any query.
 A query might just return the database contents untouched, potentially violating every single participant's privacy.
 Differential privacy requires that any query response be the result of some sort of aggregation.
 
-\section{Aggregations}\label{seq:DPQ_aggregations}
+DPQ/DPDT does not impose any abstract structure on aggregation operations, as it can be very backend specific.
+Both of our backends (Idris, SQLite) implement custom data structures for this detail.
+One reason for this is for tracking total computation cost.
+Aggregations are $\epsilon$-differentially private, but $\epsilon$ is unbound.
+By defining a new type, we can express the notion of a closed computation and index it with the total cost.
 
-Aggregations are implemented as functions in DPQ.
-Listing \ref{lst:DPQ_aggregations} shows two aggregation functions for the SQLite backend.
-All aggregation functions must have at least two arguments: a \texttt{DPQ.Query}, and the precission parameter, epsilon.
-The aggregation is ran over the query, and the epsilon value decides the width of the noise distribution.
-There is not much magic happening in the implementation of the functions, except for the sometimes convoluted SQL.
+Listing \ref{lst:DPQ_aggregations} shows the type declarations for \texttt{Private} in each backend, which represents a private computation indexed by its total cost.
+The Idris and SQLite backends implement this structure completely differently.
+It also shows a sample aggregation, \texttt{noisyCount}, from each.
 
 \begin{lstlisting}[float,caption={Noisy aggregations}, label={lst:DPQ_aggregations}]
+namespace Idris
 
-noisyCount : (Query s c) -> (e:Epsilon) -> Private (c*e)
-noisyCount  (MkQuery q) eps  =
-  let noise = "samplePure(0, " ++ show (1 / toFloat eps) ++ ")"
-  in MkPrivate $ "SELECT (COUNT(*) + " ++ noise ++ ") FROM (" ++ eval q ++ ")"
+  data Private : Sensitivity -> Type -> Type
+  evalPrivate : Private s a -> PRNG -> a
 
-noisyAverage : Expr s Double -> Query s c -> (e:Epsilon) -> Private (c*e)
-noisyAverage exp (MkQuery q) eps =
-  let expStr   = eval exp
-    clampLT  = "CASE WHEN " ++ expStr ++ " < -1 THEN -1 ELSE " ++ expStr ++" END"
-    clamp    = "CASE WHEN " ++ expStr ++ " > 1 THEN 1 ELSE "  ++ clampLT ++" END"
-    width    = show $ 2 / toFloat eps
-    noisyAvg = "noisyAverage(AVG(ClampedValues), " ++ width ++ ")"
-    isEmpty  = "CASE WHEN COUNT(*) == 0 THEN " ++ rndVar ++ " ELSE " ++ noisyAvg ++ "END"
-    select   = "SELECT (" ++ isEmpty ++ ") "
-    from     = "FROM (SELECT (" ++ clamp ++ ") AS ClampedValues FROM (" ++ eval q ++ "))"
-  in  MkPrivate $ select ++ from
+  noisyCount : (Query ListRow s c) -> (e:Epsilon) -> Private (c*e) Double
+  noisyCount (MkQuery q) eps = MkPrivate $ \g =>
+    let (rx,g') = rndDouble g
+        noise   = samplePure 0 (1 / toFloat eps) rx
+        count   = the Double $ fromInteger $ fromNat $ length (eval q)
+     in (count + noise, g')
 
-\end{lstlisting}
+namespace SQLite
 
-The result type of the aggregations is a string with an associated sensitivity cost, represented by the ADT \texttt{Private c} shown in Listing \ref{lst:DPQ_private}.
-This is the total sensitivity cost of the whole query and is calculated by multiplying the stability of the query argument and the epsilon value.
+  data Private : Sensitivity -> Type
+  evalPrivate : Private s -> String
 
-
-\texttt{evalPrivate} is used to get a pure \texttt{String} from a private result.
-
-\begin{lstlisting}[float,caption={Aggregation result ADT},label={lst:DPQ_private}]
-
-data Private : Sensitivity -> Type where
-  MkPrivate : String -> Private budget
-
-evalPrivate : Private c -> String
-evalPrivate (MkPrivate q) = q
-
+  noisyCount : (Query SQLite s c) -> (e:Epsilon) -> Private (c*e)
+  noisyCount  (MkQuery q) eps  =
+     let noise = "samplePure(0, " ++ show (1 / toFloat eps) ++ ")"
+     in MkPrivate $ "SELECT (COUNT(*) + " ++ noise ++ ") FROM (" ++ eval q ++ ")"
 \end{lstlisting}
 
 \section{Target language requirements}\label{sec:DPQ_requirements}
 
-There are some requirements that need to be in place in the target query language in order to make a DPQ backend for it.
+Any backend implementing DPQ must also meet the requirements for implementing RADT, since we use it for doing the actual transformations.
+Additionally, it must provide support generating Laplacian noise.
+This can generally be accomplished via two components: (pseudo)random uniform number generation and the ability to call custom functions.
 
-First of all, it should obviously support the basic relational algebra operations implemented in DPQ.
-The language must have a random number generator in order to add random noise.
-In addition there are several mathematical functions that are required to sample from a Laplacian distribution.
-These required functions are listed below.
-It might also be a solution to define them yourself, but query languages are generally not intended for that, and the queries could end up fairly complex.
-
-\begin{itemize}
-    \item Natural logarithm
-    \item Natural exponential
-    \item Absolute value
-    \item Signum
-\end{itemize}
-
-In the case of SQLite, which we have implemented a DPQ backend for, it lacks both logarithm and exponential functions.
-Luckily SQLite supports extension functions, which are embedded in a shared C-library, and allows for extended functionality to the language.
-So by using this feature we are able to make a DPQ backend for SQLite referencing functions in the exension library to make up for the missing required functions.
-Similar features is availible in several other query languages.
+We implemented a basic C library with the Laplacian distribution and tested it with SQLite.
+Most common database systems should allow linking with custom C libraries.
 
 \chapter{DPDT - Differentially Private Programs}\label{sec:DPDT}
 
