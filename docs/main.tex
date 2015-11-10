@@ -339,7 +339,7 @@ Despite the domain change, function sensitivity behaves exactly as outlined in T
 Consider a database endomorphism, $filter_p : \mathbb D \rightarrow \mathbb D$, which filters rows according to some pre-specified predicate, $p : Row \rightarrow Bool$.
 $filter_p$ is a 1-sensitive function because it is impossible for it to magnify the distances between databases.
 
-\begin{cor}
+\begin{cor}\label{cor:filterp_1sens}
 $filter_p : \mathbb D \rightarrow \mathbb D$ is 1-sensitive.
 \end{cor}
 
@@ -395,8 +395,10 @@ Sensitivity represents the largest factor by which the distances between pairs o
 
 \section{Indistinguishability}
 
-Indistinguishability is the key idea that distinguishes differential privacy from similar approaches in privacy research.
-If an attacker is unable to determine whether Alice's data even exists in the database, he will be unable to determine the contents of her data.
+Indistinguishability is the key idea that distinguishes differential privacy from similar approaches to privacy research.
+Simply put, we require that an adversary be unable to determine anything about the input based on the output.
+Consider two adjacent databases: one \textit{with} and one \textit{without} Alice's records.
+If an adversary is unable to determine whether Alice's data even exists in the database, he will be unable to determine the contents of her data.
 A query is said to be differentially private if it satisfies this property.
 
 We turn to randomness to achieve this kind of behavior.
@@ -411,18 +413,18 @@ Now consider a randomized query, or mechanism, $\mathcal M : \mathbb D \rightarr
 We say that such a query is $\epsilon$-differentially-private if the inclusion of Alice's data increases her privacy risk by at most $e^\epsilon$.
 
 \begin{defn}\label{def:diffpriv}
-  A randomized mechanism, $\mathcal{M} : \mathbb D \rightarrow A$, is $\epsilon$-differentially-private if, for all databases $D_1 \sim D_2$, and all $S \in A$,
-  $$Pr[\mathcal M(D_1)\in S] \le e^\epsilon \times Pr[\mathcal M(D_2)\in S]$$
+  A randomized mechanism, $\mathcal{M} : \mathbb D \rightarrow A$, is $\epsilon$-differentially-private if, for all adjacent databases $D_1 \sim D_2$, and all $S \in A$,
+  $$\forall D_1, D_2 \in \mathbb D \colon D_1\sim D_2\ldotp\forall S\in A\ldotp Pr[\mathcal M(D_1)\in S] \le e^\epsilon \times Pr[\mathcal M(D_2)\in S]$$
 \end{defn}
 
 There are a few restrictions on mechanisms in the context of sensitive databases.
-Obviously, there are limits to the types of data that queries are allowed to return.
+Obviously, there are limits to the types of data that queries can safely be returned.
 We can't allow entire tables (computed or otherwise) to be returned, because they will potentially contain the sensitive rows we are trying to protect.
 Additionally, queries should not be allowed to return data directly from any particular row.
 
 In fact, queries must be restricted to aggregation operations.
 This may seem limiting, but in practice is not so.
-Certainly, entire classes of queries and algorithms are precluded by this necessity, but the vast majority of statistical research is performed using aggregations over tables, not querying for the information pertaining to particular individuals.
+Certainly, entire classes of queries and algorithms are precluded by this necessity, but the vast majority of statistical research is performed using aggregations over tables, not querying for information pertaining to particular individuals.
 
 An additional constraint emerges from the previous one: the data type returned by the aggregation must be a semigroup; i.e. it must have an associative binary operator for folding new values into the aggregate.
 This is the case because the order in which rows are considered should have no bearing on the resulting value; otherwise, an attacker may be able to learn something about the ordering of individuals.
@@ -430,24 +432,24 @@ This is the case because the order in which rows are considered should have no b
 Aggregations alone, however, are not capable of protecting privacy.
 Consider a database consisting of all patients who have ever been treated at the \textit{ABC ABortion Clinic}.
 Alice is one of those patients.
-Regardless of what Alice's records actually contain, her mere presence in that database could have serious consequences for her private life if the wrong people found out.
+Regardless of what Alice's records actually contain, her mere presence in that database could have serious consequences for her private life.
 Consider the result of the following query: \textit{How many people named Alice are in the database?}
 One.
 That is a valid aggregation and Alice is now in trouble.
 
-So how could we have saved Alice?
-The final requirement is randomness.
+How could we have protected Alice?
+This is where randomness comes into play.
 When we run an aggregation, we need to randomize the output to satisfy indistinguishability.
 If not, an attacker can draft clever aggregations to deduce private information about particular individuals.
-Noising a result before returning it gives database participants plausible deniability.
+Adding random noise to a result before returning it gives database participants (and non-participants) plausible deniability against such aggregation attacks.
 The aggregation function from earlier will no longer be enough to determine whether any records in the database are related to Alice.
-See Figure~\ref{fig:indistinguishability} for a visualization of indistinguishability.
+See Figure~\ref{fig:indistinguishability} for a visualization of how random noise leads to indistinguishability.
 
 \begin{figure}
     \centering
     \def\svgwidth{0.75  \columnwidth}
     \input{assets/Indistinguishability.pdf_tex}
-    \caption{Visualizing indistinguishability with sample PDFs from a counting query on $D_1$ and $D_2$, where $D_1\sim D_2$}
+    \caption{Visualizing indistinguishability with sample PDFs from a counting query on adjacent databases $D_1$ and $D_2$ ($D_1\sim D_2$)}
     \label{fig:indistinguishability}
 \end{figure}
 
@@ -455,67 +457,87 @@ The differential privacy community has largely settled on using the Laplace dist
 There are a number of reasons for this, but the main ones concern symmetry and ease of scaling.
 The Laplace distribution resembles a symmetric exponential distribution.
 Its diversity parameter, or ``width'', scales predictably with $\epsilon$.
-In fact, any $c$-sensitive function can be made differentially private easily.
+Any $c$-sensitive function can be made differentially private easily by simply scaling the diversity parameter.
 
-\begin{defn}
-Any $c$-sensitive function can be made $\epsilon$-differentially private by adding a value sampled from the Laplace distribution centered on zero with diversity parameter $b=\frac{c}{\epsilon}$.
-\end{defn}
+\begin{lem}
+Any $c$-sensitive function, $f : A \rightarrow \mathbb R$, can be made $\epsilon$-differentially private by adding a value sampled from the Laplace distribution centered on zero with diversity parameter $b=\frac{c}{\epsilon}$.
+\end{lem}
 
 Noise sampled from the Laplace distribution scaled according to $b=c/\epsilon$ is sufficient to mask private information while still providing accurate results.
 
 \section{PINQ}\label{sec:pinq}
 
-This section provides a brief overview of PINQ, the framework that originally inspired DPDT.
-PINQ is a privacy layer built over top of the .NET integrated query language, LINQ.
-It provides carefully implemented, differentially-private primitives and the ability to compose arbitrarily complex algorithms from them without violating differential privacy.
+This section provides a brief overview of PINQ and its key components.
+PINQ provides differentially-private primitives and operators for composing them into arbitrarily complex, but still differentially private algorithms.
+It is layered on top of LINQ, a query EDSL for the .NET family of languages.
 There are two main components to PINQ: transformations and aggregations.
-Each PINQ server will keep track of its own privacy budget and reject queries whose costs exceed the remaining budget.
-Once a data source's budget has been consumed entirely, it is impossible to query it again through the PINQ interface.
+Each PINQ server is responsible for maintaining its own privacy budget and rejecting queries whose costs exceed what remains of it.
+After a data source's budget has been consumed entirely, it is impossible to query it again through the PINQ interface.
 
 \subsection{Transformations}
 
-LINQ is a query DSL written for the .NET languages allowing users to manipulate data with relational algebra operators directly in the host language.
-In LINQ terminology, these operations are called transformations.
-Our work includes a fully-typed LINQ-like implementation in Idris (\texttt{Database.PowerOfPi.Idris}).
+LINQ allows users to manipulate data with relational algebra operators directly in the host language.
+In LINQ/PINQ terminology, these operations are called transformations.
+Our work includes a fully-typed LINQ-like EDSL for Idris which we call RADT. (see \texttt{Database.RADT.Idris}).
 
-PINQ's primary contribution is the addition of a privacy layer around the LINQ query language.
-The majority of operations available in LINQ have also been made available in PINQ.
-However, some transformations cannot be made differentially private and have been modified or removed.
-The word ``stability'' is commonly used when discussing a concept similar to function sensitivity in the context of database transformations.
+PINQ adds a privacy layer around the LINQ query language.
+It verifies that query costs do not exceed data source budgets before handing queries off to LINQ for processing.
+Many of LINQ's transformations have been made available in PINQ, but some cannot be made differentially private and have been modified or removed.
+The word ``stability'' is commonly used when discussing function sensitivity in the context of database transformations.
 
-\begin{defn}
-A transformation $T$ is $c$-stable if for all pairs of input databases, $A$ and $B$,
+\begin{cor}[Transformation stability]
+A transformation $T$ is $c$-stable if, for all possible pairs of input databases,
 $$
-  |T(A)\ominus T(B)| \le c \times | A \ominus B |
+  \forall D_1,D_2\in\mathbb D\ldotp |T(D_1)\ominus T(D_2)| \le c \times | D_1 \ominus D_2 |
 $$
-\end{defn}
+\end{cor}
 
-Not all transformations from the LINQ API are $c$-stable for finite values of $c$.
-In these cases, PINQ provides modified, boundable versions.
-As an example, see Section~\ref{subsec:fn_sens} for a proof that the filter transformation (selection) is 1-stable.
+See Corrolary~\ref{cor:filterp_1sens} for a proof that $filter_p : \mathbb D \rightarrow \mathbb D$ is 1-stable (sensitive).
 Similar proofs exist for all of the other transformations provided by PINQ\cite{conf/sigmod/McSherry09}.
+Not all transformations from the LINQ API are $c$-stable for finite values of $c$, preventing them from being usable in differentially private computations.
+They have been removed in the PINQ API.
+When possible, PINQ provides modified, boundable versions with altered, but still useful semantics.
 
 \subsection{Aggregations}
 
-As shown earlier, the only safe way to return data from a sensitive database is to require that it be an aggregation.
-PINQ ensures that the only data being released to analysts comes from its carefully implemented aggregation mechanisms.
-Each aggregation is proven to be $\epsilon$-differentially private.
-$\epsilon$ is an argument provided by the user for fine-tuning the accuracy of the result.
-The larger $\epsilon$ is, the more accurate the result will be.
-However, the cost of running the aggregation scales directly with $\epsilon$ and is subtracted from the remaining privacy budget.
-The total cost of a query is the product of the transformation stability and $\epsilon$.
+The only safe way to return information from a sensitive database is to require that it be the result of an aggregation.
+PINQ ensures that the only information being released to analysts comes from its carefully implemented aggregation mechanisms.
+After evaluating a query with the underlying LINQ provider, every PINQ aggregation will take care to add random noise scaled according a user provided argument: $\epsilon$.
 
-The simplest of PINQ's aggregation mechanisms is \texttt{noisyCount}, which returns the number of rows described by the given query plus just enough noise to mask the true response.
-\texttt{noisyCount} is a 1-stable operation.
-Consider two databases which differ by exactly one row, $D_1 \sim D_2$.
-Because we know the databases differ by only one row, the distance between the inputs is $d_{in} = d_{\mathbb D}(D_1,D_2)=1$.
-From this, we know that the true counts (before adding noise) of the two databases must differ by one; i.e. $d_{out} = d_{\mathbb R}(count(D_1),count(D_2))=1$.
-The distances are the same so we can fix $c=1$ and conclude that \texttt{noisyCount} is a 1-sensitive function.
-\texttt{noisyCount} is made $\epsilon$-differentially private by adding Laplacian noise scaled according to $b=1/\epsilon$.
+Every aggregation provided by PINQ (and DPDT) is proven to be $\epsilon$-differentially private.
+$\epsilon$ allows analysts to fine-tune how they wish to use their allotted privacy budget.
+The larger $\epsilon$ is, the more accurate the result will be because the width of the noise distribution scales inversely with $\epsilon$.
+However, the cost of evaluating the aggregation scales directly with $\epsilon$ and must be subtracted from the remaining privacy budget.
+The total cost of evaluating an aggregation is the product of $\epsilon$ and the stability of the query we run it against.
+
+The simplest of PINQ's aggregation mechanisms is \texttt{noisyCount}, which simply returns the number of rows contained within the given query plus random noise.
+A differentially private aggregation is just another function, but it consists of two distinct components: 1) the ``true'' aggregation function and 2) the random noise to be added.
+The sensitivity is then the product of the ``true'' sensitivity and $\epsilon$.
+The true counting function is 1-sensitive.
+
+\begin{cor}[$trueCount$ sensitivity]
+trueCount is a 1-sensitive function.
+\end{cor}
+\begin{proof}
+Consider two databases differing by exactly one row ($D_1 \sim D_2$).
+We know the databases differ by only one row, so the distance between the inputs is by definition 1; i.e.
+
+$$d_{in} = d_{\mathbb D}(D_1,D_2)=1$$
+
+The true counts must also then also differ by one; i.e.
+
+$$d_{out} = d_{\mathbb R}(trueCount(D_1),trueCount(D_2))=1$$
+
+Because $d_{in} = d_{out}$, we fix $c=1$ and conclude that \texttt{trueCount} is a 1-sensitive function.
+\end{proof}
+
+\begin{cor}
+$trueCount$ can be made $\epsilon$-differentially private by adding noise sampled from a Laplacian distribution with $\mu = 0$ and diversity parameter $b=1/\epsilon$.
+\end{cor}
 
 Another aggregation mechanism PINQ provides is \texttt{noisyAverage}.
-This aggregation adds a unique challenge with regards to function sensitivity.
-Let us assume that we have an expression function, $r : \texttt{Row} \rightarrow \mathbb R$.
+This aggregation poses a unique challenge with respect to function sensitivity.
+Assume the existence of an expression function, $r : \texttt{Row} \rightarrow \mathbb R$.
 $r$ yields a numeric value for each row and we want the average value resulting from all of the rows contained in the query.
 Let $f : \mathbb D \rightarrow \mathbb R$ be the aggregation function which maps $r$ onto all rows and reduces them to their average (i.e. $f = \texttt{average . map r}$).
 What is $f$'s sensitivity?
@@ -525,11 +547,15 @@ They differ by exactly one row.
 How much of an effect can that one differing row have on the distance between the output averages?
 It is impossible to say with the information we have now.
 
-Imagine a database, $D_1$, containing the ages of bachelors students at a particular university.
+\begin{cor}[$trueAverage$ sensitivity]
+  $trueAverage$ is $\infty$-sensitive.
+\end{cor}
+\begin{proof}
+Imagine a database, $D_1$, containing the ages of bachelors students at a fancy private university, \textit{AB University} (ABU).
 In the United States, their ages will most likely range from 18 to 22.
 For illustrative purposes, let us assume that $trueAverage(D_1) = 20$.
 Alice, who just turned 40 and is tired of how frequently her private data is accidentally made public, has decided to go back to college to study differential privacy.
-How will Alice's participation in the database affect $trueAverage(D_2)$, where $D_2$ is $D_1$ plus her records?
+How will Alice's participation in the database affect $trueAverage(D_2)$, where $D_2$ is $D_1$ plus Alice's records?
 
 It depends on how many students already attend the college.
 Let's say it is a small college of just one prior student.
@@ -541,28 +567,31 @@ And we had to assume that we already knew Alice's age to even get this far!
 In reality, we will have no idea what outlier values $r$ might yield.
 We are unable to quantify the effect of that one row on the aggregate.
 Thus, we must conclude that $trueAverage$ is $\infty$-sensitive.
+\end{proof}
 
 PINQ solves this by forcing \texttt{noisyAverage} to clamp values coming from $r$ to the range $[-1,+1]$.
 In doing so, PINQ is able to conclude that no row is able to affect the aggregate by more than 2.
-Then we can add noise scaled according to $2/\epsilon$.
+It can then be made $\epsilon$-differentially private by adding noise scaled according to $2/\epsilon$.
 
 What if $trueAverage(D) + Lap(2/\epsilon)$ falls outside of $[-1,+1]$?
+For very small values of $\epsilon$, the Laplacian distribution is very wide and it is unlikely that the noised result will fall within $[-1,+1]$.
 PINQ solves this by generating new noise values over and over again until the constraint is satisfied.
-We improve on this behavior by noting that the Laplace cumulative distribution function (CDF), which is used to sample from the Laplace distribution, is invertible.
-We usually use a uniform random variable sampled from the interval $[0,1)$ to draw indiscriminately from the Laplace distribution.
-Our implementation computes the subinterval for the uniform random variable that guarantees the constraint will be met; i.e. whereas we normally would sample $x \in X=[0,1)$, we might restrict our uniform variable to $X=[0.33,0.75)$ because we know that the noise generated at these bounds will satisfy the original constraint.
+DPDT improves on this behavior by noting that the Laplace cumulative distribution function (CDF), which is used to sample from the Laplace distribution, is invertible.
+Where it might typically draw a uniform random variable from the interval $[0,1)$, DPDT instead computes the subinterval for the uniform random variable that guarantees the constraint will be met; e.g. whereas we normally might sample $x \in X=[0,1)$, we can restrict the uniform variable to draw from $X=[0.33,0.75)$ because we know that the noise generated at these bounds will satisfy the original constraint.
+See Figure~\ref{fig:lapcdf} for a visualization of constrained sampling.
 
 \begin{figure}
     \centering
     \def\svgwidth{\columnwidth}
     \input{assets/LaplaceCDF.pdf_tex}
     \caption{Visualizing constrained sampling from the Laplace distribution (as in \lstinline{noisyAverage})}
+    \label{fig:lapcdf}
 \end{figure}
 
-Of course, the decision to clamp values to the interval $[-1,+1]$ will require analysts to pre-process their data.
+Of course, the decision to clamp values to the interval $[-1,+1]$ will require analysts to pre-process the data before aggregating.
 This will require users to explicitly express their assumptions regarding the range of possible values that $r$ could return.
-If we wanted to compute the average age of the college students from before, we might draft a function translating the interval $[18,22]$ to $[-1,+1]$.
-Then, if we get a response of $0.5$, we can translate that back to $21$.
+For example, as analysts, if we wanted to compute the average age of the bachelors students at ABU, we might draft a function translating the interval $[18,22]$ (our assumption about their age ranges) to $[-1,+1]$.
+Of course, if Alice starts attending ABU as a forty year old, she will be counted in this particular query as a 22 year old.
 
 \chapter{Dependent Types in Idris}\label{sec:dependent_types_in_idris}
 
