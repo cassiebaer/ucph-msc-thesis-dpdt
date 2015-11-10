@@ -748,19 +748,20 @@ It is possible to specify proof search tactics, but that is rarely necessary.
 
 \chapter{Function Sensitivity in Idris}\label{sec:function_sensitivity}
 
-This chapter demonstrate how we use dependent types to model function sensitivity in Idris.
+This chapter demonstrates how we use dependent types to model function sensitivity in Idris.
 
-Modelling function sensitivity with dependent types is straight-forward.
-Recall that function sensitivity is a metric describing how much a function can amplify the distances between pairs of objects.
+Recall from Theorem~\ref{thm:csens} that function sensitivity describes how much a function can amplify the distances between pairs of objects.
 
 $$ \forall x,y.\; d(f(x),f(y)) \le c \times d(x,y) $$
 
-We want to reflect the sensitivity of a function in its type, so we will need to index the type on some numeric value.
-To keep the examples in this chapter simple, we will use \texttt{Float} to represent sensitivity, but our implementation actually uses an implementation of \texttt{Rational}s similar to that in Haskell's \texttt{Data.Ratio}.
+\section{Sensitive Function Definition}
+
+We want the type of a sensitive function to describe its sensitivity similarly to how the type of \texttt{Vect} describes its length.
+To keep the examples in this chapter simple, we will use \texttt{Float} to represent sensitivity, but DPDT actually uses an abstract representation of \texttt{Rational}s.
 
 Listing~\ref{lst:rep_sens_fns} defines a type constructor indexed by the sensitivity and parameterized by its input and output types.
 It has just one data constructor which is used for wrapping native Idris functions.
-A \texttt{SensitiveFunction s a b} is a function with sensitivity \texttt{s} mapping from \texttt{a} to \texttt{b}.
+A \texttt{SensitiveFunction s a b} is a function with sensitivity \texttt{s} mapping tokens from \texttt{a} to \texttt{b}.
 
 \begin{lstlisting}[caption={Representing sensitive functions},label={lst:rep_sens_fns}]
 ||| Represents a sensitive function
@@ -784,11 +785,14 @@ namespace Examples
 
 Notice the \texttt{cheat} example above.
 It is possible to define sensitive functions which intentionally misrepresent their sensitivities.
-Our focus here is not on the verification of a function's sensitivity, but rather on the interaction between sensitivity and the type system under operations such as function composition or application.
+Our focus here is not on the verification of a function's sensitivity, but rather on the interaction between sensitivity and the type system under operations such as function composition and application.
+
+\section{Function composition and application}
+
 Unrestricted application is as simple as unwrapping the function and applying it to an argument.
-Function composition returns a new type indexed by the combined sensitivies of the underlying functions.
-This is done simply by wrapping the composed functions in a new data constructor and letting the types work out the rest.
-See Listing~\ref{lst:sens_fns_ops}.
+Function composition returns a new type indexed by the combined sensitivities of the underlying functions.
+This is done simply by wrapping the composed functions in a new data constructor and computing a new sensitivity index.
+Listing~\ref{lst:sens_fns_ops} shows sensitive function composition and unrestricted application.
 
 \begin{lstlisting}[caption={Sensitive function operations},label={lst:sens_fns_ops}]
 ||| Applies a sensitive function to an input
@@ -804,7 +808,7 @@ apply (MkSensitiveFunction f) x = f x
 (.) (MkSensitiveFunction g) (MkSensitiveFunction f) = MkSensitiveFunction (g . f)
 \end{lstlisting}
 
-Now we are able to compose sensitive functions and Idris' type-checker will understand the resulting sensitivities.
+Now Idris' type-checker understands how sensitive functions compose and it can verify assertions about it.
 See Listing~\ref{lst:composition_examples} for examples of how the type-checker verifies sensitivities.
 
 \begin{lstlisting}[caption={Examples of Sensitive Function Composition},label={lst:composition_examples}]
@@ -816,16 +820,20 @@ doSomeMath = add10 . doubleThenAdd10
 
 doSomeMath2 : SensitiveFunction ?sens Float Float
 doSomeMath2 = add10 . doubleThenAdd10
+
+Main.sens = proof { intros; search }
 \end{lstlisting}
 
-One unfortunate consequence of having such a powerful type-system is that all top-level names must have an associated type declaration.
-This means that despite the fact that the type-system is capable of computing the costs, we must still explicitly provide the function sensitivity in the type declaration (as in the \texttt{doSomeMath} signature above).
-Because the computation is decidable, users will be able to ask Idris for help through its interactive proof search feature.
+One unfortunate consequence of having such a powerful type-system is that type inference is not possible.
+All top-level names must be associated with a type declaration.
+This means that despite the type-system being capable of computing the sensitivities, we must still explicitly provide the type, which includes the sensitivity (as in the \texttt{doSomeMath} signature above).
+Fortunately, because the computation is decidable (we spent a lot of time with Idris' totality checker and our \texttt{Data.Rational} implementation), users are able to ask Idris for help through its interactive proof search feature.
 Asking Idris to find a proof of the hole \texttt{?sens} yields \texttt{fromInteger 2}.
+Alternatively, proof tactics can be provided directly in the code (see Listing~\ref{lst:composition_examples}, Line 10).
 
 Listing~\ref{lst:sens_app} demonstrates an alternative application function for sensitive functions.
-This one checks whether a function's sensitivity exceeds the provided value.
-However, this check occurs \textit{at compile time}, not dynamically.
+This one checks whether a function's sensitivity is below the provided value.
+Note that this check occurs \textit{at compile time}.
 
 \begin{lstlisting}[caption={Sensitivity-aware function application},label={lst:sens_app}]
 ||| Applies a sensitive function to an input, if its sensitivity does not exceed z
