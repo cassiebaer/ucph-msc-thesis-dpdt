@@ -343,7 +343,7 @@ What is the sensitivity of the function resulting from their composition, $k = f
 Function sensitivities compose multiplicatively; i.e. $k$ is $(c\times c')$-sensitive.
 Sensitivity represents the largest factor by which the distances between pairs of objects can be increased, so it follows that the composition of sensitivities is multiplicative.
 
-\section{Indistinguishability}
+\section{Indistinguishability}\label{sec:dp_indistinguishability}
 
 Indistinguishability is the key idea that distinguishes differential privacy from similar approaches in privacy research.
 If an attacker is unable to determine whether Alice's data even exists in the database, he will be unable to determine the contents of her data.
@@ -1113,8 +1113,49 @@ Differential privacy requires that any query response be the result of some sort
 
 \section{Aggregations}
 
+Aggregations are implemented as functions in DPQ.
+Listing \ref{lst:DPQ_aggregations} shows two aggregation functions for the SQLite backend.
+All aggregation functions must have at least two arguments: a \texttt{DPQ.Query}, and the precission parameter, epsilon.
+The aggregation is ran over the query, and the epsilon value decides the width of the noise distribution.
+There is not much magic happening in the implementation of the functions, except for the sometimes convoluted SQL.
 
-\section{Target language requirements}
+\begin{lstlisting}[caption={Noisy aggregations}, label={lst:DPQ_aggregations}]
+
+noisyCount : (Query s c) -> (e:Epsilon) -> Private (c*e)
+noisyCount  (MkQuery q) eps  =
+     let noise = "samplePure(0, " ++ show (1 / toFloat eps) ++ ")"
+     in MkPrivate $ "SELECT (COUNT(*) + " ++ noise ++ ") FROM (" ++ eval q ++ ")"
+
+noisyAverage : Expr s Double -> Query s c -> (e:Epsilon) -> Private (c*e)
+noisyAverage exp (MkQuery q) eps = 
+     let expStr   = eval exp
+         clampLT  = "CASE WHEN " ++ expStr ++ " < -1 THEN -1 ELSE " ++ expStr ++ " END"
+         clamp    = "CASE WHEN " ++ expStr ++ " > 1 THEN 1 ELSE ("  ++ clampLT ++ ") END"
+         width    = show $ 2 / toFloat eps
+         noisyAvg = "noisyAverage(AVG(ClampedValues), " ++ width ++ ")"
+         isEmpty  = "CASE WHEN COUNT(*) == 0 THEN " ++ rndVar ++ " ELSE " ++ noisyAvg ++ " END"
+         select   = "SELECT (" ++ isEmpty ++ ") "
+         from     = "FROM (SELECT (" ++ clamp ++ ") AS ClampedValues FROM (" ++ eval q ++ "))"
+     in  MkPrivate $ select ++ from
+
+\end{lstlisting}
+
+The result type of the aggregations is a string with an associated sensitivity cost, represented by the ADT \texttt{Private c} shown in Listing \ref{lst:DPQ_private}.
+This is the total sensitivity cost of the whole query and is calculated by multiplying the stability of the query argument and the epsilon value.
+
+\texttt{evalPrivate} is used to get a pure \texttt{String} from a private result.
+
+\begin{lstlisting}[caption={Aggregation result ADT},label={lst:DPQ_private}]
+
+data Private : Sensitivity -> Type where
+  MkPrivate : String -> Private budget
+
+evalPrivate : Private c -> String
+evalPrivate (MkPrivate q) = q
+
+\end{lstlisting}
+
+\section{Target language requirements}\label{sec:DPQ_requirements}
 
 There are some requirements that need to be in place in the target query language in order to make a DPQ backend for it.
 
@@ -1209,7 +1250,46 @@ noisyCount (MkPINQuery q) eps = MkPrivate $ \g =>
 In this chapter, we will evaluate how well dependent types allow differential privacy metrics to be tracked and verified in the type system.
 We begin our evaluation of DPDT with simple queries before moving on to more complex algorithms.
 
-\section{Differentially private queries}
+\section{DPQ verification}
+
+In order to verify that our implementation of DPQ is correct, we have made a small test suite.
+It consists of some basic unit tests which are just ensuring that the SQLite backend compiles the correct queries.
+An example of such a test is given in Listing \ref{lst:example_DPQ_unit_test}.
+We ensure by manual labour that the validation query string as seen in \texttt{countThemAllTest} is in fact correct.
+Then, if the program compiles, the compiled query is correct.
+
+The privacy metrics calculations is verified in the types.
+Here, the table of people naturally has a stability of 1 and the noisyCount a sensitivity of 2 due to its epsilon value of 2.
+Multiplied they give 2, so the sensitivity of the whole operation is 2.
+If we had defined the type of \texttt{countThemAll} to be \texttt{Private 1.9}, the program would not compile.
+
+\begin{lstlisting}[caption={Unit test for noisyCount},label={lst:example_DPQ_unit_test}]
+  Person : Schema
+  Person = [ "Name" ::: String , "Age" ::: Nat ]
+
+  people : Query Person 1
+  people = MkQuery $ Table "People"
+
+  countThemAll : Private 2
+  countThemAll = noisyCount people 2
+
+  countThemAllTest : evalPrivate countThemAll = "SELECT (COUNT(*) + samplePure(0, 0.5)) FROM (People)"
+  countThemAllTest = Refl
+
+\end{lstlisting}
+
+In the query string in Listing \ref{lst:example_DPQ_unit_test} we see an example of the use of an extension function as discussed in Section \ref{sec:DPQ_requirements}.
+\texttt{samplePure} is not a part of the SQLite language, but is added as an extension function.
+
+In order to verify that these extension functions work and are implemented correctly, we have created some integration tests.
+Another reason to implement integration tests, which actually interact with a database, is to test on some real data.
+The integration tests is located in a C++ file that loads a SQLite database from file.
+SQLite queries compiled by DPQ is copied over to be executed on the database.
+Testing has included running a query multiple times, taking the average, and checking it up against the actual value the query should return without noise.
+This test ensures that the query compilation and the extension functions are reasonably correct.
+A data provider should of course not grant a budget that allows this much learning from a database, as it would at least put one participant at risk.
+
+\section{DPDT verification}
 
 We begin by verifying the behavior of DPDT with simple queries.
 There are enough moving parts in a differentially private mechanism to warrant this.
