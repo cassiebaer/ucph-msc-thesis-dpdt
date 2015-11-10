@@ -450,7 +450,7 @@ See Figure~\ref{fig:indistinguishability} for a visualization of how random nois
 
 \begin{figure}
     \centering
-    \def\svgwidth{0.75  \columnwidth}
+    \def\svgwidth{0.75\linewidth}
     \input{assets/Indistinguishability.pdf_tex}
     \caption{Visualizing indistinguishability with sample PDFs from a counting query on adjacent databases $D_1$ and $D_2$ ($D_1\sim D_2$)}
     \label{fig:indistinguishability}
@@ -461,6 +461,13 @@ There are a number of reasons for this, but the main ones concern symmetry and e
 The Laplace distribution resembles a symmetric exponential distribution.
 Its diversity parameter, or ``width'', scales predictably with $\epsilon$.
 Any $c$-sensitive function can be made differentially private easily by simply scaling the diversity parameter.
+
+\begin{figure}
+    \centering
+    \includegraphics[width=0.75\linewidth]{assets/laplace_b.png}
+    \caption{The Laplace distribution centered on zero with different diversity parameters}
+    \label{fig:fn_sens}
+\end{figure}
 
 \begin{lem}
 Any $c$-sensitive function, $f : A \rightarrow \mathbb R$, can be made $\epsilon$-differentially private by adding a value sampled from the Laplace distribution centered on zero with diversity parameter $b=\frac{c}{\epsilon}$.
@@ -1210,6 +1217,15 @@ First, a transformation must unwrap the underlying \texttt{RADT.Query} objects.
 Then, it transforms them using operations from \texttt{RADT}.
 Finally, it rewraps the resulting \texttt{RADT.Query} in a \texttt{DPDT.Query} data constructor, \textit{but with a different type constructor}.
 At the data level, \texttt{DPDT.Query} isn't terribly interesting; the interesting computations happen at the type level.
+
+% TODO 1 : fix this figure and make sure it looks good. and reference it. and change the caption. and give somebody a hug.
+% \begin{figure}
+%     \centering
+%     \def\svgwidth{0.75\linewidth}
+%     \input{assets/query_wrapping.svg}
+%     \caption{Visualizing indistinguishability with sample PDFs from a counting query on adjacent databases $D_1$ and $D_2$ ($D_1\sim D_2$)}
+%     \label{fig:indistinguishability}
+% \end{figure}
 
 Dependent type signatures allow total computations to be evaluated at compile-time.
 We spent significant time fine-tuning totality in the \texttt{Data.Rational} module.
