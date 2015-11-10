@@ -23,28 +23,16 @@ static double samplePureRnd(double mean, double sd, double randomVar){
         double rx = randomVar - 0.5;
         return mean - (sd * signum(rx) * log(1.0 - 2.0 * fabs(rx)));
 }
-static double noisyAveragePure(double trueAvg, double width){
-	double upperBound = cdf(0.0, width, -1.0 - trueAvg);
-	double lowerBound = cdf(0.0, width,  1.0 - trueAvg);
-	srand(time(NULL));
-	double rx = (double)rand() / ((double)(unsigned)RAND_MAX/2) - 1;
-	double rxBounded = rx * (upperBound-lowerBound) + lowerBound;
-	printf("upper: %f, lower: %f, rx: %f", upperBound, lowerBound, rx);
-	return samplePureRnd(0.0, width, rxBounded);
-}
+
 static void noisyAverage(sqlite3_context *context, int argc, sqlite3_value **argv){
 	double trueAvg = sqlite3_value_double(argv[0]);
 	double width   = sqlite3_value_double(argv[1]);
 	double upperBound = cdf(0.0, width, -1.0 - trueAvg);
 	double lowerBound = cdf(0.0, width,  1.0 - trueAvg);
 	srand(time(NULL));
-	double rx = (double)rand() / ((double)(unsigned)RAND_MAX/2) - 1;
+	double rx = ((double)rand() / ((double)(unsigned)RAND_MAX/2)) - 1;
 	double rxBounded = rx * (upperBound-lowerBound) + lowerBound;
 	sqlite3_result_double(context, samplePureRnd(0.0, width, rxBounded));
-}
-
-int main(){
-    noisyAveragePure(400, 2); 
 }
 
 static void samplePure(sqlite3_context *context, int argc, sqlite3_value **argv){
