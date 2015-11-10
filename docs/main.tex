@@ -12,9 +12,12 @@
 \usepackage{listings}
 \usepackage{idrislang}
 \usepackage{amsfonts,amsthm,amsmath}
-\usepackage[margin=3.5cm]{geometry}
+\usepackage[margin=3cm]{geometry}
 \usepackage[en,nat,farve,titelside]{ku-forside}
 \usepackage[mark,missing={CONFIGURE gitinfo2 PACKAGE}]{gitinfo2}
+\usepackage[nounderscore]{syntax}
+\usepackage{mdframed}
+\usepackage{float}
 
 \renewcommand{\gitMark}{\gitBranch\ :\ \gitHash\ \textbullet{}\ (\gitAuthorDate)\ \textbullet{}\ \gitFirstTagDescribe}
 
@@ -238,7 +241,7 @@ Thus, all type-correct programs must respect expected privacy constraints.
 This thesis describes prototype implementations of two \textit{domain specific languages} (DSLs), \texttt{DPQ} and \texttt{DPDT}, for describing differentially private queries and computations, respectively, using dependent types.
 Like PINQ, they are built overtop of a less restrictive (prototype) query language, \texttt{RADT}.
 \texttt{RADT} provides a fully-typed abstract language for describing the relational algebra (which SQL is based on).
-We provide two primitive backends for working with \texttt{RADT}: an in-memory database for Idris and compilation to SQLite query strings.
+We provide two primitive backends for working with \texttt{RADT}: an in-memory database for Idris and compilation to SQLite\footnote{https://sqlite.org/} query strings.
 Our main contribution is the layering of differential privacy metrics into the types of RADT.
 \texttt{DPQ} provides functions for building and manipulating differentially private queries.
 \texttt{DPDT} goes a step further by embedding \texttt{DPQ} in Idris, allowing users to interact with differentially private queries and host language features (almost) seamlessly.
@@ -616,7 +619,7 @@ It is \textit{parameterized} by the type of the contained elements (e.g. \texttt
 Now consider the (incomplete) definition of \texttt{head}.
 It is impossible to satisfy the right-hand side of the first pattern.
 
-\begin{lstlisting}[caption={List Definition},label={lst:listdef}]
+\begin{lstlisting}[float,caption={List Definition},label={lst:listdef}]
 data List : (elt : Type) -> Type where
   Nil  : List a
   (::) : a -> List a -> List a
@@ -634,7 +637,7 @@ The type signature of \texttt{head} is able to pattern match on that index.
 \texttt{Vect (S n) a} can be loosely interpreted as a list of \textit{at least} one element of type \texttt{a}.
 \texttt{Vect n a} and \texttt{Vect m a} are not just lists of different lengths, \textit{they are completely different types}.
 
-\begin{lstlisting}[caption={Vect Definition},label={lst:vectdef}]
+\begin{lstlisting}[float,caption={Vect Definition},label={lst:vectdef}]
 data Nat : Type where
   Z : Nat
   S : Nat -> Nat
@@ -656,7 +659,7 @@ Not only is the type signature of \texttt{appendV} much more descriptive, but Id
 This can be enormously helpful for reducing developer errors.
 Proper use of dependent types can reduce or even eliminate the need for unit testing.
 
-\begin{lstlisting}[caption={Vector Operations Example},label={lst:vector_ops_example}]
+\begin{lstlisting}[float,caption={Vector Operations Example},label={lst:vector_ops_example}]
 appendL : List a -> List a -> List a
 appendV : Vect n a -> Vect m a -> Vect (n + m) a
 \end{lstlisting}
@@ -671,7 +674,7 @@ The \texttt{State} monad is an instance of a monad.
 Pure functional languages don't support mutable state, but it can be represented functionally by threading it through a sequence of function calls.
 See Listing~\ref{lst:state_example} for an example of threading state with pure functions.
 
-\begin{lstlisting}[caption={Threading state through function calls, no monad},label={lst:state_example}]
+\begin{lstlisting}[float,caption={Threading state through function calls, no monad},label={lst:state_example}]
 ||| State holding one integer
 data MyState = MkState Int
 
@@ -694,7 +697,7 @@ Monads allow us to abstract unnecessary details like that away, allowing develop
 Another benefit is that Idris provides monad instances with an alternative syntax for writing monadic code called \texttt{do}-notation.
 Idris will simply desugar \texttt{do}-notation syntax to regular function calls.
 
-\begin{lstlisting}[caption={Threading state through function calls with do-notation},label={lst:threading_state_do_notation}]
+\begin{lstlisting}[float,caption={Threading state through function calls with do-notation},label={lst:threading_state_do_notation}]
 get       : State s s
 put       : s -> State s ()
 modify    : (s -> s) -> State s ()
@@ -730,7 +733,7 @@ The \texttt{List} \lstinline{head} function from earlier is a great example.
 The Idris type-checker will not allow us to implement \texttt{head} for \texttt{List}s until we provide it with a proof that the list is not empty.
 The type signature of \texttt{head} in Listing~\ref{lst:head_example} shows two arguments: the first is the list and the second is a proof that the list has a head element to return.
 
-\begin{lstlisting}[caption={Taking the head of a list},label={lst:head_example}]
+\begin{lstlisting}[float,caption={Taking the head of a list},label={lst:head_example}]
 head : (xs : List a) -> (isCons xs = True) -> a
 head (x :: xs) Refl = x
 
@@ -763,7 +766,7 @@ Listing~\ref{lst:rep_sens_fns} defines a type constructor indexed by the sensiti
 It has just one data constructor which is used for wrapping native Idris functions.
 A \texttt{SensitiveFunction s a b} is a function with sensitivity \texttt{s} mapping tokens from \texttt{a} to \texttt{b}.
 
-\begin{lstlisting}[caption={Representing sensitive functions},label={lst:rep_sens_fns}]
+\begin{lstlisting}[float,caption={Representing sensitive functions},label={lst:rep_sens_fns}]
 ||| Represents a sensitive function
 ||| @ c The sensitivity of the function
 ||| @ a The input type of the function
@@ -794,7 +797,7 @@ Function composition returns a new type indexed by the combined sensitivities of
 This is done simply by wrapping the composed functions in a new data constructor and computing a new sensitivity index.
 Listing~\ref{lst:sens_fns_ops} shows sensitive function composition and unrestricted application.
 
-\begin{lstlisting}[caption={Sensitive function operations},label={lst:sens_fns_ops}]
+\begin{lstlisting}[float,caption={Sensitive function operations},label={lst:sens_fns_ops}]
 ||| Applies a sensitive function to an input
 ||| @ f The sensitive function to be applied
 ||| @ x The input
@@ -811,7 +814,7 @@ apply (MkSensitiveFunction f) x = f x
 Now Idris' type-checker understands how sensitive functions compose and it can verify assertions about it.
 See Listing~\ref{lst:composition_examples} for examples of how the type-checker verifies sensitivities.
 
-\begin{lstlisting}[caption={Examples of Sensitive Function Composition},label={lst:composition_examples}]
+\begin{lstlisting}[float,caption={Examples of Sensitive Function Composition},label={lst:composition_examples}]
 doSomeMath : SensitiveFunction 2 Float Float
 doSomeMath = add10 . doubleThenAdd10
 
@@ -835,7 +838,7 @@ Listing~\ref{lst:sens_app} demonstrates an alternative application function for 
 This one checks whether a function's sensitivity is below the provided value.
 Note that this check occurs \textit{at compile time}.
 
-\begin{lstlisting}[caption={Sensitivity-aware function application},label={lst:sens_app}]
+\begin{lstlisting}[float,caption={Sensitivity-aware function application},label={lst:sens_app}]
 ||| Applies a sensitive function to an input, if its sensitivity does not exceed z
 ||| @ z The max sensitivity allowed
 ||| @ f The sensitive function to be applied
@@ -854,19 +857,21 @@ namespace Examples
 
 \chapter{RADT - Typing the Relational Algebra}\label{sec:RADT}
 
-In this chapter, we review the relational algebra and show how it can be modelled in a dependently typed language.
-We first introduce the relational algebra, after which we describe the implementation of our type-safe relational algebra, RADT (Relational Algebra with Dependent Types).
+In this chapter, we review the relational algebra and show how it can be modeled in a dependently typed language.
+We first introduce the relational algebra, after which we describe the implementation of our type-safe relational algebra, \textit{Relational Algebra with Dependent Types} (RADT).
 Our approach is based on Chapter 4 from \textit{The Power of Pi}\cite{OurySwierstra08PowerOfPi}, an excellent resource for practical examples of what dependent types are capable of.
 
-The relational algebra describes semantics for modelling and querying data in relational databases (e.g. MySQL\footnote{https://www.mysql.com/}).
+\section{The relational algebra}
+
+The relational algebra describes semantics for modeling and querying data in relational databases (e.g. MySQL\footnote{https://www.mysql.com/}).
 E.F. Codd described relational databases and their associated algebra back in the 1970's\cite{codd70}.
 The relational model quickly became popular for its simplicity and good performance.
 
 Tables are the fundamental objects which relations build on.
-The rows of a table represent individual entities and the columns represent their attributes.
-Each of these columns is associated with a data type.
-Every table has a \textit{schema}, which is a list of its column names and their types.
-For example, the Table~\ref{tab:people_table} contains four columns; each has a unique name and an associated data type.
+The rows of a table represent individual entities and the columns contain their \textit{attributes}.
+Each of these attributes is associated with a name and data type.
+Every row (and therefore table) has a \textit{schema}, which is a list of its column names and types.
+For example, Table~\ref{tab:people_table} contains four columns; each has a unique name and associated data type.
 
 \begin{table}[tb]
     \caption{People Table}
@@ -892,13 +897,14 @@ For example, the Table~\ref{tab:people_table} contains four columns; each has a 
 The relational algebra allows us to build structured queries against relational databases.
 The primary operators are listed below.
 Note that some of the operators may require expressions to be provided (e.g. for filtering a table with a conditional).
+Our implementation of RADT contains a primitive example of an expression language.
 
 \begin{itemize}
     \item selection
     \item projection
     \item Cartesian product\footnote{\label{fn:set_ops} These operations function identically to their set counterparts, but impose additional requirements regarding table schemas. In particular, union and difference (and therefore intersection) require that the schemas of the two operands match. The Cartesian product operator requires that the two schemas are disjoint.}
-    \item set union\footnotemark[\ref{fn:set_ops}]
-    \item set difference\footnotemark[\ref{fn:set_ops}]
+    \item union\footnotemark[\ref{fn:set_ops}]
+    \item difference\footnotemark[\ref{fn:set_ops}]
 \end{itemize}
 
 Note that the set operations and Cartesian product impose additional requirements in this context.
@@ -906,15 +912,62 @@ These extra constraints have precluded many type systems from being able to full
 Strongly-typed languages, such as Haskell, have devised clever solutions to this problem, but none are as straight-forward as the approach available to a dependent type system.
 The ability to capture schemas directly in the types and to manipulate them yields a deceptively simple, but powerful typing framework for relational databases.
 
-\section{Relational Algebra in Idris}
+\section{Our implementation}
 
-This section will outline the implementation of RADT, our relational algebra EDSL in Idris.
-We begin by defining some simple algebraic datatypes (ADTs) for keeping the types clear.
-We then define a toy expression language before moving on to the query language.
+\begin{figure}[H]
+\begin{mdframed}
+\begin{minipage}[t]{0.5\textwidth}
+  \begin{grammar}
+    <E> ::= \phantom
+    \alt ($\land$) <Schema> <String>
+    \alt (+) E E
+    \alt \ldots
+    \alt Lit <a>
+    \alt Couple E E
+    \alt PureFn $(a \rightarrow b)$ E
 
-First, we need to be able to represent table attributes (columns).
+    <Proj> ::= $(String \rightarrow Maybe\ String)$
+
+    <G> ::= \phantom
+    \alt groupBy E Q
+  \end{grammar}
+\end{minipage} % do NOT add a space between this and the next line.
+\begin{minipage}[t]{0.5\textwidth}
+  \begin{grammar}
+    <Q> ::= \phantom
+    \alt <t>
+    \alt Union Q Q
+    \alt Diff Q Q
+    \alt Product Q Q
+    \alt Project Proj Q
+    \alt Select E Q
+    \alt Lookup <k> G
+    \\
+
+    <P> ::= \phantom
+    \alt partitionBy E Q
+  \end{grammar}
+\end{minipage}
+\end{mdframed}
+\caption{Informal RADT grammar (refer to \texttt{Database.RADT} for precise specification)}
+\label{gram:radt}
+\end{figure}
+
+This section provides a brief overview of our implementation of RADT, an EDSL describing the relational algebra in Idris.
+Like PINQ, DPDT is implemented as a privacy layer over top of a less restrictive query language.
+In this case, that language is RADT, which is based on Oury and Swierstra's approach\cite{OurySwierstra08PowerOfPi}.
+
+Figure~\ref{gram:radt} contains an informal overview of RADT where <E> is just a toy expression language.
+The core of the language consists of <Q>, <G>, and <P> which represent queries in various forms (as tables, groupings, and partitionings, respectively).
+
+\subsection{Abstract Representation}
+
+Our foray into RADT begins with some simple algebraic datatypes (ADTs) for describing various components of the system.
+Next, we demonstrate an example of the simple expression language before moving on to query representation.
+
+First, we need to represent table attributes (columns).
 An \texttt{Attribute} is just the pairing of a name (\texttt{String}) to a data type.
-Following David Christiansen's lead, we opt to use \texttt{(:::)} instead of the more traditional \texttt{(,)} for constructing our pairs\cite{ChristiansenTypeProviders}.
+Following David Christiansen's lead\footnote{https://github.com/david-christiansen/idris-type-providers}, we opt to use \texttt{(:::)} instead of the more traditional \texttt{(,)} for constructing our attributes\cite{ChristiansenTypeProviders}.
 We believe this enhances readability of long \texttt{Schema}s, which are just lists of \texttt{Attribute}s.
 
 \begin{lstlisting}[caption={Representing attributes and schemas},label={lst:attrs_and_schemas}]
@@ -940,10 +993,11 @@ The relational algebra assumes the existence of an expression language, so we im
 An expression has access to all of a row's attributes during evaluation and can return a value of any type.
 So we index expression types by their \texttt{Schema} and parameterize them by the return type.
 Thus, an expression with the type \texttt{Expr s a} can be read as an expression with access to the attributes in schema \texttt{s} returning type \texttt{a}.
-Notice that we have not yet defined any underlying representation for the rows.
+Notice that we have not yet defined any underlying representation for the rows, but the type is still incredibly descriptive.
+In fact, it is completely representation-agnostic (with the exception of \texttt{PureFn}).
 
 Expressions are built up from other expressions, forming an expression tree.
-See Figure~\ref{fig:expr_tree} for an example of a simple singly-typed expression tree.
+See Figure~\ref{fig:expr_tree} for an example of a simple singly-typed ($\mathbb Z$) expression tree.
 
 \begin{figure}[h!]
     \centering
@@ -954,13 +1008,18 @@ See Figure~\ref{fig:expr_tree} for an example of a simple singly-typed expressio
 
 % TODO 2 : make a figure of a Query tree showing the types
 
-The return type of the tree in Figure~\ref{fig:expr_tree} is obvious, but what type will a more complex tree from our expression langage have?
+The return type of the sample tree in Figure~\ref{fig:expr_tree} is obvious, but what about a more complex tree in our expression language?
 Expressions cannot change the schema, so that must remain constant even as the tree grows.
-The root of the tree represents the last ``operation'' to be evaluated.
-The value returned by this node will be returned, therefore the return type of the root of the tree is the return type of the entire tree.
+The root of the tree represents the final ``operation'' to be evaluated, and therefore the final value.
+This value will be returned when the tree is evaluated, so the return type of an expression in RADT is the return type of the root node.
 The type-checker is capable of verifying the types throughout the entire tree, so only well-typed expressions are allowed by the type-system.
 
-\begin{lstlisting}[caption={Representing expressions},label={lst:expressions}]
+In fact, the type-checker will even verify that we don't reference attributes that don't exist in a schema (see the dependent type signature: Listing~\ref{lst:expressions}, Line 8).
+\texttt{ContainsKey} is a proof that the given schema contains the attribute in question.
+It is derived automatically, so users of our language should never have to worry about it.
+\texttt{lookupType} is able to use this proof to statically verify the return type of an expression.
+
+\begin{lstlisting}[caption={Abstract representation of toy expression language},label={lst:expressions}]
 ||| Represents an abstract expression indexed by its schema
 ||| @ s The schema available to the expression
 ||| @ a The return type of the expression
@@ -985,24 +1044,18 @@ namespace Examples
   -- doesNotCompile = people^"Does Not Exist"
 \end{lstlisting}
 
-In fact, the type-system is even aware when we try to reference columns that don't exist.
-Remember, we haven't even mentioned a backend yet; all of this safety is coming exclusively from the type-system.
-
-One of PINQ's neat features is that users have access to nearly all of the features of the host language.
-The \texttt{PureFn} data constructor lifts pure Idris functions into the expression language, which should allow clever developers to bend even this simple expression language into something quite powerful.
-This functionality is only available to the Idris backend.
-
-\texttt{ContainsKey} is a proof that the given schema contains the attribute in question.
-It is derived automatically, so users of our language should never have to worry about it.
-\texttt{lookupType} is able to use this proof to statically verify the types.
+One of PINQ's powerful features is that analysts have access to nearly all of C\#'s capabilities.
+We use the \texttt{PureFn} data constructor to lift pure Idris functions into the expression language, allowing users to leverage many of Idris' powerful language features within expressions.
+This should allow clever developers to bend even this simple expression language into something quite powerful.
+However, this functionality is only available to backends implemented in Idris.
 
 The core of the relational algebra consists of the query operators, which we model as follows.
 \texttt{Query} is implemented as a data family, allowing us to adjust its internal data representation just enough to implement a variety of backends.
 In particular, the representation of tables is backend specific.
 For example, an in-memory Idris backend might store pointers directly to the tables in memory, whereas a SQL backend might just store the name of the table as a string.
-One of the benefits of this is that any dataset which can be modelled using the relational algebra is usable.
+Any data source which can be modeled using the relational algebra should be implementable as an RADT backend.
 
-\begin{lstlisting}[caption={Representing queries},label={lst:queries}]
+\begin{lstlisting}[caption={Abstract representation of queries},label={lst:queries}]
 mutual -- required for mutual definitions
 
   ||| Represents an abstract query
@@ -1033,34 +1086,40 @@ mutual -- required for mutual definitions
 namespace Examples
 
   -- Tables in our Idris backend are: List (Row s)
-  IdrisBackend : Schema -> Type
-  IdrisBackend s = List (Row s)
+  ListRow : Schema -> Type
+  ListRow s = List (Row s) -- Row defined elsewhere
 
   -- Tables in our SQLite backend are represented by their names
   SQLiteBackend : Schema -> Type
   SQLiteBackend _ = String
 \end{lstlisting}
 
-Recall that the set operators require additional constraints that less powerful type systems have a difficult time capturing.
-Set union and difference require that the two operands share matching schemas.
-Cartesian product requires that they be disjoint.
-Notice how type unification allows us to specify the first two constraints.
-The disjoint proof is only slightly more complex; but because it is decidable it can be automatically derived, so the users will be unaware of any additional complexity.
+Recall that the set operators impose additional constraints which have challenged traditional type systems.
+Set union and difference require that the two operands share matching schemas and cartesian product requires that they be disjoint.
+Type unification allows us to specify the matching schemas constraints very succinctly.
+The disjoint proof is slightly more complex; but because it is decidable, it can be automatically derived.
 
-In trying to emulate PINQ, we chose to focus most of our efforts on implementing an in-memory Idris backend.
-However, any backend which can be modelled with the relational algebra can be supported and queried in a differentially-private manner.
-The exception to this is the \texttt{PureFn} feature, which is only available to Idris-based backends (e.g. an Idris-based server a la LINQ providers).
+\subsection{Backend Implementation}
+
+We provide two prototype backends with our implementation of RADT: an in-memory Idris-powered backend and a backend compiling SQL query strings targeting SQLite.
+However, it is possible to write a backend for any data source which can be modeled with the relational algebra.
+One powerful consequence of this is that our privacy layer (DPQ or DPDT) will also work for any relational data source.
+
+There is one caveat: \texttt{PureFn} is only available to Idris-based backends (e.g. an Idris-based server a la LINQ providers).
 However, most uses of \texttt{PureFn} could be replaced by extensions to the expression language.
+As our abstract representation exists right now, though, it is possible to include \texttt{PureFn}s in an expression intended for a non-Idris backend.
+This was an oversight on our part which we aim to fix in the near future.
+Until then, backend implementors will need to take care when implementing expression evaluation.
 
-There are two main components required to make a functioning backend implementation:
-1) an underlying data representation and
-2) evaluator functions that understand our abstract expression and query trees.
-Existing database systems such as \texttt{MySQL}\footnote{https://www.mysql.com/} and \texttt{SQLite}\footnote{https://sqlite.org/} already have their underlying data representations.
+There are two main components required for a functional backend implementation:
+1) an underlying table data representation (e.g. ListRow in Listing~\ref{lst:queries}) and
+2) evaluator functions for the abstract expression and query trees.
+Existing database systems such as \texttt{MySQL}\footnote{https://www.mysql.com/} and \texttt{SQLite} already have their underlying data representations.
 Implementing backends for them would likely require compiling abstract syntax trees down to SQL strings which could then be submitted to the database.
 
 Our Idris backend uses a basic \texttt{cons}-list structure indexed over \texttt{Schema}s.
-Listing~\ref{lst:idris_backend} shows this.
-It also shows snippets from expression and query evaluation functions written for Idris and SQLite backends, respectively.
+Listing~\ref{lst:idris_backend} demonstrates how we represent databases in-memory (underlying data representation) in Idris.
+It also shows snippets from the evaluator functions for both backends.
 
 \begin{lstlisting}[caption={Implementing backends (snippets)},label={lst:idris_backend}]
 ||| Represents a row of data in memory
@@ -1092,7 +1151,6 @@ namespace SQLiteBackend
     [..]
 \end{lstlisting}
 
-
 \chapter{DPQ - Differentially Private Queries}\label{sec:DPQ}
 
 In this chapter we describe how we bring together the material of the previous chapters and outline the implementation of DPQ.
@@ -1113,7 +1171,7 @@ To avoid confusion these type names will be prefixed with their respective langu
 It should be pointed out that DPQ and DPDT, described in the next chapter, share these data types.
 Therefore, both \texttt{DPQ.Query} and \texttt{DPDT.Query} refer to \texttt{Query} from Listing \ref{lst:pinqueries}.
 
-\begin{lstlisting}[caption={Representing privacy-aware queries},label={lst:pinqueries}]
+\begin{lstlisting}[float,caption={Representing privacy-aware queries},label={lst:pinqueries}]
 ||| Represents an abstract, stability-aware query
 ||| @ t A function yielding a base table representation given a schema
 ||| @ s The schema of the query
@@ -1149,7 +1207,7 @@ This is because the schema and stability could potentially change.
 We control the \textit{application programming interface} (API) that is exported, so we carefully implement the relational algebra operators with the correct stability costs.
 By unwrapping and rewrapping the \texttt{RADT.Query} trees from Chapter~\ref{sec:RADT} in our new type, we are now able to build query trees that carry privacy metrics in the type.
 
-\begin{lstlisting}[caption={Representing privacy-aware transformations},label={lst:transformations}]
+\begin{lstlisting}[float,caption={Representing privacy-aware transformations},label={lst:transformations}]
 ||| Represents stability-aware selection
 where' : Query b s c -> Expr s Bool -> Query b s c
 where' (MkQuery q) e = MkQuery (Select e q)
@@ -1190,7 +1248,7 @@ All aggregation functions must have at least two arguments: a \texttt{DPQ.Query}
 The aggregation is ran over the query, and the epsilon value decides the width of the noise distribution.
 There is not much magic happening in the implementation of the functions, except for the sometimes convoluted SQL.
 
-\begin{lstlisting}[caption={Noisy aggregations}, label={lst:DPQ_aggregations}]
+\begin{lstlisting}[float,caption={Noisy aggregations}, label={lst:DPQ_aggregations}]
 
 noisyCount : (Query s c) -> (e:Epsilon) -> Private (c*e)
 noisyCount  (MkQuery q) eps  =
@@ -1217,7 +1275,7 @@ This is the total sensitivity cost of the whole query and is calculated by multi
 
 \texttt{evalPrivate} is used to get a pure \texttt{String} from a private result.
 
-\begin{lstlisting}[caption={Aggregation result ADT},label={lst:DPQ_private}]
+\begin{lstlisting}[float,caption={Aggregation result ADT},label={lst:DPQ_private}]
 
 data Private : Sensitivity -> Type where
   MkPrivate : String -> Private budget
@@ -1263,7 +1321,7 @@ It still acts as the result type of aggregation functions, but has some extended
 It is parameterized by the aggregation function's return type, instead of just \texttt{String} as in DPQ.
 \texttt{CrapGen} is a fairly good random number generator, as the name implies, and is used in the process of adding noise.
 
-\begin{lstlisting}[caption={Representing differentially private mechanisms},label={lst:mechanisms}]
+\begin{lstlisting}[float,caption={Representing differentially private mechanisms},label={lst:mechanisms}]
 ||| Represents a differentially private computation
 ||| @ c The privacy cost of the computation
 ||| @ a The return type of the computation
@@ -1313,7 +1371,7 @@ Listing \ref{lst:DPDT_aggregations} shows DPDT's \texttt{noisyCount}.
 We can see that the return type includes what type the aggregation returns (here, and for most differentially private aggregations, a \texttt{Double}).
 The sensitivity calculations work the same as in DPQ.
 
-\begin{lstlisting}[caption={Representing aggregations in DPDT},label={lst:DPDT_aggregations}]
+\begin{lstlisting}[float,caption={Representing aggregations in DPDT},label={lst:DPDT_aggregations}]
 ||| Differentially private mechanism for counting the
 ||| number of rows described by a query for the Idris backend
 ||| @ q The query
@@ -1328,7 +1386,7 @@ noisyCount (MkQuery q) eps = MkPrivate $ \g =>
 
 Another flexibility improvement implemented for our Idris backend of DPDT is the \texttt{PureFn} expression in Listing \ref{lst:purefn}.
 
-\begin{lstlisting}[caption={PureFn expression constructor}, label={lst:purefn}]
+\begin{lstlisting}[float,caption={PureFn expression constructor}, label={lst:purefn}]
 PureFn : (a -> b) -> Expr s a -> Expr s b
 \end{lstlisting}
 
@@ -1362,7 +1420,7 @@ Here, the table of people naturally has a stability of 1 and the noisyCount a se
 Multiplied they give 2, so the sensitivity of the whole operation is 2.
 If we had defined the type of \texttt{countThemAll} to be \texttt{Private 1.9}, the program would not compile.
 
-\begin{lstlisting}[caption={Unit test for noisyCount},label={lst:example_DPQ_unit_test}]
+\begin{lstlisting}[float,caption={Unit test for noisyCount},label={lst:example_DPQ_unit_test}]
   Person : Schema
   Person = [ "Name" ::: String , "Age" ::: Nat ]
 
@@ -1395,7 +1453,7 @@ There are enough moving parts in a differentially private mechanism to warrant t
 % TODO 1 : "tell what you want to show"
 Listing~\ref{lst:example_data_people} constructs a small database in our Idris backend.
 
-\begin{lstlisting}[caption={Validation Data},label={lst:example_data_people}]
+\begin{lstlisting}[float,caption={Validation Data},label={lst:example_data_people}]
 import Database.PowerOfPi.Idris
 
 Person : Schema
@@ -1414,7 +1472,7 @@ Let us consider some primitive queries and their responses.
 First, we will try to determine whether Alice's records are included in the database.
 This simple example demonstrates several components of our implementation: the expression language, a transformation, and a differentially private mechanism: \texttt{noisyCount}.
 
-\begin{lstlisting}[caption={Counting Alices},label={lst:counting_alices}]
+\begin{lstlisting}[float,caption={Counting Alices},label={lst:counting_alices}]
 countAlices : Private 1 Double
 countAlices = do let isAlice = Person^"Name" == Lit "Alice"
                  let alices  = people `where'` isAlice
@@ -1441,7 +1499,7 @@ Of course, the analyst could try to sample multiple times, averaging the results
 DPDT allows this, but the type system ensures that the cost of the query increases accordingly.
 Listing~\ref{lst:nested_aggrs} contains an example of how a malicious analyst might try to average a few queries.
 
-\begin{lstlisting}[caption={Counting Alices (revisited)},label={lst:nested_aggrs}]
+\begin{lstlisting}[float,caption={Counting Alices (revisited)},label={lst:nested_aggrs}]
 alices : PINQuery IdrisTable Person 1
 alices = people `where'` (Person^"Name" == Lit "Alice")
 
@@ -1482,7 +1540,7 @@ Idris, on the other hand, provides \textit{referential transparency}; i.e. an ex
 This may seem unimportant, but side effecting functions can compromise differential privacy in spectacular ways.
 Consider the result of the following expression.
 
-\begin{lstlisting}[caption={Example side-channel attack}]
+\begin{lstlisting}[float,caption={Example side-channel attack}]
 patients.Select(p => if p.Name == "Alice" {
                         beep();
                      };
@@ -1612,7 +1670,7 @@ Idris syntax extensions consist of two components: reserved keywords and non-ter
 Keywords help anchor the parser around the non-terminals, which are captured and usable on the right hand side of a custom syntax declaration.
 Listing~\ref{lst:syntax_extensions} contains two examples of syntax rules.
 
-\begin{lstlisting}[caption={Extending Idris' syntax},label={lst:syntax_extensions}]
+\begin{lstlisting}[float,caption={Extending Idris' syntax},label={lst:syntax_extensions}]
 -- Definition
 syntax select [f] from [q] = select q f
 syntax select [f] from [q] where [e] = select (where q e) f
