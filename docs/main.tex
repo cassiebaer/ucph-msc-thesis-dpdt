@@ -18,7 +18,10 @@
 
 \renewcommand{\gitMark}{\gitBranch\ :\ \gitHash\ \textbullet{}\ (\gitAuthorDate)\ \textbullet{}\ \gitFirstTagDescribe}
 
-\newtheorem{defn}{Definition}[section]
+\newtheorem{defn}{Definition}[chapter]
+\newtheorem{thm}[defn]{Theorem}
+\newtheorem{cor}[defn]{Corollary}
+\newtheorem{lem}[defn]{Lemma}
 
 \opgave{M.Sc. Thesis}
 \forfatter{
@@ -255,48 +258,57 @@ We evaluate our work in Chapter~\ref{sec:evaluation} and provide concluding rema
 
 \chapter{Differential Privacy}\label{sec:differential_privacy}
 
-In this chapter, we will focus on specific ideas from the differential privacy literature as it relates to the implementation of our language, DPDT.
-In particular, we will discuss function sensitivity, which is a relative measure of how much a function can magnify the distances between collections of objects; and indistinguishability, which is the key idea which quantifies what it means for a computation to be differentially private.
-Finally, we describe PINQ, the framework that allows users to build differentially private computations by construction.
+In this chapter, we describe fundamental concepts from the differential privacy literature as it relates to the implementation of our language, DPDT.
+In particular, we will discuss function sensitivity, which is a relative measure of how much a function can magnify the distances between collections of objects; and indistinguishability, which is the key property necessary for a computation to be differentially private.
+Finally, we give a brief outline of PINQ's moving parts, since they served as the primary motivation for DPDT.
 
 \section{Function Sensitivity}\label{subsec:fn_sens}
 
-Function sensitivity is an important concept from the differential privacy literature.
+Function sensitivity is a metric that plays a key role in much of the differential privacy literature.
 We can make assertions about an entire program if we understand the sensitivities of the functions with which it is composed.
-Sensitivity is a key part in making our type system work.
+Sensitivity is a key component for making DPDT's type system work.
 
-Function sensitivity captures the idea of how relatively ``far'' a function can magnify the distances between pairs of objects.
-We say that a function is $c$-sensitive if, for all pairs of inputs, the distance between the outputs does not exceed $c$ times the original distance between the inputs.
+Function sensitivity describes how relatively ``far'' a function can magnify the distances between pairs of objects.
+We say that a function is $c$-sensitive if, for all possible pairs of inputs, the distance between the outputs does not exceed $c$ times the original distance between the inputs.
 
-\begin{defn}\label{def:csens}
-  A function, $f : \mathbb A \rightarrow \mathbb A$, is $c$-sensitive if
-  $$\forall x,y.\; d_{\mathbb A}(f(x),f(y)) \le c \times d_{\mathbb A}(x,y)$$
-\end{defn}
+\begin{thm}\label{thm:csens}
+  Given a distance function, $d_{\mathbb A} : \mathbb A \rightarrow \mathbb A \rightarrow \mathbb R$, and a function, $f : \mathbb A \rightarrow \mathbb A$, we say that $f$ is $c$-sensitive if
+  $$\forall x,y\in\mathbb A.\; d_{\mathbb A}(f(x),f(y)) \le c \times d_{\mathbb A}(x,y)$$
+\end{thm}
 
-For a concrete example, let us turn our attention to the domain of real numbers.
-We will take the distance function to be the absolute value norm; i.e. $d_\mathbb{R}(x,y) = |x - y|$.
-Obviously, the function $f_{id}(x)=x$ cannot magnify distances at all.
+\begin{samepage}
+For a concrete example, consider the domain of real numbers.
+We take the distance function to be the absolute value norm; i.e. $d_\mathbb{R}(x,y) = |x - y|$.
+Obviously, the function $f_{id}(x)=x$ cannot magnify distances at all (see Figure~\ref{fig:fn_sens}).
+\begin{cor}
+$f_{id} : \mathbb A \rightarrow \mathbb A$ is 1-sensitive.
+\end{cor}
+\begin{proof}
 For any two real numbers, their difference will equal the difference between them after applying $f_{id}$.
-
+\nopagebreak
 \[
   \forall x,y.\; d_\mathbb{R}(f_{id}(x),f_{id}(y)) = d_\mathbb{R}(x,y)
 \]
+\end{proof}
+\end{samepage}
 
 We say $f_{id}$ is 1-sensitive because distances can't be magnified at all.
 Another example of a 1-sensitive function is $f_{1/2}(x) = x/2$; in fact, $f_{1/2}$ is also $\frac{1}{2}$-sensitive.
 
-\begin{defn}\label{def:clessthancprime}
+\begin{lem}\label{lem:clessthancprime}
   A function that is $c$-sensitive is also $c'$-sensitive for all $c < c'$.
-\end{defn}
+\end{lem}
+% TODO 3 : add proof?
 
-Similarly, consider the case where $f_{+10}(x) = x + 10$.
+Similarly, consider the case where $f_{+2}(x) = x + 2$.
 Clearly, it doesn't matter which $x$ and $y$ you sample; the distance $d_{\mathbb R}(x,y)$ will always equal $d_{\mathbb R}(f(x),f(y))$.
-Therefore, $f_{+10}$ is a 1-sensitive function.
-Now consider the case of $f_{\times 2+10}(x) = 2x + 10$.
+Therefore, $f_{+2}$ is also a 1-sensitive function.
+Now consider the case of $f_{\times 2}(x) = 2x$.
 Distances between input and output objects can now be doubled (but no more), so it is a 2-sensitive function.
+
 Intuitively, when dealing with linear functions on $\mathbb R$ and the absolute value norm, the largest linear coefficient will dictate the c-sensitivity.
-Higher order polynomials are necessarily $\infty$-sensitive.
-See Figure~\ref{fig:fn_sens} for a visualization of function sensitivity on $\mathbb R$.
+Higher order polynomials are necessarily $\infty$-sensitive; i.e. there is no finite bound.
+See Figure~\ref{fig:fn_sens} for a visualization of function sensitivity on $\mathbb R$ with $f_id$, $f_{+2}$, $f_{\times 2}$.
 
 \begin{figure}
     \centering
@@ -307,8 +319,9 @@ See Figure~\ref{fig:fn_sens} for a visualization of function sensitivity on $\ma
 \end{figure}
 
 Simple functions on $\mathbb R$ and one dimensional distance functions are not particularly interesting.
-However, function sensitivity can be applied much more generally and to much more interesting domains, such as databases containing sensitive information (e.g. Alice's tax records or health information).
+However, function sensitivity can be applied much more generally to much more interesting domains, such as databases containing sensitive information (e.g. Alice's tax records or health information).
 
+We define a database simply as a multiset of rows.
 We will use $\mathbb D$ to describe the domain of all possible databases.
 Hence, a function $f : \mathbb D \rightarrow \mathbb D$ is an endomorphism for databases.
 The distance between two databases is their symmetric difference; i.e. $d_{\mathbb D}(D_1,D_2) = | D_1 \ominus D_2 |$.
@@ -322,17 +335,23 @@ We say that two databases are adjacent if they differ by exactly one row.
   We say that $D_1$ and $D_2$ are adjacent.
 \end{defn}
 
-Despite the domain change, function sensitivity behaves exactly as outlined before.
-Consider a database endomorphism, $filter_p : \mathbb D \rightarrow \mathbb D$, which filters rows according to some pre-specified predicate, $p$.
+Despite the domain change, function sensitivity behaves exactly as outlined in Theorem~\ref{thm:csens}.
+Consider a database endomorphism, $filter_p : \mathbb D \rightarrow \mathbb D$, which filters rows according to some pre-specified predicate, $p : Row \rightarrow Bool$.
 $filter_p$ is a 1-sensitive function because it is impossible for it to magnify the distances between databases.
 
+\begin{cor}
+$filter_p : \mathbb D \rightarrow \mathbb D$ is 1-sensitive.
+\end{cor}
+
+\begin{proof}
 For all pairs of databases, $D_1$ and $D_2$, the distance between them is $d_{in} = d_{\mathbb D}(D_1,D_2)$.
 The distance $d_{out} = d_{\mathbb D}(filter_p(D_1),filter_p(D_2))$ cannot exceed $d_{in}$.
-$filter_p$ will only remove rows from a database, or leave them unchanged, so we have only to consider the three possible cases of removal.
+$filter_p$ will only remove rows from a database, or leave them unchanged, so we have only to consider the four possible cases of removal.
 There are three main cases to consider:
 \begin{enumerate}
   \item the filter removes a row that is in both of the databases,
-  \item the filter removes a row that is in exactly one of the databases, and
+  \item the filter removes a row that is in the first database,
+  \item the filter removes a row that is in the second database, and
   \item the filter removes a row that is in neither of the databases (does nothing).
 \end{enumerate}
 
@@ -341,11 +360,14 @@ Because the row is included in both of the input databases, their symmetric diff
 The row is in neither of the output databases, so their symmetric difference is also unaffected.
 Therefore, after the removal of the one row, $d_{out} = d_{in}$.
 
-\paragraph{Case: the filter removes a row that is in exactly one of the databases.}
+\paragraph{Case: the filter removes a row that is in the left database.}
 The symmetric difference of the input databases is affected by this row, because it is in one, but not the other.
 Therefore, this row is contributing to the distance between the input databases.
 Its removal will bring the output databases closer together.
 Therefore, $d_{out} < d_{in}$.
+
+\paragraph{Case: the filter removes a row that is in the right database.}
+This case is symmetric to the previous case.
 
 \paragraph{Case: the filter removes a row that is in neither of the databases.}
 This is nearly the same as the first case.
@@ -355,18 +377,23 @@ The output distance is equal to the input distance: $d_{out} = d_{in}$.
 In all cases, $d_{out}$ is either less than or equal to $d_{in}$ after the removal of one row, so we conclude that the removal of any single row will either result in the distance between databases shrinking or remaining unchanged.
 Then it follows that the removal of another row isn't going to increase the distance.
 Generalizing this to the removal of $n$ rows, we conclude that $d_{out} \le d_{in}$ regardless of how many rows are removed from either database.
-Thus, we can fix $c=1$ and conclude that filtering is a 1-sensitive function.
+Thus, we can fix $c=1$ and conclude that $filter_p$ is a 1-sensitive function.
+\end{proof}
 
-Similar proofs exist for the other relational algebra operators.
-Proofs like these provide the basic building blocks used by PINQ and DPDT.
-The real power of PINQ and DPDT, however, comes from the ability to freely combine these building blocks without having to manually consider sensitivities.
+Similar proofs exist for establishing the sensitivities of other relational algebra operators.
+Proofs like these provide the basic building blocks used in PINQ and DPDT.
+The real power of PINQ and DPDT, however, comes from the ability to freely manipulate these building blocks with sensitivity-aware operations.
 
-Consider two functions, $f : \mathbb A \rightarrow \mathbb A$ and $g : \mathbb A \rightarrow \mathbb A$, with sensitivities $c$ and $c'$, respectively.
+Consider two functions, $f : \mathbb B \rightarrow \mathbb C$ and $g : \mathbb A \rightarrow \mathbb B$, with sensitivities $c$ and $c'$, respectively.
 What is the sensitivity of the function resulting from their composition, $k = f . g$?
 Function sensitivities compose multiplicatively; i.e. $k$ is $(c\times c')$-sensitive.
 Sensitivity represents the largest factor by which the distances between pairs of objects can be increased, so it follows that the composition of sensitivities is multiplicative.
 
-\section{Indistinguishability}\label{sec:dp_indistinguishability}
+\begin{lem}
+  For all pairs of functions, $f : \mathbb B \rightarrow \mathbb C$ and $g : \mathbb A \rightarrow \mathbb B$, with sensitivities $c$ and $c'$, respectively, the composition $k = f . g$ yields a function $k : \mathbb A \rightarrow \mathbb C$ with sensitivity $c*c'$.
+\end{lem}
+
+\section{Indistinguishability}
 
 Indistinguishability is the key idea that distinguishes differential privacy from similar approaches in privacy research.
 If an attacker is unable to determine whether Alice's data even exists in the database, he will be unable to determine the contents of her data.
@@ -418,7 +445,7 @@ See Figure~\ref{fig:indistinguishability} for a visualization of indistinguishab
 
 \begin{figure}
     \centering
-    \def\svgwidth{0.75\columnwidth}
+    \def\svgwidth{0.75  \columnwidth}
     \input{assets/Indistinguishability.pdf_tex}
     \caption{Visualizing indistinguishability with sample PDFs from a counting query on $D_1$ and $D_2$, where $D_1\sim D_2$}
     \label{fig:indistinguishability}
@@ -860,7 +887,7 @@ The ability to capture schemas directly in the types and to manipulate them yiel
 
 \section{Relational Algebra in Idris}
 
-This section will outline the implementation of RADT, our relational algebra EDSL in Idris. 
+This section will outline the implementation of RADT, our relational algebra EDSL in Idris.
 We begin by defining some simple algebraic datatypes (ADTs) for keeping the types clear.
 We then define a toy expression language before moving on to the query language.
 
@@ -1048,7 +1075,7 @@ namespace SQLiteBackend
 \chapter{DPQ - Differentially Private Queries}\label{sec:DPQ}
 
 In this chapter we describe how we bring together the material of the previous chapters and outline the implementation of DPQ.
-DPQ is an abbreviation for Differentially Private Queries and is a language for compiling differentially private string queries for query languages. 
+DPQ is an abbreviation for Differentially Private Queries and is a language for compiling differentially private string queries for query languages.
 
 The language is built as a layer on top of our relational algebra, RADT, described in the previous chapter.
 Our goal is to leverage the Idris type-checker to statically verify differential privacy constraints in single queries.
@@ -1150,7 +1177,7 @@ noisyCount  (MkQuery q) eps  =
      in MkPrivate $ "SELECT (COUNT(*) + " ++ noise ++ ") FROM (" ++ eval q ++ ")"
 
 noisyAverage : Expr s Double -> Query s c -> (e:Epsilon) -> Private (c*e)
-noisyAverage exp (MkQuery q) eps = 
+noisyAverage exp (MkQuery q) eps =
      let expStr   = eval exp
          clampLT  = "CASE WHEN " ++ expStr ++ " < -1 THEN -1 ELSE " ++ expStr ++ " END"
          clamp    = "CASE WHEN " ++ expStr ++ " > 1 THEN 1 ELSE ("  ++ clampLT ++ ") END"
