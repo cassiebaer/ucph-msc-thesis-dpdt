@@ -49,33 +49,29 @@ breaklines=true,
 postbreak=\raisebox{0ex}[0ex][0ex]{\ensuremath{\color{red}\hookrightarrow\space}}
 }
 
-% TODO 1 : add problem statement to introduction
-% TODO 1 : improve evaluation by focusing on Hypothesis / Conclusion
-% TODO 1 : improve evaluation by comparing # of programs in PINQ vs DPDT
-
 \graphicspath{{assets/}}
 
 \begin{abstract}
 With more personal data being stored in the ``cloud'' every day, privacy is becoming an important topic for public discussion.
 Private data is potentially quite useful, but cannot be released in its raw form due to privacy concerns.
-Differental privacy is an emerging field of research aiming to protect the privacy of individuals participating in a database while maximizing its utility.
+Differential privacy is an emerging field of research aiming to protect the privacy of individuals participating in a database while maximizing its utility.
 
 PINQ is a framework for the C\# enforcing differential privacy constraints over top of the popular integrated query language, LINQ.
 Users are able to build complex, differentially-private queries from a few carefully implemented primitives.
 PINQ data providers are then able to dynamically reject queries which could put private information at risk.
 
 Type systems can statically verify programs for varying degrees of correctness.
-Dependent types are a particularly powerful feature of certain type systems which lend themselves to tracking differentially privacy metrics.
+Dependent types are a particularly powerful feature of certain type systems which allows types to be predicated on values.
+Because of this, we believe dependent types are a natural fit for capturing differential privacy metrics.
 
-We implemented a prototype of a differentially-private query language, DPDT, in the dependently-typed, functional programming language Idris.
-We outline the benefits and drawbacks we found using dependent types for enforcing differential privacy.
-
+We present a prototype of a differentially-private query language, DPDT, in the dependently-typed, functional programming language Idris.
 DPDT is loosely modelled on PINQ.
 However, whereas PINQ verifies privacy constraints dynamically, DPDT is able to do it statically.
 In addition, DPDT is completely type-safe in all of its relational algebra operations.
 
-Limitations of DPDT in comparison to PINQ are backend support, and expressibility in some cases.
-However, a large number of side-channel attacks that PINQ is unable to stop are impossible in our language.
+We outline the benefits and drawbacks to using dependent types for enforcing differential privacy.
+Limitations of DPDT in comparison to PINQ are backend support, and expressibility of dynamically terminating algorithms.
+However, a large number of side-channel attacks that PINQ is unable to stop are impossible in DPDT.
 \end{abstract}
 
 \clearpage
@@ -1683,7 +1679,7 @@ DPDT provides type-safety for all of the relational algebra and differential pri
 Two powerful consequences of this are that type-correct programs written in DPDT are guaranteed to be differentially private and will terminate with a result (not a runtime budget error).
 
 In fact, DPDT's type-safety even protects against many side-channel attacks which might be possible in a side-effecting language like PINQ.
-PINQ does try to ``scrub'' any expressions before they are evaluated, but mechanically determining which expressions consistute a side-channel attack is not feasible.
+PINQ does try to ``scrub'' any expressions before they are evaluated, but mechanically determining which expressions constitute a side-channel attack is not feasible.
 However, timing attacks represent one side-channel which no type system is likely to be able to stop.
 Certainly, Idris' purity will prevent calls to \texttt{Thread.sleep}, but what about an expression computing the $n^{th}$ Fibonacci number for some large $n$?
 A specialized runtime system is required to prevent this kind of side-channel attack\cite{conf/uss/HaeberlenPN11}.
@@ -1776,7 +1772,7 @@ Unfortunately, both PINQ and DPDT are susceptible to a particular form of timing
 Preventing this kind of attack requires a smart server implementation like the one described in \cite{conf/uss/HaeberlenPN11}.
 
 Dependent types can fully represent the relational algebra and its contraints which have stumped lesser type-systems\cite{OurySwierstra08PowerOfPi}.
-We have shown that dependent types can also represent differential privacy metrics and their contraints---with some limitations on the types of algorithms that can be expressed.
+We have shown that dependent types can also represent differential privacy metrics and their constraints---with some limitations on the types of algorithms that can be expressed.
 There are no limits on constructing independent, differentially-private queries, but dynamically terminating algorithms cannot be expressed because privacy constraints cannot be verified at compile-time.
 Despite this limitation, we believe that dependent types lend themselves quite well to representing differential privacy metrics and constraints.
 
