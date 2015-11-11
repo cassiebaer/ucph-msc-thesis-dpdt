@@ -1157,6 +1157,49 @@ namespace SQLiteBackend
 
 \chapter{DPQ - Differentially Private Queries}\label{sec:DPQ}
 
+\begin{figure}[H]
+\begin{mdframed}
+\begin{minipage}[t]{0.5\textwidth}
+  \begin{grammar}
+    <E> ::= \phantom
+    \alt ($\land$) <Schema> <String>
+    \alt (+) E E
+    \alt \ldots
+    \alt Lit <a>
+    \alt Couple E E
+    \alt PureFn $(a \rightarrow b)$ E
+
+    <Proj> ::= $(String \rightarrow Maybe\ String)$
+
+    <G> ::= \phantom
+    \alt groupBy E Q
+
+    <A> ::= \phantom
+    \alt noisyCount Q $\epsilon$
+    \alt noisyAverage Q $\epsilon$
+  \end{grammar}
+\end{minipage} % do NOT add a space between this and the next line.
+\begin{minipage}[t]{0.5\textwidth}
+  \begin{grammar}
+    <Q> ::= \phantom
+    \alt <t>
+    \alt Union Q Q
+    \alt Diff Q Q
+    \alt Product Q Q
+    \alt Project Proj Q
+    \alt Select E Q
+    \alt Lookup <k> G
+    \\
+
+    <P> ::= \phantom
+    \alt partitionBy E Q
+  \end{grammar}
+\end{minipage}
+\end{mdframed}
+\caption{Informal DPQ grammar (refer to \texttt{Database.DPDT} for precise specification)}
+\label{gram:radt}
+\end{figure}
+
 This chapter describes \textit{Differentially Private Queries} (DPQ), a restricted subset of the DPDT language.
 DPQ is just a simple privacy layer wrapped around our implementation of RADT, as described in Chapter~\ref{sec:RADT}.
 Sequencing is the primary primitive distinguishing DPQ from DPDT.
@@ -1307,6 +1350,51 @@ We implemented a basic C library with the Laplacian distribution and tested it w
 Most common database systems should allow linking with custom C libraries.
 
 \chapter{DPDT - Differentially Private Algorithms}\label{sec:DPDT}
+
+\begin{figure}[H]
+\begin{mdframed}
+\begin{minipage}[t]{0.5\textwidth}
+  \begin{grammar}
+    <E> ::= \phantom
+    \alt ($\land$) <Schema> <String>
+    \alt (+) E E
+    \alt \ldots
+    \alt Lit <a>
+    \alt Couple E E
+    \alt PureFn $(a \rightarrow b)$ E
+
+    <Proj> ::= $(String \rightarrow Maybe\ String)$
+
+    <G> ::= \phantom
+    \alt groupBy E Q
+
+    <A> ::= \phantom
+    \alt noisyCount Q $\epsilon$
+    \alt noisyAverage Q $\epsilon$
+    \alt $(>>=)$ A A
+    \alt return <t>
+  \end{grammar}
+\end{minipage} % do NOT add a space between this and the next line.
+\begin{minipage}[t]{0.5\textwidth}
+  \begin{grammar}
+    <Q> ::= \phantom
+    \alt <t>
+    \alt Union Q Q
+    \alt Diff Q Q
+    \alt Product Q Q
+    \alt Project Proj Q
+    \alt Select E Q
+    \alt Lookup <k> G
+    \\
+
+    <P> ::= \phantom
+    \alt partitionBy E Q
+  \end{grammar}
+\end{minipage}
+\end{mdframed}
+\caption{Informal DPDT grammar (refer to \texttt{Database.DPDT} for precise specification)}
+\label{gram:radt}
+\end{figure}
 
 DPQ is useful for simple statistical queries that can be represented as one aggregation with the given expression language, but for more complex algorithms this is not sufficient.
 We distinguish \textit{queries} from \textit{algorithms} in that they do not support dependent sequencing operations (i.e. conditional branching support).
@@ -1784,7 +1872,7 @@ Despite this limitation, we believe that dependent types lend themselves quite w
 
 \chapter{Sample Programs}
 
-\begin{lstlisting}[caption={AOLData.idr},label={appx:aoldata_idris}]
+\begin{lstlisting}[caption={tests/Idris/AOLData.idr},label={appx:aoldata_idris}]
 module Main
 
 import Database.DPDT.Idris
@@ -1815,6 +1903,120 @@ main = do
   print $ evalPrivate (countUniqueAnonID t) 1238389612
   return ()
 
+\end{lstlisting}
+
+\begin{lstlisting}[caption={tests/SQLite/AOLData.idr},label={appx:aoldata_sqlite}]
+module Main
+
+import Database.DPDT.SQLite
+import Effects
+import Effect.StdIO
+
+AOLSchema : Schema
+AOLSchema = [ "AnonID" ::: Double, "Query" ::: String ]
+
+table : Query AOLSchema 1
+table = MkQuery (Table "AOL")
+
+countUniqueAnonId : Private 2
+countUniqueAnonId =
+  noisyCount gq 1 where
+  gq : Grouping AOLSchema Double 2
+  gq = groupBy (AOLSchema^"AnonID") table
+
+averageAnonId : Private 1
+averageAnonId = noisyAverage (AOLSchema^"AnonID") table 1
+
+printResult : Eff () [STDIO]
+printResult = do
+              putStr $ evalPrivate countUniqueAnonId ++ "\n"
+              putStr $ evalPrivate averageAnonId ++ "\n"
+
+main : IO ()
+main = run printResult
+\end{lstlisting}
+
+\begin{lstlisting}[caption={tests/idris/kMeans3.idr},label={appx:kMeans3}]
+module Main
+
+import Data.Vect
+import Database.DPDT.Idris
+import Data.Floats
+import System.Random.CrapGen
+
+----------------------------------------------------------------
+
+record Point2 where
+  constructor MkPt
+  ptX : Double
+  ptY : Double
+
+dist : Point2 -> Point2 -> Double
+dist (MkPt x y) (MkPt x' y') = sqrt $ (x-x')*(x-x') + (y-y')*(y-y')
+
+instance Eq Point2 where
+    (==) x y = dist x y < (1/1000000)
+
+----------------------------------------------------------------
+
+SPoint2 : Schema
+SPoint2 = [ "x" ::: Double, "y" ::: Double ]
+
+----------------------------------------------------------------
+
+points : Query SPoint2 1
+points = MkQuery $ Table $ [ point2 x y | x <- [0,1], y <- [0,1] ]
+                        ++ [ point2 x y | x <- [7,8], y <- [7,8] ]
+  where point2 : Cast a Double => a -> a -> Row SPoint2
+        point2 x y = [ (cast x), (cast y) ]
+
+----------------------------------------------------------------
+
+labelVect : Vect n a -> Vect n (Nat,a)
+labelVect v = go v Z
+  where go : Vect n a -> Nat -> Vect n (Nat,a)
+        go [] k        = []
+        go (x :: xs) k = (k,x) :: go xs (S k)
+
+-- classifies each point and gives an ix to the center it matched
+classify : Vect (S n) Point2 -> Point2 -> Fin (S n)
+classify {n} cs p = let ds = map (dist p) cs
+                     in fromNat . fst $ foldr1 findMinDist (labelVect ds)
+  where findMinDist : (Nat,Double) -> (Nat,Double) -> (Nat,Double)
+        findMinDist (ix,d) (ix',d') = if (d < d') then (ix,d) else (ix',d')
+
+eps : Epsilon
+eps = (1//2)
+
+updateCenters : Vect (S n) Point2 -> Grouping SPoint2 (Fin (S n)) c
+             -> Private ?updateCenters_cost (Vect (S n) Point2)
+updateCenters cs gr = sequence (map (updateCenter gr) (map (fromNat . fst) $ labelVect cs))
+  where
+    updateCenter : Grouping SPoint2 (Fin (S n)) c -> Fin (S n) -> Private (c*eps + c*eps) Point2
+    updateCenter gr ix = do
+      let ps = lookup ix gr
+      x <- noisyAverage (SPoint2^"x") ps eps
+      y <- noisyAverage (SPoint2^"y") ps eps
+      return (MkPt x y)
+
+kMeans : (k:Nat) -> (cs:Vect (S n) Point2) -> (tbl:Query SPoint2 1) -> Private ?kMeans_cost (Vect (S n) Point2)
+kMeans Z     cs tbl = return cs
+kMeans (S k) cs tbl = do
+    cs' <- updateCenters cs (groupBy classifyExpr tbl)
+    kMeans k cs' tbl
+  where classifyExpr = PureFn (classify cs) (PureFn (uncurry MkPt) (Couple (SPoint2^"x") (SPoint2^"y")))
+
+foo : Vect 2 Point2
+foo = evalPrivate (kMeans 10 [MkPt 3 4, MkPt 5 6] points) 123
+
+---------- Proofs ----------
+
+Main.updateCenters_cost = proof
+  intros
+  search
+
+testDist : dist (MkPt 0 0) (MkPt 0 1) = 1
+testDist = Refl
 \end{lstlisting}
 
 \end{appendices}
