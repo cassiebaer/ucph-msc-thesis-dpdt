@@ -45,3 +45,9 @@ groupBy e (MkQuery q) = MkGrouping (MkGrouping e q)
 
 lookup : (Eq k) => k -> Grouping b s k c -> Query b s c
 lookup k (MkGrouping q) = MkQuery (Lookup k q)
+
+------------------------------------------------------------------------------
+
+unionCostsAdd : { q1 : Query b s c } -> { q2 : Query b s c' } -> { q3 : Query b s c'' }
+   -> ( union q1 q2 = q3 ) -> c + c' = c''
+unionCostsAdd Refl = Refl
