@@ -108,7 +108,8 @@ The goal of differential privacy is to minimize the risk for the individual whil
 
 % TODO 1 : add problem statement
 % TODO 1 : maybe move contributions up here? or at least outline rest of chap.
-This thesis ...
+This thesis aims to show that it is feasible to provide differential privacy guarantees statically in a language with dependent types, specifically Idris\footnote{http://idris-lang.org}.
+In the rest of this chapter we will introduce the notions of differential privacy and dependent types, before we present our contributions.
 
 \section{Differential Privacy}\label{sec:intro-diffpriv}
 
@@ -129,7 +130,7 @@ Instead, differential privacy promises that Alice's participation in the databas
 \subsection{Indistinguishability}\label{subsec:intro-indistinguishability}
 
 One of the centrals ideas driving differential privacy is that of indistinguishability, i.e. a query evaluated against a dataset should return more-or-less the same result regardless of whether Alice's records were included in the data.
-If the result of the query with Alice included is indistinguishable from the result of the query without her, then the contents of Alice's records must be indistinguishable, too.
+If the result of the query with Alice included is indistinguishable from the result of the query without her, then the contents of Alice's records must be indistinguishable too.
 
 Indistinguishability is typically achieved by combining the true (distinguishable) result of a query with enough random noise to mask Alice's participation in the database.
 However, additive noise is insufficient by itself to guarantee privacy.
@@ -191,7 +192,7 @@ The burden of producing such proofs and implementing the algorithms is typically
 
 However, there is a subset of differential privacy for which metrics can be described and composed according to well-defined rules.
 A few implementations exist that try to capitalize on this to reduce programmer burden.
-PINQ\cite{mcsherry2010privacy} is a differential privacy framework implemented and embedded in C\#.
+PINQ\cite{conf/sigmod/McSherry09} is a differential privacy framework implemented and embedded in C\#.
 It is a SQL-like, \textit{embedded domain specific language} (EDSL) for describing differentially private queries.
 Each query primitive is carefully implemented to be differentially private.
 PINQ provides functions for manipulating and combining queries with the guarantee that the resulting queries are also differentially private.
@@ -209,29 +210,29 @@ Fortunately, the only additional requirement is that it tracks a global privacy 
 
 The PINQ EDSL essentially uses a PINQ provider as a trusted runtime system for tracking the remaining privacy budget and rejecting queries which cost too much.
 One disadvantage of this is that queries are only rejected at runtime.
-Reed and Pierce proposed tracking the privacy metrics in a language's type system with Fuzz\cite{conf/icfp/ReedP10} and Gaboardi et al. improved on it's limitations in DFuzz\cite{conf/popl/GaboardiHHNP13} using linear dependent types.
+Reed and Pierce proposed tracking the privacy metrics in a language type system with Fuzz\cite{conf/icfp/ReedP10} and Gaboardi et al. improved on it's limitations in DFuzz\cite{conf/popl/GaboardiHHNP13} using linear dependent types.
 These approaches allow for machine-verifiable differential privacy at compile-time.
 
 We aim to build on this idea by demonstrating that dependent types are a great environment for describing and enforcing differential privacy requirements.
 
 \section{Dependent Types}\label{sec:intro-deptyps}
-% TODO 1 : add more about what dep.typ.s are
-% TODO 1 : add problem statement / hypothesis
-% TODO 1 : cite TT paper (mlitt)
 
-% Originally limited to a handful of academic proof assistants, dependently-typed languages have a come a long way since Per Martin-L\"of presented his intuitionistic type theory (TT)\cite{mlitt}.
-% General purpose, practical programming languages such as Agda\footnote{http://wiki.portal.chalmers.se/agda/pmwiki.php} and Idris are under active development.
-% We show that dependent types are a natural fit for describing and verifying differential privacy constraints.
+A dependent type is a type that depends on a value.
+Types in strongly typed programming languages are verified statically by a type-checker.
+Dependent types allows for more of the program to be verified statically, which can be helpful in writing bug-free programs.
+This is because the type-checker may catch potential runtime errors that otherwise would be harder to catch.
 
-Programs written in strongly-typed programming languages can be statically verified for type-correctness.
-This precludes many potential sources of runtime errors: ``well-typed programs can't go wrong''.
-We extend this notion of ``well-typedness'' to include differential privacy metrics in a prototype query EDSL, \textit{Differential Privacy with Dependent Types} (DPDT).
-Just as PINQ is embedded in C\#, DPDT is embedded within the dependently-typed, functional programming language Idris\footnote{http://idris-lang.org}.
+We show that dependent types is capable of capturing differential privacy metrics and assuring differential privacy guarantees.
+We do this by introducing a prototype query EDSL, \textit{Differential Privacy with Dependent Types} (DPDT).
+Just as PINQ is embedded in C\#, DPDT is embedded within the dependently-typed, functional programming language Idris.
 This allows DPDT to take advantage of Idris' parser and advanced type-checker, as well as the many improvements continually being made by Idris' active open-source community.
 
 Well-typed programs in our embedded language can't go wrong and also can't violate their privacy requirements.
 Formal proofs for type-correct algorithms written in our language are unnecessary - the program itself is the proof.
 Thus, all type-correct programs must respect expected privacy constraints.
+
+This was just a brief introduction to dependent types and how it applies to our thesis.
+Chapter~\ref{sec:dependent_types_in_idris} provides examples of how to program with dependent types in Idris.
 
 \section{Contributions}
 
@@ -253,12 +254,12 @@ In Chapter~\ref{sec:differential_privacy}, we cover some necessary background fo
 Chapter~\ref{sec:dependent_types_in_idris} serves as a brief tutorial to Idris with a focus on the language features we make use of in our implementation.
 Chapter~\ref{sec:function_sensitivity} combines the contents of the previous two chapters in an example implementation of function sensitivity.
 Chapter~\ref{sec:RADT} reviews the relational algebra and how we represent it using dependent types.
-Chapter~\ref{sec:our_implementation} covers the differential privacy layer that we built over top of the fully-typed relational algebra.
+Chapter~\ref{sec:DPQ} outline our implementation of DPQ, our fully type-safe query language for single queries, and in Chapter~\ref{sec:DPDT} we outline DPDT, which also support sequencing of queries. 
 We evaluate our work in Chapter~\ref{sec:evaluation} and provide concluding remarks in Chapter~\ref{sec:conclusion}.
 
 \chapter{Differential Privacy}\label{sec:differential_privacy}
 
-In this chapter, we describe fundamental concepts from the differential privacy literature as it relates to the implementation of our language, DPDT.
+In this chapter, we describe fundamental concepts from the differential privacy literature as it relates to the implementation of our languages.
 In particular, we will discuss function sensitivity, which is a relative measure of how much a function can magnify the distances between collections of objects; and indistinguishability, which is the key property necessary for a computation to be differentially private.
 Finally, we give a brief outline of PINQ's moving parts, since they served as the primary motivation for DPDT.
 
@@ -512,7 +513,7 @@ The only safe way to return information from a sensitive database is to require 
 PINQ ensures that the only information being released to analysts comes from its carefully implemented aggregation mechanisms.
 After evaluating a query with the underlying LINQ provider, every PINQ aggregation will take care to add random noise scaled according a user provided argument: $\epsilon$.
 
-Every aggregation provided by PINQ (and DPDT) is proven to be $\epsilon$-differentially private.
+Every aggregation provided by PINQ (and DPQ/DPDT) is proven to be $\epsilon$-differentially private.
 $\epsilon$ allows analysts to fine-tune how they wish to use their allotted privacy budget.
 The larger $\epsilon$ is, the more accurate the result will be because the width of the noise distribution scales inversely with $\epsilon$.
 However, the cost of evaluating the aggregation scales directly with $\epsilon$ and must be subtracted from the remaining privacy budget.
@@ -618,7 +619,7 @@ We then give a brief overview of some Idris language features we make use of in 
 \section{Example: Hello Vect}
 
 Just as every introduction to programming tutorial begins with printing ``Hello World'' to the console, introductory dependent types tutorials begin with \texttt{Vect}.
-Consider the definition of \texttt{List} in Listing~\ref{lst:lstdef}.
+Consider the definition of \texttt{List} in Listing~\ref{lst:listdef}.
 It is \textit{parameterized} by the type of the contained elements (e.g. \texttt{List Double}).
 Now consider the (incomplete) definition of \texttt{head}.
 It is impossible to satisfy the right-hand side of the first pattern.
@@ -770,7 +771,7 @@ Listing~\ref{lst:rep_sens_fns} defines a type constructor indexed by the sensiti
 It has just one data constructor which is used for wrapping native Idris functions.
 A \texttt{SensitiveFunction s a b} is a function with sensitivity \texttt{s} mapping tokens from \texttt{a} to \texttt{b}.
 
-\begin{lstlisting}[float,caption={Representing sensitive functions},label={lst:rep_sens_fns}]
+\begin{lstlisting}[caption={Representing sensitive functions},label={lst:rep_sens_fns}]
 ||| Represents a sensitive function
 ||| @ c The sensitivity of the function
 ||| @ a The input type of the function
@@ -801,7 +802,7 @@ Function composition returns a new type indexed by the combined sensitivities of
 This is done simply by wrapping the composed functions in a new data constructor and computing a new sensitivity index.
 Listing~\ref{lst:sens_fns_ops} shows sensitive function composition and unrestricted application.
 
-\begin{lstlisting}[float,caption={Sensitive function operations},label={lst:sens_fns_ops}]
+\begin{lstlisting}[caption={Sensitive function operations},label={lst:sens_fns_ops}]
 ||| Applies a sensitive function to an input
 ||| @ f The sensitive function to be applied
 ||| @ x The input
@@ -833,7 +834,7 @@ Main.sens = proof { intros; search }
 
 One unfortunate consequence of having such a powerful type-system is that type inference is not possible.
 All top-level names must be associated with a type declaration.
-This means that despite the type-system being capable of computing the sensitivities, we must still explicitly provide the type, which includes the sensitivity (as in the \texttt{doSomeMath} signature above).
+This means that despite the type-system being capable of computing the sensitivities, we must still explicitly provide the type, which includes the sensitivity (as in the \texttt{doSomeMath} signature in Listing~\ref{lst:composition_examples}).
 Fortunately, because the computation is decidable (we spent a lot of time with Idris' totality checker and our \texttt{Data.Rational} implementation), users are able to ask Idris for help through its interactive proof search feature.
 Asking Idris to find a proof of the hole \texttt{?sens} yields \texttt{fromInteger 2}.
 Alternatively, proof tactics can be provided directly in the code (see Listing~\ref{lst:composition_examples}, Line 10).
@@ -1133,7 +1134,7 @@ Our Idris backend uses a basic \texttt{cons}-list structure indexed over \texttt
 Listing~\ref{lst:idris_backend} demonstrates how we represent databases in-memory (underlying data representation) in Idris.
 It also shows snippets from the evaluator functions for both backends.
 
-\begin{lstlisting}[caption={Implementing backends (snippets)},label={lst:idris_backend}]
+\begin{lstlisting}[float,caption={Implementing backends (snippets)},label={lst:idris_backend}]
 ||| Represents a row of data in memory
 ||| @ s The row's schema
 data Row : (s:Schema) -> Type where
@@ -1655,7 +1656,7 @@ Please see Listing~\ref{appx:aoldata_idris} in the appendices.
 
 Similarly to our Idris backend, we provide a number of unit tests for the SQLite backend.
 Listing~\ref{lst:example_DPQ_unit_test} contains a snippet from one of our unit test modules.
-We verify that total costs are calculated as expected with in the SQLite \texttt{Private} type.
+We verify that total costs are calculated as expected within the SQLite \texttt{Private} type.
 We also verify that a specific query compiles to an expected query string.
 Notice how $(=)$ can also be used for implementing unit tests.
 Also be aware the \texttt{countThemAll} is not a unit test!
