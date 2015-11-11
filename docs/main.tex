@@ -18,6 +18,7 @@
 \usepackage[nounderscore]{syntax}
 \usepackage{mdframed}
 \usepackage{float}
+\usepackage[toc,page]{appendix}
 
 \renewcommand{\gitMark}{\gitBranch\ :\ \gitHash\ \textbullet{}\ (\gitAuthorDate)\ \textbullet{}\ \gitFirstTagDescribe}
 
@@ -48,33 +49,29 @@ breaklines=true,
 postbreak=\raisebox{0ex}[0ex][0ex]{\ensuremath{\color{red}\hookrightarrow\space}}
 }
 
-% TODO 1 : add problem statement to introduction
-% TODO 1 : improve evaluation by focusing on Hypothesis / Conclusion
-% TODO 1 : improve evaluation by comparing # of programs in PINQ vs DPDT
-
 \graphicspath{{assets/}}
 
 \begin{abstract}
 With more personal data being stored in the ``cloud'' every day, privacy is becoming an important topic for public discussion.
 Private data is potentially quite useful, but cannot be released in its raw form due to privacy concerns.
-Differental privacy is an emerging field of research aiming to protect the privacy of individuals participating in a database while maximizing its utility.
+Differential privacy is an emerging field of research aiming to protect the privacy of individuals participating in a database while maximizing its utility.
 
 PINQ is a framework for the C\# enforcing differential privacy constraints over top of the popular integrated query language, LINQ.
 Users are able to build complex, differentially-private queries from a few carefully implemented primitives.
 PINQ data providers are then able to dynamically reject queries which could put private information at risk.
 
 Type systems can statically verify programs for varying degrees of correctness.
-Dependent types are a particularly powerful feature of certain type systems which lend themselves to tracking differentially privacy metrics.
+Dependent types are a particularly powerful feature of certain type systems which allows types to be predicated on values.
+Because of this, we believe dependent types are a natural fit for capturing differential privacy metrics.
 
-We implemented a prototype of a differentially-private query language, DPDT, in the dependently-typed, functional programming language Idris.
-We outline the benefits and drawbacks we found using dependent types for enforcing differential privacy.
-
+We present a prototype of a differentially-private query language, DPDT, in the dependently-typed, functional programming language Idris.
 DPDT is loosely modelled on PINQ.
 However, whereas PINQ verifies privacy constraints dynamically, DPDT is able to do it statically.
 In addition, DPDT is completely type-safe in all of its relational algebra operations.
 
-Limitations of DPDT in comparison to PINQ are backend support, and expressibility in some cases.
-However, a large number of side-channel attacks that PINQ is unable to stop are impossible in our language.
+We outline the benefits and drawbacks to using dependent types for enforcing differential privacy.
+Limitations of DPDT in comparison to PINQ are backend support, and expressibility of dynamically terminating algorithms.
+However, a large number of side-channel attacks that PINQ is unable to stop are impossible in DPDT.
 \end{abstract}
 
 \clearpage
@@ -797,7 +794,7 @@ Notice the \texttt{cheat} example above.
 It is possible to define sensitive functions which intentionally misrepresent their sensitivities.
 Our focus here is not on the verification of a function's sensitivity, but rather on the interaction between sensitivity and the type system under operations such as function composition and application.
 
-\section{Function composition and application}
+\section{Function Composition and Application}
 
 Unrestricted application is as simple as unwrapping the function and applying it to an argument.
 Function composition returns a new type indexed by the combined sensitivities of the underlying functions.
@@ -868,7 +865,7 @@ In this chapter, we review the relational algebra and show how it can be modeled
 We first introduce the relational algebra, after which we describe the implementation of our type-safe relational algebra, \textit{Relational Algebra with Dependent Types} (RADT).
 Our approach is based on Chapter 4 from \textit{The Power of Pi}\cite{OurySwierstra08PowerOfPi}, an excellent resource for practical examples of what dependent types are capable of.
 
-\section{The relational algebra}
+\section{The Relational Algebra}
 
 The relational algebra describes semantics for modeling and querying data in relational databases (e.g. MySQL\footnote{https://www.mysql.com/}).
 E.F. Codd described relational databases and their associated algebra back in the 1970's\cite{codd70}.
@@ -919,7 +916,7 @@ These extra constraints have precluded many type systems from being able to full
 Strongly-typed languages, such as Haskell, have devised clever solutions to this problem, but none are as straight-forward as the approach available to a dependent type system.
 The ability to capture schemas directly in the types and to manipulate them yields a deceptively simple, but powerful typing framework for relational databases.
 
-\section{Our implementation}
+\section{Our Implementation}
 
 \begin{figure}[H]
 \begin{mdframed}
@@ -1106,7 +1103,7 @@ Set union and difference require that the two operands share matching schemas an
 Type unification allows us to specify the matching schemas constraints very succinctly.
 The disjoint proof is slightly more complex; but because it is decidable, it can be automatically derived.
 
-\subsection{Backend Implementation}
+\subsection{Backend Implementations}
 
 We provide two prototype backends with our implementation of RADT: an in-memory Idris-powered backend and a backend compiling SQL query strings targeting SQLite.
 However, it is possible to write a backend for any data source which can be modeled with the relational algebra.
@@ -1160,6 +1157,49 @@ namespace SQLiteBackend
 
 \chapter{DPQ - Differentially Private Queries}\label{sec:DPQ}
 
+\begin{figure}[H]
+\begin{mdframed}
+\begin{minipage}[t]{0.5\textwidth}
+  \begin{grammar}
+    <E> ::= \phantom
+    \alt ($\land$) <Schema> <String>
+    \alt (+) E E
+    \alt \ldots
+    \alt Lit <a>
+    \alt Couple E E
+    \alt PureFn $(a \rightarrow b)$ E
+
+    <Proj> ::= $(String \rightarrow Maybe\ String)$
+
+    <G> ::= \phantom
+    \alt groupBy E Q
+
+    <A> ::= \phantom
+    \alt noisyCount Q $\epsilon$
+    \alt noisyAverage Q $\epsilon$
+  \end{grammar}
+\end{minipage} % do NOT add a space between this and the next line.
+\begin{minipage}[t]{0.5\textwidth}
+  \begin{grammar}
+    <Q> ::= \phantom
+    \alt <t>
+    \alt Union Q Q
+    \alt Diff Q Q
+    \alt Product Q Q
+    \alt Project Proj Q
+    \alt Select E Q
+    \alt Lookup <k> G
+    \\
+
+    <P> ::= \phantom
+    \alt partitionBy E Q
+  \end{grammar}
+\end{minipage}
+\end{mdframed}
+\caption{Informal DPQ grammar (refer to \texttt{Database.DPDT} for precise specification)}
+\label{gram:radt}
+\end{figure}
+
 This chapter describes \textit{Differentially Private Queries} (DPQ), a restricted subset of the DPDT language.
 DPQ is just a simple privacy layer wrapped around our implementation of RADT, as described in Chapter~\ref{sec:RADT}.
 Sequencing is the primary primitive distinguishing DPQ from DPDT.
@@ -1171,7 +1211,7 @@ We begin by embedding differential privacy metrics into the types as described i
 Next, we demonstrate how these sensitivity-indexed types interact with transformations and aggregations.
 Finally, we briefly describe the requirements for implementing DPQ-capable backends.
 
-\section{Sensitive types}
+\section{Sensitive Types}
 
 First, we want to wrap our RADT types with new types indexed by their sensitivities.
 Listing~\ref{lst:pinqueries} shows how this can be done.
@@ -1300,21 +1340,68 @@ namespace SQLite
      in MkPrivate $ "SELECT (COUNT(*) + " ++ noise ++ ") FROM (" ++ eval q ++ ")"
 \end{lstlisting}
 
-\section{Target language requirements}\label{sec:DPQ_requirements}
+\section{Backend Requirements}\label{sec:DPQ_requirements}
 
 Any backend implementing DPQ must also meet the requirements for implementing RADT, since we use it for doing the actual transformations.
-Additionally, it must provide support generating Laplacian noise.
+Additionally, it must provide support for generating Laplacian noise.
 This can generally be accomplished via two components: (pseudo)random uniform number generation and the ability to call custom functions.
 
-We implemented a basic C library with the Laplacian distribution and tested it with SQLite.
+We implemented a basic C library with the Laplacian distribution and tested it with SQLite (\texttt{util/laplace.c}).
 Most common database systems should allow linking with custom C libraries.
 
 \chapter{DPDT - Differentially Private Algorithms}\label{sec:DPDT}
+
+\begin{figure}[H]
+\begin{mdframed}
+\begin{minipage}[t]{0.5\textwidth}
+  \begin{grammar}
+    <E> ::= \phantom
+    \alt ($\land$) <Schema> <String>
+    \alt (+) E E
+    \alt \ldots
+    \alt Lit <a>
+    \alt Couple E E
+    \alt PureFn $(a \rightarrow b)$ E
+
+    <Proj> ::= $(String \rightarrow Maybe\ String)$
+
+    <G> ::= \phantom
+    \alt groupBy E Q
+
+    <A> ::= \phantom
+    \alt noisyCount Q $\epsilon$
+    \alt noisyAverage Q $\epsilon$
+    \alt $(>>=)$ A A
+    \alt return <t>
+  \end{grammar}
+\end{minipage} % do NOT add a space between this and the next line.
+\begin{minipage}[t]{0.5\textwidth}
+  \begin{grammar}
+    <Q> ::= \phantom
+    \alt <t>
+    \alt Union Q Q
+    \alt Diff Q Q
+    \alt Product Q Q
+    \alt Project Proj Q
+    \alt Select E Q
+    \alt Lookup <k> G
+    \\
+
+    <P> ::= \phantom
+    \alt partitionBy E Q
+  \end{grammar}
+\end{minipage}
+\end{mdframed}
+\caption{Informal DPDT grammar (refer to \texttt{Database.DPDT} for precise specification)}
+\label{gram:radt}
+\end{figure}
 
 DPQ is useful for simple statistical queries that can be represented as one aggregation with the given expression language, but for more complex algorithms this is not sufficient.
 We distinguish \textit{queries} from \textit{algorithms} in that they do not support dependent sequencing operations (i.e. conditional branching support).
 DPDT implements sequencing for the Idris backend computation type, \texttt{Private}.
 Additionally, DPDT supports \texttt{PureFn}, allowing analysts to use many of Idris' own language features alongside DPDT.
+
+\section{Sequencing DPQ}
 
 The structure of \texttt{Private} in DPDT with our Idris backend is just a \textit{State monad}, where the state we are threading through is a random number generator.
 The SQLite implementation of \texttt{Private} does not need this as it relies on SQLite's own pseudorandom number generator.
@@ -1391,77 +1478,36 @@ Each evaluation of \texttt{evalPrivate} is equivalent to resetting the ``budget'
 
 \chapter{Evaluation}\label{sec:evaluation}
 
-In this chapter, we will evaluate how well dependent types allow differential privacy metrics to be tracked and verified in the type system.
-We begin our evaluation of DPDT with simple queries before moving on to more complex algorithms.
+In this chapter, we evaluate our implementation of DPDT.
+We begin by introducing some simple queries to gain an intuition for DPQ/DPDT.
+Then we verify correct behavior of differentially privacy queries using the DPQ subset of our language (and test RADT by proxy).
+Next, we extend our correctness analysis to DPDT by implementing more complex differentially private algorithms.
+Finally, we compare DPDT with PINQ and discuss pros and cons of dynamic vs. static verification of differential privacy metrics.
 
-\section{DPQ verification}
+\section{Where in the Database is Alice?}
 
-In order to verify that our implementation of DPQ is correct, we have made a small test suite.
-It consists of some basic unit tests which are just ensuring that the SQLite backend compiles the correct queries.
-An example of such a test is given in Listing \ref{lst:example_DPQ_unit_test}.
-We ensure by manual labour that the validation query string as seen in \texttt{countThemAllTest} is in fact correct.
-Then, if the program compiles, the compiled query is correct.
-
-The privacy metrics calculations is verified in the types.
-Here, the table of people naturally has a stability of 1 and the noisyCount a sensitivity of 2 due to its epsilon value of 2.
-Multiplied they give 2, so the sensitivity of the whole operation is 2.
-If we had defined the type of \texttt{countThemAll} to be \texttt{Private 1.9}, the program would not compile.
-
-\begin{lstlisting}[caption={Unit test for noisyCount},label={lst:example_DPQ_unit_test}]
-  Person : Schema
-  Person = [ "Name" ::: String , "Age" ::: Nat ]
-
-  people : Query Person 1
-  people = MkQuery $ Table "People"
-
-  countThemAll : Private 2
-  countThemAll = noisyCount people 2
-
-  countThemAllTest : evalPrivate countThemAll = "SELECT (COUNT(*) + samplePure(0, 0.5)) FROM (People)"
-  countThemAllTest = Refl
-
-\end{lstlisting}
-
-In the query string in Listing \ref{lst:example_DPQ_unit_test} we see an example of the use of an extension function as discussed in Section \ref{sec:DPQ_requirements}.
-\texttt{samplePure} is not a part of the SQLite language, but is added as an extension function.
-
-In order to verify that these extension functions work and are implemented correctly, we have created some integration tests.
-Another reason to implement integration tests, which actually interact with a database, is to test on some real data.
-The integration tests is located in a C++ file that loads a SQLite database from file.
-SQLite queries compiled by DPQ is copied over to be executed on the database.
-Testing has included running a query multiple times, taking the average, and checking it up against the actual value the query should return without noise.
-This test ensures that the query compilation and the extension functions are reasonably correct.
-A data provider should of course not grant a budget that allows this much learning from a database, as it would at least put one participant at risk.
-
-\section{DPDT}
-
-In this section we verified implementation of DPDT and how it compares to PINQ.
-
-\subsection{Verification}
-
-We begin by verifying the behavior of DPDT with simple queries.
-There are enough moving parts in a differentially private mechanism to warrant this.
-% TODO 1 : "tell what you want to show"
+We begin by manually verifying the behavior of DPDT with simple queries.
+There are enough moving parts in a differentially private mechanism to warrant this, but it is also useful for gaining an intuition for DPQ/DPDT.
 Listing~\ref{lst:example_data_people} constructs a small database in our Idris backend.
 
-\begin{lstlisting}[caption={Validation Data},label={lst:example_data_people}]
+\begin{lstlisting}[float,caption={Building an in-memory database},label={lst:example_data_people}]
 import Database.PowerOfPi.Idris
 
 Person : Schema
 Person = [ "Name" ::: String , "Age" ::: Double ]
 
-people : PINQuery IdrisTable Person 1
-people = MkPINQuery $ Table [ [ "Alice"  , 40 ]
-                            , [ "Casper" , 26 ]
-                            , [ "Knut"   , 26 ]
-                            , [ "Tor"    , 26 ]
-                            , [ "Gismo"  ,  2 ]
-                            ]
+people : Query Person 1
+people = mkTable [ [ "Alice"  , 40 ]
+                 , [ "Casper" , 26 ]
+                 , [ "Knut"   , 26 ]
+                 , [ "Tor"    , 26 ]
+                 , [ "Gismo"  ,  2 ]
+                 ]
 \end{lstlisting}
 
-Let us consider some primitive queries and their responses.
+Let us quickly consider some primitive queries and their responses.
 First, we will try to determine whether Alice's records are included in the database.
-This simple example demonstrates several components of our implementation: the expression language, a transformation, and a differentially private mechanism: \texttt{noisyCount}.
+This simple example demonstrates several components of our implementation in action: the expression language, a transformation, and a differentially private mechanism: \texttt{noisyCount}.
 
 \begin{lstlisting}[float,caption={Counting Alices},label={lst:counting_alices}]
 countAlices : Private 1 Double
@@ -1476,19 +1522,21 @@ testCountAlices = evalPrivateIO alices
 \texttt{isAlice} is an \texttt{Expr Person Bool} for finding those rows which contain ``Alice'' in the name column.
 \texttt{alices} is a \texttt{PINQuery IdrisTable Person 1}, because \texttt{where'} has a stability of 1.
 It abstractly represents the table of participants named ``Alice''.
-Finally, when we invoke the \texttt{noisyCount} mechanism, the Idris backend evaluates the query, computes the desired result and adds noise to it before returning it.
-
-Note that we have chosen to use $\epsilon = 1$ when invoking \texttt{noisyCount} and \texttt{where'} has a stability cost of 1.
-Therefore, the cost of the entire computation is 1.
+\texttt{noisyCount} gives us a \texttt{Private} computation.
+If we were to modify the cost of it, the Idris type-checker would complain that the cost we specified does not match the true cost.
+We could also place a type hole (e.g. \texttt{?howMuch}) and use proof tactics for cost inference.
+Finally, when we invoke the \texttt{evalPrivateIO} mechanism, the Idris backend evaluates the query, computes the desired result and adds noise to it before returning it.
 
 Every time we run \texttt{testCountAlices}, we will get a different response because of the Laplacian noise being added to the result.
 Given the \texttt{people} table from Listing~\ref{lst:example_data_people}, we can describe from the outset what we expect the distribution of this query to look like (assuming an infinite budget).
 Figure~\ref{fig:indistinguishability} shows the PDF curves for \texttt{countAlices} being run on a database with and a database without Alice.
 Given a single value sampled from either of those two PDFs, an analyst will have no way of telling which PDF it came from.
+We can manually try this by removing Alice from \texttt{people} and rerunning the query.
+The results of running \texttt{countAlices} on \texttt{people} and \texttt{tail people} are indistinguishable.
 
-Of course, the analyst could try to sample multiple times, averaging the results, to learn the true mean.
+Of course, the analyst could try to sample multiple times and averaging the results to learn the true mean.
 DPDT allows this, but the type system ensures that the cost of the query increases accordingly.
-Listing~\ref{lst:nested_aggrs} contains an example of how a malicious analyst might try to average a few queries.
+Listing~\ref{lst:nested_aggrs} contains an example of how an adversarial analyst might try to bypass our protections.
 
 \begin{lstlisting}[float,caption={Counting Alices (revisited)},label={lst:nested_aggrs}]
 alices : PINQuery IdrisTable Person 1
@@ -1502,31 +1550,146 @@ tripleCountAlice = do x <- noisyCount alices 1
 
 tripleCountAlice' : Private 3 Double
 tripleCountAlice' = noisyCount alices 3
-
--- Sample outputs from running the same query
-
-> evalPrivateIO tripleCountAlice
-0.37815165965182446 : Double
-
-> evalPrivateIO tripleCountAlice
-1.1722612701665798 : Double
 \end{lstlisting}
 
 The cost of the computation increases each time the analyst tries to extract information from the database, regardless of how it is used.
-In fact, \texttt{tripleCountAlice} and \texttt{tripleCountAlice'} are functionally equivalent.
-They are asking for the same thing at the same privacy cost; therefore, their representative PDFs will be equal.
-The analyst is limited by the privacy budget.
+In fact, \texttt{tripleCountAlice} and \texttt{tripleCountAlice'} are semantically equivalent.
+Averaging the results of three less accurate queries will be just as accurate as the result returned from the same query made three times more expensive.
+Put another way, they are asking for the same thing at the same privacy cost; therefore, their representative PDFs will be equal.
 
-\subsection{Standing on the shoulders of giants}
+Where in the database is Alice?
+We don't even know if she is in it.
+
+\section{Verifying Differentially Private Queries}
+
+We verified the correctness of our implementation of DPQ with a variety of techniques.
+In particular, we employ unit tests and dependently typed proofs for both backends and some basic integration tests for the SQLite backend.
+
+\subsection{Properties of the Abstract Language}
+
+Types allow us to express assertions about a program using types.
+``Program'' in this context does not necessarily mean a whole program source file; it could be just a function or some property of a data type.
+This powerful observation is known as the Curry-Howard isomorphism.
+The Curry-Howard isomorphism maps propositions to types vice versa.
+In order to prove a proposition/type $A$, it is sufficient to produce a value $a : A$.
+$a$ is the proof of $A$.
+
+This is a particularly powerful consequence in a dependent type system.
+Idris provides many useful types for expressing various propositions about programs.
+Consider the return type of \texttt{unionCostsAdd} in Listing~\ref{lst:curryhoward}.
+$(=)$ is a type constructor provided by Idris' prelude used for proposing that two terms be equal.
+Note that this is not just a dynamic equality check; Idris' type-checker will examine the structures of the types involved and verify the equality.
+
+\texttt{unionCostsAdd} can be viewed as proof that, given two queries with costs $c_1$ and $c_2$, respectively, the union of them will result in a query with cost $c_1 + c_2$.
+We never specify what $c_1$ and $c_2$ are, as would be done in unit testing.
+Instead, Idris proves the proposition that for all possible pairs of queries, their union \textit{must} result in a query that costs $c_1 + c_2$.
+
+Unit testing proves only that a program is correct for a sampling of the test space.
+This is particularly important because we can only write unit tests for cases for which we already have expectations.
+There are techniques for identifying corner cases, but they are still only sampling from the test space.
+
+A proof like \texttt{unionCostsAdd} provides a markedly better assurance about the test space because it proves the property across the entire test space.
+Our language implementations include various propositions such as these directly in the modules they are defined in.
+Their placement there prevents modifications from invalidating properties which should be true.
+The type-checker will be unable to verify that the type is inhabited and refuse to compile the module.
+
+\begin{lstlisting}[float,caption={Example of using types to assert properties of programs (Curry-Howard correspondence)},label={lst:curryhoward}]
+unionCostsAdd : { q1 : Query b s c1 }
+             -> { q2 : Query b s c2 }
+             -> { q3 : Query b s c3 }
+             -> ( union q1 q2 = q3 )
+             -> c1 + c2 = c3
+unionCostsAdd Refl = Refl
+\end{lstlisting}
+
+In addition to proofs about DPQ/DPDT language constructs, we implemented a number of proofs about \texttt{Rational} properties.
+Convincing Idris that operations on \texttt{Rational}s are completely total was difficult, but by expressing our expectations as propositional proofs, we were able to identify the problem spots.
+Listing~\ref{lst:reductionprfs} shows how we were able to propose reduction properties about operations.
+
+\begin{lstlisting}[float,caption={Examples of reduction property proofs for \texttt{Rational}s},label={lst:reductionprfs}]
+fromDec_reduces : (d:Dec b) -> fromDec Z Z d = Z
+fromDec_reduces (Yes _) = Refl
+fromDec_reduces (No  _) = Refl
+
+rationalsReduce : (4//8) = 1//2
+rationalsReduce = Refl
+
+rationalsReduceWhenAdded : (1//4) + (1//2) = (3//4)
+rationalsReduceWhenAdded = Refl
+\end{lstlisting}
+
+\subsection{Testing the Idris Backend}
+
+We have a combination of unit tests and proofs for verifying that our Idris backend operates as expected.
+Most of the property proofs exist directly in the modules they are most relevent to.
+The unit tests live in the /tests/idris/ directory.
+Because the Idris backend can so easily be tested, we provide a script which should be used by developers for compiling all of the test files as a git pre-commit hook.
+
+Being able to express expectations so clearly was incredibly useful during our exploration phase in implementing DPDT.
+We did not have to spend any time on writing unit tests and the compiler itself complained when we violated our expectations.
+Listing~\ref{lst:privprops} contains two properties which were particularly useful for debugging.
+
+\begin{lstlisting}[float,caption={Properties of \texttt{Private} computation sequencing},label={lst:privprops}]
+returnIsFree : { p1 : Private s1 Double } -> { p2 : Private s2 Double }
+            -> do { x <- p1; return 1.0 } = p2 -> s1 = s2
+returnIsFree Refl = Refl
+
+sequencingIsAdditive : { p1 : Private s1 a } -> { p2 : Private s2 a }
+                    -> { p3 : Private s3 (a,a)  }
+                    -> do { x <- p1; y <- p2; return (x,y) } = p3 -> s1 + s2 = s3
+sequencingIsAdditive Refl = Refl
+\end{lstlisting}
+
+We also wrote a simple, but complete program that loads real data into the backend database and then runs a differentially private aggregation against it.
+Please see Listing~\ref{appx:aoldata_idris} in the appendices.
+
+\subsection{Testing the SQLite Backend}
+
+Similarly to our Idris backend, we provide a number of unit tests for the SQLite backend.
+Listing~\ref{lst:example_DPQ_unit_test} contains a snippet from one of our unit test modules.
+We verify that total costs are calculated as expected with in the SQLite \texttt{Private} type.
+We also verify that a specific query compiles to an expected query string.
+Notice how $(=)$ can also be used for implementing unit tests.
+Also be aware the \texttt{countThemAll} is not a unit test!
+But it is testing that our type system behaves as expected.
+If we changed the cost of \texttt{countThemAll}, the Idris type-checker would be unable to unify the incorrect cost with the correct one.
+
+\begin{lstlisting}[float,caption={Unit test for noisyCount},label={lst:example_DPQ_unit_test}]
+Person : Schema
+Person = [ "Name" ::: String , "Age" ::: Nat ]
+
+people : Query Person 1
+people = mkTable "People"
+
+countThemAll : Private 2
+countThemAll = noisyCount people 2
+
+countThemAllTest : evalPrivate countThemAll = "SELECT (COUNT(*) + samplePure(0, 0.5)) FROM (People)"
+countThemAllTest = Refl
+\end{lstlisting}
+
+The expected query string in Listing~\ref{lst:example_DPQ_unit_test} contains an example usage of a function from our external C library, \texttt{samplePure}.
+SQLite does not provide the Laplacian distribution in its libraries, so we must manually provide it.
+
+We also created some basic integration tests for testing with a real SQLite database.
+We use C++ to load a SQLite database, link it with our C library, and run compiled DPQ queries against it.
+
+Additionally, we have manually tested that, assuming an infinite budget, the mean of repeated noisy aggregations approach the true mean.
+This ``sanity check'' allows us to be reasonably certain that the interface between our dependent type safety and the outside world behaves as expected.
+
+% TODO 1 : better title?
+\section{DPDT vs. PINQ: The Final Showdown}
+
+\subsection{Purity vs. Side Effects}
 
 One of LINQ's key features is that it is embedded within the .NET languages.
 This means that developers have access to much more than the LINQ DSL when writing applications; they are able to use all of the features of the host language.
 This is a very powerful feature that allows users to seamlessly blend data access and flow control in one environment.
 
 DPDT exists as an embedded language within Idris.
-There are important differences between an imperative language like C\# and a pure functional language like Idris.
-In particular, C\# makes no effort to contain side effects.
-Idris, on the other hand, provides \textit{referential transparency}; i.e. an expression can be replaced by its value without affecting the semantics of the program at all.
+However, there are important differences between an imperative language like C\# and a pure functional language like Idris.
+In particular, C\# makes no effort to contain side effects or limit access to global state.
+Idris, on the other hand, offers us \textit{referential transparency}; i.e. an expression can be replaced by its value without affecting the semantics of the program at all.
 
 This may seem unimportant, but side effecting functions can compromise differential privacy in spectacular ways.
 Consider the result of the following expression.
@@ -1542,9 +1705,10 @@ patients.Select(p => if p.Name == "Alice" {
 The result is a no-op: the data remains unchanged.
 However, if the analyst hears a beep during the evaluation of this query, he knows that Alice is included in the \texttt{patients} database.
 In fact, beep is just one example of a side-channel.
-% TODO 1 : "doesn't PINQ deal via rewrite?"
 Other possible examples include timing attacks (e.g. \texttt{Thread.sleep}), writing to global memory or external file (e.g. \texttt{echo yes > /foundAlice}), or even sending an email.
 These kinds of interactions with the outside world are called \textit{side effects}.
+
+PINQ does attempt to examine all expressions before evaluating them for potential side-effects, but this approach is error-prone and mechanically deciding whether an expression could violate privacy constraints is difficult.
 
 Idris' type system does not allow functions to contain side effects unless they are explicitly marked as such in their type signature.
 This alone prevents many of the side-channel attacks that are possible in other systems.
@@ -1556,113 +1720,113 @@ Instead of calling \texttt{beep()} in the example above, the analyst could have 
 If he observes that a query takes significantly longer than it did without the call to the expensive computation, he can conclude that Alice's records are in the database.
 Stopping this kind of side-channel attack requires a dedicated runtime system which ensures that, regardless of which row the expression is evaluated on, it takes the same amount of time\cite{conf/uss/HaeberlenPN11}.
 
+\subsection{Static vs. Dynamic Differential Privacy}
+
 Alone, DPDT leverages Idris' powerful type system to statically verify the differential privacy constraints of a query.
 Combining DPDT with Idris, however, gives it access to all of the features of a Turing complete language.
 It is no longer restricted to simple queries.
 We can write differentially private algorithms a la PINQ and prevent some of the side channel attacks it might have been susceptible to.
-We implemented an example of differentially private k-means clustering in DPDT.
 
 However, using dependent types to verify differential privacy metrics does prevent some types of algorithms from being expressible in DPDT.
-Our implementation of k-means can only run for a predetermined number of iterations.
+This is because we must know the total cost in order to fully construct a computation's type.
+If the type-checker is unable to determine when an algorithm will terminate statically, it is impossible to assign it a type.
+Our implementation of k-means runs for a fixed number of iterations.
 Computing the total cost of running it is accomplished by multiplying the cost of an iteration with the total number of iterations.
 
-However, k-means can also be developed with a criteria function for dynamic termination.
-How do we compute the total cost of an algorithm when we don't know how many iterations it will run through before terminating (if it even does)?
-It isn't possible.
-In fact, this is just the Halting problem in another disguise.
-DPDT's type system will prevent all dynamically terminating algorithms from being expressed.
+However, k-means can also be implemented to use a criteria function for dynamic termination.
+It is impossible for the type-checker to know when this variation will terminate, or if it even will.
+DPDT's type system precludes dynamically terminating algorithms from being expressed.
 
-This is a serious limitation that PINQ also struggles with.
-However, PINQ is able to represent dynamic k-means by relying on the fact that geometric series with $-1 < r < 1$ converge.
+PINQ is able to represent dynamic k-means by relying on the fact that geometric series with $-1 < r < 1$ converge.
 If each iteration uses exactly half of the remaining budget ($r=1/2$), then the cost of the entire algorithm, regardless of how many iterations are necessary, cannot exceed the budget.
 
 $$\sum_{x=2}^{\infty} 1/x = \frac{1}{2} + \frac{1}{4} + \frac{1}{8} + .. = 1$$
 
-In fact, PINQ is able to represent an impressive variety of algorithms in a differentially private manner.
 It may be possible for us to extend the \texttt{Sensitivity} type and convince the Idris type-checker that algorithms resembling a geometric series with $-1 < r < 1$ converge, but we have not yet explored this option.
 
-\section{Differential privacy and dependent types}
+\chapter{Conclusion}\label{sec:conclusion}
 
-Nicolas Oury and Wouter Swierstra have already shown that dependent types are natural fit for fully typing the relational algebra\cite{OurySwierstra08PowerOfPi}.
-Chapter~\ref{sec:RADT} provided an overview of their method in our implementation of RADT.
-The goal of this thesis is to demonstrate that dependent types are also capable of typing differential privacy metrics and we certainly believe this to be the case.
-Chapter~\ref{sec:function_sensitivity} showed how metrics such as function sensitivity can be tracked using dependent types.
-Chapter~\ref{sec:DPQ} put the previous chapter together into a completely type-safe Idris EDSL for compiling single queries, Chapter~\ref{sec:DPDT} added sequencing to that, resulting in a PINQ-like language.
+Nicolas Oury and Wouter Swierstra demonstrated that dependent types are a natural fit for fully typing the relational algebra\cite{OurySwierstra08PowerOfPi}.
+Chapter~\ref{sec:RADT} provided an overview of our implementation of RADT, which was based on their work.
+
+The primary goal of this thesis has been to demonstrate that dependent types also can be used for typing differential privacy metrics and we certainly believe this to be the case.
+Chapter~\ref{sec:function_sensitivity} showed how easily metrics such as function sensitivity can be tracked using dependent types.
+Chapter~\ref{sec:DPQ} outlined our implementation of a subset of DPDT's features, which we refer to as DPQ.
+DPQ is a fully-type safe query DSL for describing one differentially private aggregation at a time.
+This subset of features is enough to allow compilation to SQL strings for use in other applications.
+In Chapter~\ref{sec:DPDT}, we add sequencing and, for the Idris backend, the ability to lift Idris functions into the expression language, resulting in a PINQ-like language: DPDT.
+DPDT is a prototype EDSL for describing differentially private queries in Idris.
+
+\section{Type Safety}
 
 LINQ provides type-safety for most of the relational algebra.
 PINQ expands this safety to include privacy metrics, but it does so dynamically.
-Unfortunately, this also means that any verification of privacy constraints occurs dynamically.
 This actually allows PINQ to express some forms of algorithms which aren't possible in DPDT.
 Any algorithm relying on dynamic conditions for termination will be difficult to statically verify.
 How can the type-checker know the cost of an algorithm when it could run for any number of iterations?
-However, it is possible for users of PINQ to write type-correct programs which can never be run due to privacy budget constraints.
 
 DPDT provides type-safety for all of the relational algebra and differential privacy constraints.
-Two powerful consequences of this are that type-correct programs written in DPDT are guaranteed to be differentially private and will terminate with a result.
-Unfortunately, these guarantees preclude certain types of algorithms from being written with it.
+Two powerful consequences of this are that type-correct programs written in DPDT are guaranteed to be differentially private and will terminate with a result (not a runtime budget error).
 
 In fact, DPDT's type-safety even protects against many side-channel attacks which might be possible in a side-effecting language like PINQ.
-PINQ does try to ``scrub'' any expressions before they are evaluated, but mechanically determining which expressions consistute a side-channel attack is not feasible.
+PINQ does try to ``scrub'' any expressions before they are evaluated, but mechanically determining which expressions constitute a side-channel attack is not feasible.
 However, timing attacks represent one side-channel which no type system is likely to be able to stop.
 Certainly, Idris' purity will prevent calls to \texttt{Thread.sleep}, but what about an expression computing the $n^{th}$ Fibonacci number for some large $n$?
 A specialized runtime system is required to prevent this kind of side-channel attack\cite{conf/uss/HaeberlenPN11}.
 
-Dependent type systems have benefitted from decades of research and come a long way from their purely academic origins.
-Languages like Agda\footnote{http://wiki.portal.chalmers.se/agda/pmwiki.php}, and more recently, Idris, provide the power of dependent types in a practical setting, allowing critical concepts, such as differential privacy constraints, to be recorded and mechanically verified at compile time.
+Dependent type systems have benefited from decades of research and come a long way from their academic origins.
+Languages like Agda\footnote{http://wiki.portal.chalmers.se/agda/pmwiki.php}, and more recently, Idris, combine the power of dependent types with a powerful, Turing-complete functional programming languages (computations at the type level are not Turing-complete).
+This yields a very practical setting for developing differentially private algorithms.
 
-We believe that in spite of the limitations outlined above, dependent types are capable of representing differential privacy metrics.
-DPQ and DPDT are EDSL prototypes demonstrating exactly this point.
-Some of the limitations described above can probably be lifted with more work (e.g. recursive descent geometric series costs), but some are impossible (e.g. dynamic termination with equal cost iterations).
+We believe that despite the limitations regarding dynamically-terminating algorithms, dependent types are a great match for representing differential privacy metrics.
+We provide DPQ and DPDT as concrete prototype EDSLs demonstrating this, as well as several example programs written with them.
 
-\section{Future work}\label{sec:future_work}
+\section{Future Work}\label{sec:future_work}
 
-At the time of this writing, DPDT exists only as a prototype.
-There are many potential paths for future work, but we attempt to list some promising ones here.
+DPDT is still just a prototype, so there are many potential paths for future work.
+We list what we see as the most promising ones here.
 
-Some algorithms can be implemented in PINQ but not DPDT.
-% TODO 1 : "which?"
-We believe that some classes of algorithms simply cannot be represented by a static type-system (if we are to compute their total costs), but we aren't convinced that this is true of all of them.
-% TODO 1 : "why?"
-In particular, our \texttt{Sensitivity} type can probably be extended to allow for recursive algorithms where the iterative costs resemble a geometric series with $-1 < r < 1$.
+\paragraph{Some algorithms can be implemented in PINQ but not DPDT.}
+Dynamically terminating algorithms are by definition difficult to analyze statically.
+DPDT's current type system precludes all dynamically terminating algorithms.
+PINQ is able to implement dynamic kMeans in the case where the iterative costs resemble a geometric series with $-1 < r < 1$.
+We believe that it may be possible to extend \texttt{Rational}s in such a way that Idris' type-checker could unify costs appropriately.
 
-Exploring the limits to what kinds of backends can be supported and providing implementations for those that can would be a great step.
-PINQ supports any LINQ-supported backend out of the box.
-DPDT has no underlying LINQ-like framework under active development, so backends must be added one by one.
-What features does DPDT require to support a particular backend?
-Could we interface DPDT with LINQ providers?
-
-Of course, backends aren't limited to local memory access.
-A server component, not unlike many network-facing LINQ providers, would help DPDT better mirror PINQ's capabilities.
+\paragraph{Implement new DPDT ``providers'' for other data sources.}
+Backends don't need to be limited to local memory access.
+A DPDT server component, not unlike many network-facing LINQ providers, would help DPDT better mirror PINQ's capabilities.
 By establishing a trusted runtime system on the server hosting the data, we can expose the powers of \texttt{PureFn} to data analysts remotely.
-Our current prototype still leaves a lot to be desired in terms of actual usability.
 
 %%%%%%%
 
-Idris provides several experimental language features which may provide DPDT with better integration into its host language.
+\paragraph{Explore Idris language features for other ways to improve DPDT.}
+Idris serves as a test bed for several new and interesting experimental language features which could provide DPDT with better integration into its host language.
 Two examples that come to mind are Idris' \texttt{Effects} library and \textit{type providers}.
 
 Effects are an alternative to monadic actions for describing side-effects.
-Reimplementing the \texttt{Private} monad from Chapter~\ref{sec:DPDT} using effects might be beneficial.
-There may be other opportunities for implementing components as effects.
+Reimplementing the \texttt{Private} monad from Chapter~\ref{sec:DPDT} using effects would be more idiomatic for integration into Idris.
+There may be other opportunities for implementing components of randomized mechanisms as effects.
 
-Type providers allow the Idris type-system to define and predicate types on input from the outside world.
-A classic example is grabbing schemas directly from the database itself, but this could be extended to grab that data source's remaining privacy budget as well.
-DPDT's implementation could also be adjusted such that \texttt{PureFn} is disabled for backends which do not support it.
+Type providers allow the Idris type-system to define and predicate types based on input from the outside world.
+A common use case for type providers is communicating directly with a database for getting schemas.
+This could be extended for getting remaining privacy budget.
+
+\paragraph{The expression language is not type-safe because of \texttt{PureFn}}.
+DPDT's implementation should be adjusted so that \texttt{PureFn} is disabled for backends which do not support it.
 The current implementation will quit with a runtime error.
 
 %%%%%%%
 
-Finally, improving DPDT's syntax would be beneficial to all future users.
-In its current form, it is not particularly well suited to users who aren't familiar with Idris' syntax.
-However, Idris tries to make embedding domain specific languages easier by providing various extensions allowing users to modify its parser and other moving parts.
-One of these is the ability to describe syntax extensions with regular expressions which the parser can then make use of.
+\paragraph{DPDT syntax is far from ideal.}
+In its current form, it is not particularly well suited to users who aren't familiar with Idris' syntax or functional programming.
+However, Idris tries to make embedding domain specific languages easier by allowing developers to modify its parser and elaborator.
 Custom syntax rules allow embedded language developers to extend the parser with EDSL-specific syntax constructs.
 
 Idris syntax extensions consist of two components: reserved keywords and non-terminals.
 Keywords help anchor the parser around the non-terminals, which are captured and usable on the right hand side of a custom syntax declaration.
 Listing~\ref{lst:syntax_extensions} contains two examples of syntax rules.
 
-\begin{lstlisting}[float,caption={Extending Idris' syntax},label={lst:syntax_extensions}]
+\begin{lstlisting}[caption={Extending Idris' syntax},label={lst:syntax_extensions}]
 -- Definition
 syntax select [f] from [q] = select q f
 syntax select [f] from [q] where [e] = select (where q e) f
@@ -1673,9 +1837,8 @@ select f from (q `union` q') where e
 
 In fact, it may be possible to recreate a SQL-like syntax using Idris parser extensions exclusively.
 They should, however, be used with caution as poorly implemented syntax rules can cause the parser to diverge.
-Additionally, SQL-like syntax may not necessarily the best syntax.
 
-\chapter{Conclusion}\label{sec:conclusion}
+\section{Closing Remarks}
 
 Dependent types are capable of representing differential privacy metrics and constraints.
 The ability to verify differential privacy by construction is a desirable property.
@@ -1698,11 +1861,164 @@ Unfortunately, both PINQ and DPDT are susceptible to a particular form of timing
 Preventing this kind of attack requires a smart server implementation like the one described in \cite{conf/uss/HaeberlenPN11}.
 
 Dependent types can fully represent the relational algebra and its contraints which have stumped lesser type-systems\cite{OurySwierstra08PowerOfPi}.
-We have shown that dependent types can also represent differential privacy metrics and their contraints---with some limitations on the types of algorithms that can be expressed.
+We have shown that dependent types can also represent differential privacy metrics and their constraints---with some limitations on the types of algorithms that can be expressed.
 There are no limits on constructing independent, differentially-private queries, but dynamically terminating algorithms cannot be expressed because privacy constraints cannot be verified at compile-time.
 Despite this limitation, we believe that dependent types lend themselves quite well to representing differential privacy metrics and constraints.
 
 \bibliographystyle{abbrv}
 \bibliography{main}
+
+\begin{appendices}
+
+\chapter{Sample Programs}
+
+\begin{lstlisting}[caption={tests/Idris/AOLData.idr},label={appx:aoldata_idris}]
+module Main
+
+import Database.DPDT.Idris
+
+AOLSchema : Schema
+AOLSchema = [ "AnonID" ::: String, "Query" ::: String ]
+
+parseLine : String -> Row AOLSchema
+parseLine cs = let (x::y::zs) = split (== ',') cs
+                in [ x , y ]
+
+loadTable : String -> IO (Query AOLSchema 1)
+loadTable fname = do
+  f <- map parseLine . lines <$> readFile fname
+  return $ MkQuery (Table f)
+
+-- TODO 1 : FIX THIS! We need associativity: esp. with (fromInteger 1). Commutativity would be nice, too.
+-- (Try changing c*2*1 to anything else.)
+
+countUniqueAnonID : Query AOLSchema c -> Private (c*2*1) Double
+countUniqueAnonID q = do
+  let gq = groupBy (AOLSchema^"AnonID") q
+  noisyCount gq 1
+
+main : IO ()
+main = do
+  t <- loadTable "tests/AOL_sm.txt"
+  print $ evalPrivate (countUniqueAnonID t) 1238389612
+  return ()
+
+\end{lstlisting}
+
+\begin{lstlisting}[caption={tests/SQLite/AOLData.idr},label={appx:aoldata_sqlite}]
+module Main
+
+import Database.DPDT.SQLite
+import Effects
+import Effect.StdIO
+
+AOLSchema : Schema
+AOLSchema = [ "AnonID" ::: Double, "Query" ::: String ]
+
+table : Query AOLSchema 1
+table = MkQuery (Table "AOL")
+
+countUniqueAnonId : Private 2
+countUniqueAnonId =
+  noisyCount gq 1 where
+  gq : Grouping AOLSchema Double 2
+  gq = groupBy (AOLSchema^"AnonID") table
+
+averageAnonId : Private 1
+averageAnonId = noisyAverage (AOLSchema^"AnonID") table 1
+
+printResult : Eff () [STDIO]
+printResult = do
+              putStr $ evalPrivate countUniqueAnonId ++ "\n"
+              putStr $ evalPrivate averageAnonId ++ "\n"
+
+main : IO ()
+main = run printResult
+\end{lstlisting}
+
+\begin{lstlisting}[caption={tests/idris/kMeans3.idr},label={appx:kMeans3}]
+module Main
+
+import Data.Vect
+import Database.DPDT.Idris
+import Data.Floats
+import System.Random.CrapGen
+
+----------------------------------------------------------------
+
+record Point2 where
+  constructor MkPt
+  ptX : Double
+  ptY : Double
+
+dist : Point2 -> Point2 -> Double
+dist (MkPt x y) (MkPt x' y') = sqrt $ (x-x')*(x-x') + (y-y')*(y-y')
+
+instance Eq Point2 where
+    (==) x y = dist x y < (1/1000000)
+
+----------------------------------------------------------------
+
+SPoint2 : Schema
+SPoint2 = [ "x" ::: Double, "y" ::: Double ]
+
+----------------------------------------------------------------
+
+points : Query SPoint2 1
+points = MkQuery $ Table $ [ point2 x y | x <- [0,1], y <- [0,1] ]
+                        ++ [ point2 x y | x <- [7,8], y <- [7,8] ]
+  where point2 : Cast a Double => a -> a -> Row SPoint2
+        point2 x y = [ (cast x), (cast y) ]
+
+----------------------------------------------------------------
+
+labelVect : Vect n a -> Vect n (Nat,a)
+labelVect v = go v Z
+  where go : Vect n a -> Nat -> Vect n (Nat,a)
+        go [] k        = []
+        go (x :: xs) k = (k,x) :: go xs (S k)
+
+-- classifies each point and gives an ix to the center it matched
+classify : Vect (S n) Point2 -> Point2 -> Fin (S n)
+classify {n} cs p = let ds = map (dist p) cs
+                     in fromNat . fst $ foldr1 findMinDist (labelVect ds)
+  where findMinDist : (Nat,Double) -> (Nat,Double) -> (Nat,Double)
+        findMinDist (ix,d) (ix',d') = if (d < d') then (ix,d) else (ix',d')
+
+eps : Epsilon
+eps = (1//2)
+
+updateCenters : Vect (S n) Point2 -> Grouping SPoint2 (Fin (S n)) c
+             -> Private ?updateCenters_cost (Vect (S n) Point2)
+updateCenters cs gr = sequence (map (updateCenter gr) (map (fromNat . fst) $ labelVect cs))
+  where
+    updateCenter : Grouping SPoint2 (Fin (S n)) c -> Fin (S n) -> Private (c*eps + c*eps) Point2
+    updateCenter gr ix = do
+      let ps = lookup ix gr
+      x <- noisyAverage (SPoint2^"x") ps eps
+      y <- noisyAverage (SPoint2^"y") ps eps
+      return (MkPt x y)
+
+kMeans : (k:Nat) -> (cs:Vect (S n) Point2) -> (tbl:Query SPoint2 1) -> Private ?kMeans_cost (Vect (S n) Point2)
+kMeans Z     cs tbl = return cs
+kMeans (S k) cs tbl = do
+    cs' <- updateCenters cs (groupBy classifyExpr tbl)
+    kMeans k cs' tbl
+  where classifyExpr = PureFn (classify cs) (PureFn (uncurry MkPt) (Couple (SPoint2^"x") (SPoint2^"y")))
+
+foo : Vect 2 Point2
+foo = evalPrivate (kMeans 10 [MkPt 3 4, MkPt 5 6] points) 123
+
+---------- Proofs ----------
+
+Main.updateCenters_cost = proof
+  intros
+  search
+
+testDist : dist (MkPt 0 0) (MkPt 0 1) = 1
+testDist = Refl
+\end{lstlisting}
+
+\end{appendices}
 
 \end{document}
