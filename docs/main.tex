@@ -1001,21 +1001,21 @@ Notice that we have not yet defined any underlying representation for the rows, 
 In fact, it is completely representation-agnostic (with the exception of \texttt{PureFn}).
 
 Expressions are built up from other expressions, forming an expression tree.
-See Figure~\ref{fig:expr_tree} for an example of a simple singly-typed ($\mathbb Z$) expression tree.
+See Figure~\ref{fig:expr_tree} for an example of an expression tree using constructors from Listing~\ref{lst:expressions}.
 
-\begin{figure}[h!]
-    \centering
-    \includegraphics[width=0.25\linewidth]{assets/expr_tree.png}
-    \caption{Visualizing expression trees with an example of a simple integer arithmetic expression $(1 + 2 \times 3)$}
-    \label{fig:expr_tree}
+\begin{figure}
+     \centering
+     \def\svgwidth{0.75\linewidth}
+     \input{assets/expr_tree.pdf_tex}
+     \caption{Expression tree representing an equality check applied to the addition of two lookups}
+     \label{fig:expr_tree}
 \end{figure}
 
-% TODO 2 : make a figure of a Query tree showing the types
 
-The return type of the sample tree in Figure~\ref{fig:expr_tree} is obvious, but what about a more complex tree in our expression language?
-Expressions cannot change the schema, so that must remain constant even as the tree grows.
+Expressions cannot change the schema, so that must remain constant even as the tree grows (Figure~\ref{fig:query_tree} shows how schemas of queries may change).
 The root of the tree represents the final ``operation'' to be evaluated, and therefore the final value.
 This value will be returned when the tree is evaluated, so the return type of an expression in RADT is the return type of the root node.
+In the example  expression tree the return type is a \texttt{Bool} as the root node is an equality operation, while the type of the rest of the nodes is \texttt{Nat}.
 The type-checker is capable of verifying the types throughout the entire tree, so only well-typed expressions are allowed by the type-system.
 
 In fact, the type-checker will even verify that we don't reference attributes that don't exist in a schema (see the dependent type signature: Listing~\ref{lst:expressions}, Line 8).
@@ -1023,7 +1023,7 @@ In fact, the type-checker will even verify that we don't reference attributes th
 It is derived automatically, so users of our language should never have to worry about it.
 \texttt{lookupType} is able to use this proof to statically verify the return type of an expression.
 
-\begin{lstlisting}[caption={Abstract representation of toy expression language},label={lst:expressions}]
+\begin{lstlisting}[float,caption={Abstract representation of toy expression language},label={lst:expressions}]
 ||| Represents an abstract expression indexed by its schema
 ||| @ s The schema available to the expression
 ||| @ a The return type of the expression
@@ -1052,6 +1052,14 @@ One of PINQ's powerful features is that analysts have access to nearly all of C\
 We use the \texttt{PureFn} data constructor to lift pure Idris functions into the expression language, allowing users to leverage many of Idris' powerful language features within expressions.
 This should allow clever developers to bend even this simple expression language into something quite powerful.
 However, this functionality is only available to backends implemented in Idris.
+
+\begin{figure}
+     \centering
+     \def\svgwidth{0.75\linewidth}
+     \input{assets/query_tree.pdf_tex}
+     \caption{RADT query tree representing the types of a projection applied to the union of two tables}
+     \label{fig:query_tree}
+\end{figure}
 
 The core of the relational algebra consists of the query operators, which we model as follows.
 \texttt{Query} is implemented as a data family, allowing us to adjust its internal data representation just enough to implement a variety of backends.
