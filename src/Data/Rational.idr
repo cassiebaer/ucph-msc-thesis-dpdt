@@ -45,9 +45,6 @@ ratPlus : Rational -> Rational -> Rational
 ratPlus left     (Z  :% d') = left
 ratPlus (n :% d) (n' :% d') = reduce (n*d' + n'*d) (d*d')
 
-ratMinus : Rational -> Rational -> Rational
-ratMinus (n :% d) (n' :% d') = reduce (n*d' - n'*d) (d*d')
-
 ratMult : Rational -> Rational -> Rational
 ratMult (Z :% _) _          = ratFromInteger 0
 ratMult (n :% d) (n' :% d') = reduce (n*n') (d*d')
@@ -67,9 +64,7 @@ ratComp (n :% d) (n' :% d') = compare (n * d') (n' * d)
 
 instance Num Rational where
     (+) = ratPlus
-    (-) = ratMinus
     (*) = ratMult
-    abs = id -- Our rationals can only be positive.
     fromInteger = ratFromInteger
 
 instance Eq Rational where
@@ -94,9 +89,6 @@ rationalsReduce = Refl
 rationalsReduceWhenAdded : (1//4) + (1//2) = (3//4)
 rationalsReduceWhenAdded = Refl
 
-rationalsReduceWhenSubtracted : (1//2) - (1//4) = (1//4)
-rationalsReduceWhenSubtracted = Refl
-
 rationalsReduceWhenMultiplied : (1//2) * 2 = 1
 rationalsReduceWhenMultiplied = Refl
 
@@ -108,11 +100,4 @@ ratMultZeroLeft r = Refl
 
 ratPlusZeroRight : (left : Rational) -> left + 0 = left
 ratPlusZeroRight l = Refl
-
-ratMultDistributes : { x,y,c : Rational } -> c * (x + y) = c * x + c * y
-ratMultDistributes = ?ratMultDistributes_rhs
-
-Data.Rational.ratMultDistributes_rhs = proof
-  intros
-  exact believe_me (Refl {x})
 

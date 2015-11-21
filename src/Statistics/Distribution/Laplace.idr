@@ -1,7 +1,5 @@
 module Statistics.Distribution.Laplace
 
-import Data.Floats
-
 ||| Returns the sign of the given number.
 signum : Double -> Double
 signum x = case compare x 0 of
