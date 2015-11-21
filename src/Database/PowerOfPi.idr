@@ -92,7 +92,7 @@ data Expr : (s:Schema) -> (t:Type) -> Type where
   ||| @nm The name of the attribute to look up
   (^) : (s:Schema) -> (nm:String) -> { auto p : toList s `ContainsKey` nm } -> Expr s (lookupType s p)
   (+) : Num t  => Expr s t -> Expr s t -> Expr s t
-  (-) : Num t  => Expr s t -> Expr s t -> Expr s t
+  (-) : Neg t  => Expr s t -> Expr s t -> Expr s t
   (/) : Expr s Float -> Expr s Float -> Expr s Float
   (*) : Num t  => Expr s t -> Expr s t -> Expr s t
   (==): Eq t   => Expr s t -> Expr s t -> Expr s Bool
