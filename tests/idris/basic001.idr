@@ -21,88 +21,70 @@ foods = Table [ [ "Casper" , "Bruschetta" ]
               , [ "Gismo"  , "Dog food"   ]
               ]
 
-namespace Union
+unionPeopleWithItself : ListRow Person
+unionPeopleWithItself = eval (people `Union` people)
 
-  unionPeopleWithItself : ListRow Person
-  unionPeopleWithItself = eval (people `Union` people)
+lengthUnionPeopleWithItself : length Basic001.unionPeopleWithItself = 8
+lengthUnionPeopleWithItself = Refl
 
-  lengthUnionPeopleWithItself : length unionPeopleWithItself = 8
-  lengthUnionPeopleWithItself = Refl
+unionPeopleWithNew : ListRow Person
+unionPeopleWithNew = eval (people `Union` (Table [["Alice",18]]))
 
-  unionPeopleWithNew : ListRow Person
-  unionPeopleWithNew = eval (people `Union` (Table [["Alice",18]]))
+lengthUnionPeopleWithNew : length Basic001.unionPeopleWithNew = 5
+lengthUnionPeopleWithNew = Refl
 
-  lengthUnionPeopleWithNew : length unionPeopleWithNew = 5
-  lengthUnionPeopleWithNew = Refl
+diffPeopleWithItself : ListRow Person
+diffPeopleWithItself = eval (people `Diff` people)
 
-namespace Diff
+lengthDiffPeopleWithItself : length Basic001.diffPeopleWithItself = 0
+lengthDiffPeopleWithItself = Refl
 
-  diffPeopleWithItself : ListRow Person
-  diffPeopleWithItself = eval (people `Diff` people)
+diffPeopleWithNew : List (Row Person)
+diffPeopleWithNew = eval (people `Diff` (Table [["Gismo",2]]))
 
-  lengthDiffPeopleWithItself : length diffPeopleWithItself = 0
-  lengthDiffPeopleWithItself = Refl
+lengthDiffPeopleWithNew : length Basic001.diffPeopleWithNew = 3
+lengthDiffPeopleWithNew = Refl
 
-  diffPeopleWithNew : List (Row Person)
-  diffPeopleWithNew = eval (people `Diff` (Table [["Gismo",2]]))
+prodPeopleWithABC : List (Row (Person ++ ["Foo":::Char]))
+prodPeopleWithABC = eval (Product people fooTable) where
+  fooTable : Query ["Foo":::Char]
+  fooTable = Table [ [ 'A' ] , [ 'B' ] , [ 'C' ] ]
 
-  lengthDiffPeopleWithNew : length diffPeopleWithNew = 3
-  lengthDiffPeopleWithNew = Refl
+lengthProdPeopleWithABC : length Basic001.prodPeopleWithABC = 12
+lengthProdPeopleWithABC = Refl
 
-namespace Product
+projPeopleFirstNames : List (Row ["FirstName":::String])
+projPeopleFirstNames = eval (Projection fooProj people) where
+  fooProj : String -> Maybe String
+  fooProj "Name" = Just "FirstName"
+  fooProj _      = Nothing
 
-  prodPeopleWithABC : List (Row (Person ++ ["Foo":::Char]))
-  prodPeopleWithABC = eval (Product people fooTable) where
-    fooTable : Query ["Foo":::Char]
-    fooTable = Table [ [ 'A' ] , [ 'B' ] , [ 'C' ] ]
+selectOneTable : List (Row Person)
+selectOneTable = eval (Select expr people) where
+  expr : Expr Person Bool
+  expr = (Person ^ "Age") == (Lit 25)
 
-  lengthProdPeopleWithABC : length prodPeopleWithABC = 12
-  lengthProdPeopleWithABC = Refl
+lengthSelectOneTable : length Basic001.selectOneTable = 1
+lengthSelectOneTable = Refl
 
-namespace Projection
+groupByAge : GroupingMap Nat Person
+groupByAge = eval (MkGrouping (Person ^ "Age") people)
 
-  projPeopleFirstNames : List (Row ["FirstName":::String])
-  projPeopleFirstNames = eval (Projection fooProj people) where
-    fooProj : String -> Maybe String
-    fooProj "Name" = Just "FirstName"
-    fooProj _      = Nothing
+lengthGroupByAge : length Basic001.groupByAge = 3
+lengthGroupByAge = Refl
 
-namespace Select
+twentySixYOs : List (Row Person)
+twentySixYOs = eval $ Lookup 26 $ MkGrouping (Person ^ "Age") people
 
-  selectOneTable : List (Row Person)
-  selectOneTable = eval (Select expr people) where
-    expr : Expr Person Bool
-    expr = (Person ^ "Age") == (Lit 25)
+length26YOs : length Basic001.twentySixYOs = 2
+length26YOs = Refl
 
-  lengthSelectOneTable : length selectOneTable = 1
-  lengthSelectOneTable = Refl
+countTable : eval (count Basic001.people) = length (eval Basic001.people)
+countTable = Refl
 
-namespace Grouping
+sumAges : eval (sum Basic001.people (Person^"Age")) = 79
+sumAges = Refl
 
-  groupByAge : GroupingMap Nat Person
-  groupByAge = eval (MkGrouping (Person ^ "Age") people)
-
-  lengthGroupByAge : length groupByAge = 3
-  lengthGroupByAge = Refl
-
-namespace Foo
-
-  twentySixYOs : List (Row Person)
-  twentySixYOs = eval $ Lookup 26 $ MkGrouping (Person ^ "Age") people
-
-  length26YOs : length twentySixYOs = 2
-  length26YOs = Refl
-
-namespace Aggregation
-
-  countTable : eval (count people) = length (eval people)
-  countTable = Refl
-
-  sumAges : eval (sum people (Person^"Age")) = 79
-  sumAges = Refl
-
-namespace Partition
-
-  partitionByAge : GroupingMap Nat Person
-  partitionByAge = eval (MkPartitioning [2,26] (Person^"Age") people)
+partitionByAge : GroupingMap Nat Person
+partitionByAge = eval (MkPartitioning [2,26] (Person^"Age") people)
 
