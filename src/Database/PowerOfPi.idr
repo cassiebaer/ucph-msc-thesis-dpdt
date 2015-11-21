@@ -50,7 +50,7 @@ namespace Proofs
       uninhabited Here      impossible
       uninhabited (There p) impossible
 
-  %assert_total
+  total
   decContainsKey : DecEq 'k => (ps:List ('k,'v)) -> (k:'k) -> Dec (ps `ContainsKey` k)
   decContainsKey [] k = No absurd
   decContainsKey ((a, b) :: ps) k with (decEq a k)
@@ -67,14 +67,19 @@ namespace Proofs
 
 ----------------------------------------------------------------
 
+total
+toList : Schema -> List (String,Type)
+toList [] = []
+toList ((nm ::: ty) :: ps) = (nm,ty) :: toList ps
+
 ||| Looks up the Type associated with 'nm'
 |||
 ||| @ps The schema to check
 ||| @k  The name to look for
-%assert_total
-lookupType : (ps:Schema) -> (map cast ps) `ContainsKey` k -> Type
+total
+lookupType : (ps:Schema) -> toList ps `ContainsKey` k -> Type
 lookupType (k:::v :: ps) Here = v
-lookupType (k':::v :: ps) (There x) = lookupType ps x
+lookupType (k:::v :: ps) (There x) = lookupType ps x
 
 ||| Represents a typed expression.
 |||
@@ -85,7 +90,7 @@ data Expr : (s:Schema) -> (t:Type) -> Type where
   |||
   ||| @s  The schema of available attributes (i.e. the current row)
   ||| @nm The name of the attribute to look up
-  (^) : (s:Schema) -> (nm:String) -> { auto p : (map cast s) `ContainsKey` nm } -> Expr s (lookupType s p)
+  (^) : (s:Schema) -> (nm:String) -> { auto p : toList s `ContainsKey` nm } -> Expr s (lookupType s p)
   (+) : Num t  => Expr s t -> Expr s t -> Expr s t
   (-) : Num t  => Expr s t -> Expr s t -> Expr s t
   (/) : Expr s Float -> Expr s Float -> Expr s Float
