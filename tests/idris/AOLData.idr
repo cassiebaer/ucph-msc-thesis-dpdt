@@ -11,11 +11,9 @@ parseLine cs = let (x::y::zs) = split (== ',') cs
 
 loadTable : String -> IO (Query AOLSchema 1)
 loadTable fname = do
-  f <- map parseLine . lines <$> readFile fname
-  return $ MkQuery (Table f)
-
--- TODO 1 : FIX THIS! We need associativity: esp. with (fromInteger 1). Commutativity would be nice, too.
--- (Try changing c*2*1 to anything else.)
+  Right raw <- readFile fname
+  let parsed = map parseLine . lines $ raw
+  return $ MkQuery (Table parsed)
 
 countUniqueAnonID : Query AOLSchema c -> Private (c*2*1) Double
 countUniqueAnonID q = do
@@ -27,3 +25,4 @@ main = do
   t <- loadTable "tests/AOL_sm.txt"
   print $ evalPrivate (countUniqueAnonID t) 1238389612
   return ()
+

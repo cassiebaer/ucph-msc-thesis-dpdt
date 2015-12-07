@@ -14,17 +14,17 @@ Food = [ "Name" ::: String , "Food" ::: String ]
 
 people : Query Person 1
 people = MkQuery $ Table [ [ "Alice"  , 40 ]
-                            , [ "Casper" , 26 ]
-                            , [ "Knut"   , 26 ]
-                            , [ "Tor"    , 26 ]
-                            , [ "Gismo"  ,  2 ]
-                            ]
+                         , [ "Casper" , 26 ]
+                         , [ "Knut"   , 26 ]
+                         , [ "Tor"    , 26 ]
+                         , [ "Gismo"  ,  2 ]
+                         ]
 
 foods : Query Food 1
 foods = MkQuery ( Table [ [ "Casper" , "Bruschetta" ]
-                           , [ "Knut"   , "Prim"       ]
-                           , [ "Gismo"  , "Dog food"   ]
-                           ])
+                        , [ "Knut"   , "Prim"       ]
+                        , [ "Gismo"  , "Dog food"   ]
+                        ])
 
 namespace Aggregations
 

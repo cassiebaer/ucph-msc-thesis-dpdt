@@ -2,7 +2,6 @@ module Main
 
 import Data.Vect
 import Database.DPDT.Idris
-import Data.Floats
 import System.Random.CrapGen
 
 ------------------------------------------------------------------------------

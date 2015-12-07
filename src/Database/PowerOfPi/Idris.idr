@@ -30,7 +30,7 @@ project f (r::rs) {s=n:::t::as} with (f n)
 
 ||| Get the value of an attribute given a proof that the
 ||| attribute exists
-lookupVal : (Row s) -> (nm:String) -> (p : (map cast s) `ContainsKey` nm) -> lookupType s p
+lookupVal : (Row s) -> (nm:String) -> (p : toList s `ContainsKey` nm) -> lookupType s p
 lookupVal (x::xs) nm Here       = x
 lookupVal (x::xs) nm (There s') = lookupVal xs nm s'
 
